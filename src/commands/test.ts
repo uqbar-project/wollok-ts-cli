@@ -1,7 +1,6 @@
 import { time, timeEnd } from 'console'
-import { is, Node, Test, validate } from 'wollok-ts'
-import { List } from 'wollok-ts/dist/extensions'
-import interpret, { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
+import { is, Test, validate } from 'wollok-ts'
+import interpret from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { buildEnvironmentForProject, failureDescription, problemDescription, successDescription, valueDescription } from '../utils'
 import { bold } from 'chalk'
@@ -25,69 +24,52 @@ export default async function (filter: string | undefined, { project, skipValida
     else if(problems.some(_ => _.level === 'error')) return log(failureDescription('Aborting run due to validation errors!'))
   }
 
+  const targets = environment.descendants().filter(is('Test')).filter(test =>
+    (!filter || test.fullyQualifiedName().includes(filter)) &&
+    !test.siblings().some(sibling => sibling.is('Test') && sibling.isOnly)
+  )
+
+  log(`Running ${targets.length} tests...`)
 
   time('Run finished')
-  const results = runTests(environment.members, interpret(environment, natives), filter ?? '')
+  const interpreter = interpret(environment, natives)
+  const failures: [Test, Error][] = []
+  let successes = 0
+
+  environment.forEach(node => node.match({
+    Test: node => {
+      if (targets.includes(node)) {
+        const tabulation = '  '.repeat(node.fullyQualifiedName().split('.').length - 1)
+        try {
+          interpreter.fork().exec(node)
+          log(tabulation, successDescription(node.name))
+          successes++
+        } catch (error: any) {
+          log(tabulation, failureDescription(node.name))
+          failures.push([node, error])
+        }
+      }
+    },
+    Entity: node => {
+      const tabulation = '  '.repeat(node.fullyQualifiedName().split('.').length - 1)
+      if(targets.some(target => node.descendants().includes(target)))
+        log(tabulation, node.name)
+    },
+    Node: _ => { },
+  }))
+
   log()
   timeEnd('Run finished')
 
-  results.failures.forEach(([test, error]) => {
+  failures.forEach(([test, error]) => {
     log()
     log(failureDescription(bold(test.fullyQualifiedName()), error))
   })
 
   log(
     '\n',
-    successDescription(`${results.successes} passing`),
-    failureDescription(`${results.failures.length} failing`),
+    successDescription(`${successes} passing`),
+    failureDescription(`${failures.length} failing`),
     '\n'
   )
-}
-
-type Results = {
-  total: number
-  successes: number
-  failures: [Test, Error][]
-}
-
-function runTests(
-  nodes: List<Node>,
-  interpreter: Interpreter,
-  filter: string,
-  tabulationLevel = 0,
-  results: Results = { total: 0, successes: 0, failures: [] },
-): Results {
-  const tabulation = '  '.repeat(tabulationLevel)
-
-  // TODO: Use filter
-
-  nodes.forEach(node => {
-    if(node.is('Package')){
-      if(node.descendants().some(is('Test'))) log(tabulation, node.name)
-      runTests(node.members, interpreter, filter, tabulationLevel + 1, results)
-    }
-
-    else if (node.is('Describe')) {
-      log(tabulation, node.name)
-      const onlyTest = node.tests().find(test => test.isOnly)
-      runTests(onlyTest ? [onlyTest] : node.tests(), interpreter, filter, tabulationLevel + 1, results)
-    }
-
-    else if (
-      node.is('Test') &&
-      !node.parent.children().some(sibling => node !== sibling && sibling.is('Test') && sibling.isOnly) &&
-      !!node.fullyQualifiedName().includes(filter)
-    ) {
-      try {
-        interpreter.fork().exec(node)
-        log(tabulation, successDescription(node.name))
-        results.successes++
-      } catch (error: any) {
-        log(tabulation, failureDescription(node.name))
-        results.failures.push([node, error])
-      }
-    }
-  })
-
-  return results
 }

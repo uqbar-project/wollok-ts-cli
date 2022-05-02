@@ -16,7 +16,7 @@ program.command('run')
 
 program.command('test')
   .description('Run Wollok tests')
-  .argument('[filter]', 'filter pattern')
+  .argument('[filter]', 'filter pattern for a test, describe or package')
   .option('-p, --project [filter]', 'path to project', process.cwd())
   .option('--skipValidations', 'skip code validation', false)
   .action(test)
