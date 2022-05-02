@@ -1,47 +1,34 @@
-import { readFile } from 'fs/promises'
-import globby from 'globby'
-import { join } from 'path'
-import { buildEnvironment, Name, Program, validate } from 'wollok-ts'
+import { Name, validate } from 'wollok-ts'
 import interpret from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
+import { buildEnvironmentForProject, failureDescription, problemDescription, successDescription, valueDescription } from '../utils'
 
-const { time, timeEnd, log, error, warn } = console
+const { time, timeEnd, log } = console
 
 type Options = {
   project: string
   skipValidations: boolean
 }
 
-
 export default async function (programFQN: Name, { project, skipValidations }: Options): Promise<void> {
-  log(`Running "${programFQN}" on ${project}`)
+  log(`Running ${valueDescription(programFQN)} on ${valueDescription(project)}`)
 
-  const paths = await globby('**/*.@(wlk|wtest|wpgm)', { cwd: project })
-
-  time('Reading project files')
-  const files = await Promise.all(paths.map(async name =>
-    ({ name, content: await readFile(join(project, name), 'utf8') })
-  ))
-  timeEnd('Reading project files')
-
-  time('Building environment')
-  const environment = buildEnvironment(files)
-  timeEnd('Building environment')
+  const environment = await buildEnvironmentForProject(project)
 
   if(!skipValidations) {
     const problems = validate(environment)
-    problems.forEach(problem => {
-      const report = problem.level === 'warning' ? warn : error
-      report(`${problem.level}: ${problem.code} at ${problem.node?.sourceInfo() ?? 'unknown'}`)
-    })
-
-    if(!problems.length) log('No problems found building the environment!')
-    if(problems.some(_ => _.level === 'error')) return log('Aborting run due to errors!')
+    problems.forEach(problem => log(problemDescription(problem)))
+    if(!problems.length) log(successDescription('No problems found building the environment!'))
+    else if(problems.some(_ => _.level === 'error')) return log(failureDescription('Aborting run due to validation errors!'))
   }
 
-  log(`Running "${programFQN}"...`)
-  time('Done')
-  const program = environment.getNodeByFQN<Program>(programFQN)
-  interpret(environment, natives).exec(program)
-  timeEnd('Done')
+  log(`Running ${valueDescription(programFQN)}...`)
+
+  try {
+    time(successDescription('Run finalized successfully'))
+    interpret(environment, natives).run(programFQN)
+    timeEnd(successDescription('Run finalized successfully'))
+  } catch (error: any) {
+    log(failureDescription('Uh-oh... An error occurred during the run!', error))
+  }
 }
