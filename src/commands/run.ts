@@ -5,7 +5,7 @@ import { buildEnvironment, Name, Program, validate } from 'wollok-ts'
 import interpret from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 
-const { time, timeEnd, log } = console
+const { time, timeEnd, log, error, warn } = console
 
 type Options = {
   project: string
@@ -14,7 +14,7 @@ type Options = {
 
 
 export default async function (programFQN: Name, { project, skipValidations }: Options): Promise<void> {
-  log(`Running ${programFQN} on ${project}`)
+  log(`Running "${programFQN}" on ${project}`)
 
   const paths = await globby('**/*.@(wlk|wtest|wpgm)', { cwd: project })
 
@@ -30,13 +30,18 @@ export default async function (programFQN: Name, { project, skipValidations }: O
 
   if(!skipValidations) {
     const problems = validate(environment)
-    if (problems.length) throw new Error(`Found ${problems.length} problems building the environment!: ${problems.map(({ code, node }) => `${code} at ${node?.sourceInfo() ?? 'unknown'}`).join('\n')}`)
-    else log('No problems found building the environment!')
+    problems.forEach(problem => {
+      const report = problem.level === 'warning' ? warn : error
+      report(`${problem.level}: ${problem.code} at ${problem.node?.sourceInfo() ?? 'unknown'}`)
+    })
+
+    if(!problems.length) log('No problems found building the environment!')
+    if(problems.some(_ => _.level === 'error')) return log('Aborting run due to errors!')
   }
 
-  time(`Running ${programFQN}`)
+  log(`Running "${programFQN}"...`)
+  time('Done')
   const program = environment.getNodeByFQN<Program>(programFQN)
   interpret(environment, natives).exec(program)
-  timeEnd(`Running ${programFQN}`)
-  log('Done.')
+  timeEnd('Done')
 }
