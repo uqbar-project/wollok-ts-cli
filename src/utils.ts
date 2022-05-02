@@ -40,8 +40,9 @@ export const failureDescription = (description: string, e?: Error): string => {
     ?.replaceAll('\t', '  ')
     ?.replaceAll('     ', '  ')
     ?.replaceAll('    ', '  ')
+    ?.split('\n')?.join('\n  ')
 
-  return red(`${bold('✗')} ${description}${stack ? '\n' + stack : ''}`)
+  return red(`${bold('✗')} ${description}${stack ? '\n  ' + stack : ''}`)
 }
 
 export const problemDescription = (problem: Problem): string => {

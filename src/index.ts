@@ -1,5 +1,6 @@
 import { program } from 'commander'
 import run from './commands/run'
+import test from './commands/test'
 
 program
   .name('wollok')
@@ -12,5 +13,12 @@ program.command('run')
   .option('-p, --project <path>', 'path to project', process.cwd())
   .option('--skipValidations', 'skip code validation', false)
   .action(run)
+
+program.command('test')
+  .description('Run Wollok tests')
+  .argument('[filter]', 'filter pattern')
+  .option('-p, --project [filter]', 'path to project', process.cwd())
+  .option('--skipValidations', 'skip code validation', false)
+  .action(test)
 
 program.parseAsync()

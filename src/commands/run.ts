@@ -22,7 +22,7 @@ export default async function (programFQN: Name, { project, skipValidations }: O
     else if(problems.some(_ => _.level === 'error')) return log(failureDescription('Aborting run due to validation errors!'))
   }
 
-  log(`Running ${valueDescription(programFQN)}...`)
+  log(`Running ${valueDescription(programFQN)}...\n`)
 
   try {
     time(successDescription('Run finalized successfully'))
@@ -31,4 +31,6 @@ export default async function (programFQN: Name, { project, skipValidations }: O
   } catch (error: any) {
     log(failureDescription('Uh-oh... An error occurred during the run!', error))
   }
+
+  log()
 }
