@@ -1,8 +1,9 @@
-import { program } from 'commander'
+import { Command } from 'commander'
+import repl from './commands/repl'
 import run from './commands/run'
 import test from './commands/test'
 
-program
+const program = new Command()
   .name('wollok')
   .description('Wollok Language command line interpreter tool')
   .version(process.env.npm_package_version ?? 'unkown')
@@ -20,5 +21,13 @@ program.command('test')
   .option('-p, --project [filter]', 'path to project', process.cwd())
   .option('--skipValidations', 'skip code validation', false)
   .action(test)
+
+program.command('repl')
+  .description('Start Wollok interactive console')
+  .argument('[file]', 'main Wollok file to auto import')
+  .option('-p, --project [filter]', 'path to project', process.cwd())
+  .option('--skipValidations', 'skip code validation', false)
+  .action(repl)
+
 
 program.parseAsync()

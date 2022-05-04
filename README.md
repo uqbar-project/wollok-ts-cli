@@ -17,8 +17,9 @@ To build the CLI executables for distribution run `npm run build` and check the 
 
 This is the list of the currently available commands:
 
-- **run <program>**: Runs a Wollok program on the target project.
-- **test \[filter\]**: Runs Wollok tests on the target project.
+- **run < program >**: Runs a Wollok program on the target project.
+- **test [ filter ]**: Runs Wollok tests on the target project.
+- **repl < auto-import >**: Opens the Wollok REPL on the target project importing the auto-import path (if any).
 
 ## Contributing
 
