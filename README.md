@@ -39,7 +39,7 @@ Before anything else, you will need a *TypeScript* editor. We recomend [Visual S
 
 ### Node
 
-You need to install [a LTS node version](https://nodejs.org/es/) > 11, which provides VM environment, and [nvm - Node Version Manager](https://github.com/nvm-sh/nvm). Before anything make sure you'll use the right version of node by running this command:
+You need to install [a LTS node version](https://nodejs.org/es/) > 15, which provides VM environment, and [nvm - Node Version Manager](https://github.com/nvm-sh/nvm). Before anything make sure you'll use the right version of node by running this command:
 
 ```bash
 nvm use
@@ -48,8 +48,8 @@ nvm use
 Expected output is the node version that will be used, for example:
 
 ```bash
-Found '/home/dodain/workspace/wollok-dev/wollok-ts/.nvmrc' with version <v11.15.0>
-Now using node v11.15.0 (npm v6.7.0)
+Found '/home/you/wollok-ts-cli/.nvmrc' with version <lts/gallium>
+Now using node v16.15.0 (npm v8.5.5)
 ```
 
 ### NPM
