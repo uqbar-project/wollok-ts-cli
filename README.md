@@ -39,7 +39,7 @@ Before anything else, you will need a *TypeScript* editor. We recomend [Visual S
 
 ### Node
 
-You need to install [node](https://nodejs.org/es/) > 11, which provides VM environment, and [nvm - Node Version Manager](https://github.com/nvm-sh/nvm). Before anything make sure you'll use the right version of node by running this command:
+You need to install [a LTS node version](https://nodejs.org/es/) > 11, which provides VM environment, and [nvm - Node Version Manager](https://github.com/nvm-sh/nvm). Before anything make sure you'll use the right version of node by running this command:
 
 ```bash
 nvm use
