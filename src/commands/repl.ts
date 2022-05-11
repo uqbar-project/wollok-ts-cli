@@ -5,7 +5,7 @@ import { buildEnvironmentForProject, failureDescription, problemDescription, suc
 import { Closure, Entity, Environment, Import, link, Package, parse, Reference, Sentence, Singleton, validate, WollokException } from 'wollok-ts'
 import interpret from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
-import { last, notEmpty } from 'wollok-ts/dist/extensions'
+import { notEmpty } from 'wollok-ts/dist/extensions'
 import { LinkError } from 'wollok-ts/dist/linker'
 import path from 'path'
 
@@ -26,11 +26,25 @@ type Options = {
 export default async function (autoImportPath: string|undefined, { project, skipValidations }: Options): Promise<void> {
   log(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(project)}`)
 
-  let environment = await buildEnvironmentForProject(project)
+  let environment: Environment
+
+  try {
+    environment = await buildEnvironmentForProject(project)
+  } catch (error) {
+    log(failureDescription('Could not build project due to errors!', error as Error))
+    return
+  }
+
+  if(!skipValidations) {
+    const problems = validate(environment)
+    problems.forEach(problem => log(problemDescription(problem)))
+    if(!problems.length) log(successDescription('No problems found building the environment!'))
+    else if(problems.some(_ => _.level === 'error')) return log(failureDescription('Exiting REPL due to validation errors!'))
+  }
 
   let autoImport: Import | undefined
   if(autoImportPath) {
-    const fqn = path.relative(project, autoImportPath).split('.')[0].replace(path.sep, '.')
+    const fqn = path.relative(project, autoImportPath).split('.')[0].replace('/', '.')
     const entity = environment.getNodeOrUndefinedByFQN<Entity>(fqn)
     if(entity) {
       autoImport = new Import({
@@ -42,13 +56,6 @@ export default async function (autoImportPath: string|undefined, { project, skip
   }
 
   environment = rebuildRepl(environment, autoImport)
-
-  if(!skipValidations) {
-    const problems = validate(environment)
-    problems.forEach(problem => log(problemDescription(problem)))
-    if(!problems.length) log(successDescription('No problems found building the environment!'))
-    else if(problems.some(_ => _.level === 'error')) return log(failureDescription('Exiting REPL due to validation errors!'))
-  }
 
   const repl = readLine.createInterface({
     input: process.stdin,
@@ -154,10 +161,7 @@ function rebuildRepl(environment: Environment, newSentenceOrImport?: Sentence | 
 
   const updatedRepl = Closure({ sentences }).copy({ name: REPL_INSTANCE_NAME })
 
-  return link([REPL_PACKAGE.split('.').slice(0, -1).reduceRight((member, name) =>
-    new Package({ name, members: [member] })
-  , new Package({ name: last(REPL_PACKAGE.split('.'))!, members: [updatedRepl], imports })
-  )], environment)
+  return link([new Package({ name: REPL_PACKAGE, members: [updatedRepl], imports })], environment)
 }
 
 async function autocomplete(input: string): Promise<CompleterResult> {

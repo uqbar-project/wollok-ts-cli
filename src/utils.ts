@@ -20,10 +20,8 @@ export async function buildEnvironmentForProject(cwd: string): Promise<Environme
   timeEnd('Reading project files')
 
   time('Building environment')
-  const environment = buildEnvironment(files)
-  timeEnd('Building environment')
-
-  return environment
+  try { return buildEnvironment(files) }
+  finally { timeEnd('Building environment') }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
