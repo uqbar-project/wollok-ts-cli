@@ -1,22 +1,20 @@
-import readLine, { CompleterResult } from 'readline'
+import { createInterface as REPL, CompleterResult } from 'readline'
 import { bold } from 'chalk'
 import { Command } from 'commander'
 import { buildEnvironmentForProject, failureDescription, problemDescription, successDescription, valueDescription } from '../utils'
-import { Closure, Entity, Environment, Import, link, Package, parse, Reference, Sentence, Singleton, validate, WollokException } from 'wollok-ts'
-import interpret from 'wollok-ts/dist/interpreter/interpreter'
+import { Entity, Environment, Evaluation, Import, parse, Reference, validate, WollokException } from 'wollok-ts'
+import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { notEmpty } from 'wollok-ts/dist/extensions'
-import { LinkError } from 'wollok-ts/dist/linker'
+import { LinkError, linkIsolated } from 'wollok-ts/dist/linker'
 import path from 'path'
+import { ParseError } from 'wollok-ts/dist/parser'
 
 // TODO:
 // - reload
 // - autocomplete piola
 
 const { log } = console
-
-const REPL_PACKAGE = 'wollok.repl'
-const REPL_INSTANCE_NAME = 'instance'
 
 type Options = {
   project: string
@@ -27,6 +25,7 @@ export default async function (autoImportPath: string|undefined, { project, skip
   log(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(project)}`)
 
   let environment: Environment
+  const imports: Import[] = []
 
   try {
     environment = await buildEnvironmentForProject(project)
@@ -55,9 +54,9 @@ export default async function (autoImportPath: string|undefined, { project, skip
     else log(failureDescription(`File ${valueDescription(autoImportPath)} doesn't exist or is outside of project!`))
   }
 
-  environment = rebuildRepl(environment, autoImport)
+  const interpreter = new Interpreter(Evaluation.build(environment, natives))
 
-  const repl = readLine.createInterface({
+  const repl = REPL({
     input: process.stdin,
     output: process.stdout,
     terminal: true,
@@ -70,11 +69,9 @@ export default async function (autoImportPath: string|undefined, { project, skip
     .on('line', line => {
       line = line.trim()
 
-      if(line.startsWith(':')) commandHandler.parse(line.split(' '), { from: 'user' })
-      else {
-        const [nextOutput, nextEnvironment] = evaluate(environment, line)
-        environment = nextEnvironment
-        if(nextOutput.length) log(nextOutput)
+      if(line.length) {
+        if(line.startsWith(':')) commandHandler.parse(line.split(' '), { from: 'user' })
+        else log(interprete(interpreter, imports, line))
       }
 
       repl.prompt()
@@ -119,49 +116,46 @@ commandHandler.command(':help')
 // EVALUATION
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-function evaluate(previousEnvironment: Environment, line: string): [string, Environment] {
+function interprete(interpreter: Interpreter, imports: Import[], line: string): string {
   try {
     const sentenceOrImport = parse.Import.or(parse.Variable).or(parse.Assignment).or(parse.Expression).tryParse(line)
-    const environment = rebuildRepl(previousEnvironment, sentenceOrImport)
-    const unlinkedNode = environment.descendants().find(_ => _.problems?.some(problem => problem instanceof LinkError))
-    if(unlinkedNode) throw new Error(
-      `Unknown reference ${'name' in unlinkedNode ? valueDescription(unlinkedNode.name) : `at ${unlinkedNode.sourceInfo()}`}`
-    )
+    const error = [sentenceOrImport, ...sentenceOrImport.descendants()].flatMap(_ => _.problems ?? []).find(_ => _.level === 'error')
+    if (error) throw error
 
-    const interpreter = interpret(environment, natives)
-    const replInstance = interpreter.object(`${REPL_PACKAGE}.${REPL_INSTANCE_NAME}`)
-    const result = interpreter.send('<apply>', replInstance)
-    const stringifiedResult = result ? interpreter.send('toString', result)!.innerString! : ''
+    if(sentenceOrImport.is('Sentence')) {
+      const linkedSentence = linkIsolated(sentenceOrImport, interpreter.evaluation.environment, imports)
+      const unlinkedNode = [linkedSentence, ...linkedSentence.descendants()].find(_ => _.problems?.some(problem => problem instanceof LinkError))
 
-    return [successDescription(stringifiedResult), environment]
+      if(unlinkedNode) {
+        if(unlinkedNode.is('Reference')) {
+          if(!interpreter.evaluation.currentFrame.get(unlinkedNode.name))
+            return failureDescription(`Unknown reference ${valueDescription(unlinkedNode.name)}`)
+        } else return failureDescription(`Unknown reference at ${unlinkedNode.sourceInfo()}`)
+      }
+
+      const result = interpreter.exec(linkedSentence)
+      return successDescription(result ? interpreter.send('toString', result)!.innerString! : '')
+    }
+
+    if(sentenceOrImport.is('Import')) {
+      if(!interpreter.evaluation.environment.getNodeOrUndefinedByFQN(sentenceOrImport.entity.name))
+        throw new Error(
+          `Unknown reference ${valueDescription(sentenceOrImport.entity.name)}`
+        )
+
+      imports.push(sentenceOrImport)
+      return successDescription('')
+    }
+
+    return successDescription('')
   } catch (error: any) {
-    const errorInfo =
+    return (
       error.type === 'ParsimmonError' ? failureDescription(`Syntax error:\n${error.message.split('\n').filter(notEmpty).slice(1).join('\n')}`) :
       error instanceof WollokException ? failureDescription('Evaluation Error!', error) :
+      error instanceof ParseError ? failureDescription(`Syntax Error at offset ${error.sourceMap.start.offset}: ${line.slice(error.sourceMap.start.offset, error.sourceMap.end.offset)}`)  :
       failureDescription('Uh-oh... Unexpected TypeScript Error!', error)
-
-    return [errorInfo, previousEnvironment]
+    )
   }
-}
-
-function rebuildRepl(environment: Environment, newSentenceOrImport?: Sentence | Import): Environment {
-  const previousReplPackage = environment.getNodeOrUndefinedByFQN<Package>(REPL_PACKAGE)
-  const previousReplDefinition = previousReplPackage?.getNodeByQN<Singleton>(REPL_INSTANCE_NAME)
-    ?? Closure({}).copy({ name: REPL_INSTANCE_NAME })
-
-  const previousReplSentences = previousReplDefinition.methods().find(_ => _.name === '<apply>')!.sentences()
-  const sentences = newSentenceOrImport?.is('Sentence')
-    ? [...previousReplSentences.map(sentence => sentence.is('Return') ? sentence.value! : sentence), newSentenceOrImport]
-    : previousReplSentences
-
-  const previousReplImports = previousReplPackage?.imports ?? []
-  const imports = newSentenceOrImport?.is('Import')
-    ? [...previousReplImports, newSentenceOrImport]
-    : previousReplImports
-
-  const updatedRepl = Closure({ sentences }).copy({ name: REPL_INSTANCE_NAME })
-
-  return link([new Package({ name: REPL_PACKAGE, members: [updatedRepl], imports })], environment)
 }
 
 async function autocomplete(input: string): Promise<CompleterResult> {
