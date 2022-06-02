@@ -6,7 +6,8 @@
   "license": "MIT",
   "scripts": {
     "start": "node -r ts-node/register src/index.ts",
-    "build": "rm -rf dist && tsc && pkg ."
+    "build": "rm -rf dist && tsc && pkg .",
+    "build:win": "rm -rf dist && tsc && pkg -t win ."
   },
   "bin": {
     "wollok": "./dist/index.js"
