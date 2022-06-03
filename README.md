@@ -61,7 +61,7 @@ You need to install the [NVM- for Windows](https://github.com/coreybutler/nvm-wi
 
 Run the installer `nvm-setup.exe` as Administrator
 
-Open an elevated Command Prompt or Git Bash (with Administrator privileges) and run
+Open an elevated Command Prompt or Git Bash in the project folder (with Administrator privileges) and run
 
 ```bash
 nvm install (version)
