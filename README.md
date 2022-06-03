@@ -64,9 +64,9 @@ Run the installer `nvm-setup.exe` as Administrator
 Open an elevated Command Prompt or Git Bash in the project folder (with Administrator privileges) and run
 
 ```bash
-nvm install (version)
-nvm use (version)
-#The version that is being used is 16.15.0
+nvm install <<version number>>
+nvm use <<version number>>
+# The version number is in the .nvmrc file (do not use codename version e.g. lts/gallium, in Windows you have to use the equivalent version number e.g. 16.15.0)
 ```
 
 Expected output is the node version that will be used:
