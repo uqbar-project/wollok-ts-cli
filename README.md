@@ -55,6 +55,31 @@ So now you need to use npm to install dependencies:
 # This will install all the project dependencies. Give it some time.
 npm install
 ```
+**For Windows:**
+
+You need to install the [NVM- for Windows](https://github.com/coreybutler/nvm-windows)
+Run the installer `nvm-setup.exe` as Administrator
+
+Open an elevated Command Prompt or Git Bash (with Administrator privileges) and run
+
+```bash
+nvm install (version)
+nvm use (version)
+#The version that is being used is 16.15.0
+```
+
+Expected output is the node version that will be used:
+```bash
+node -v
+#v16.15.0
+```
+So now you need to use npm to install dependencies:
+
+```bash
+# This will install all the project dependencies. Give it some time.
+npm install
+```
+
 
 ### Running and testing
 
