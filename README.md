@@ -81,6 +81,8 @@ Finally, you can generate wollok-cli **executable binaries** (a.k.a. the distrib
 
 ```bash
 npm run build
+# If you're in Windows, run:
+npm run build:win
 ```
 
 And checking the `/dist` folder.
