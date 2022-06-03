@@ -58,6 +58,7 @@ npm install
 **For Windows:**
 
 You need to install the [NVM- for Windows](https://github.com/coreybutler/nvm-windows)
+
 Run the installer `nvm-setup.exe` as Administrator
 
 Open an elevated Command Prompt or Git Bash (with Administrator privileges) and run
