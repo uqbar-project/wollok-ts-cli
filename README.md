@@ -32,7 +32,7 @@ Before anything else, you will need a *TypeScript* editor. We recomend [Visual S
 
 ### Node, npm, and dependencies
 
-**For Linux, MacOS:**
+#### For Linux, MacOS:
   
 You need to install [nvm - Node Version Manager](https://github.com/nvm-sh/nvm). 
 
