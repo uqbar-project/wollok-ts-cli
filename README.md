@@ -49,7 +49,7 @@ Found '/home/you/wollok-ts-cli/.nvmrc' with version <lts/gallium>
 Now using node v16.15.0 (npm v8.5.5)
 ```
 
-**For Windows:**
+#### For Windows:
 
 You need to install the [NVM- for Windows](https://github.com/coreybutler/nvm-windows).
 
