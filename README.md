@@ -32,6 +32,8 @@ Before anything else, you will need a *TypeScript* editor. We recomend [Visual S
 
 ### Node, npm, and dependencies
 
+#### For Linux, MacOS:
+  
 You need to install [nvm - Node Version Manager](https://github.com/nvm-sh/nvm). 
 
 Before anything make sure you'll use the right version of node by running this command:
@@ -47,14 +49,36 @@ Found '/home/you/wollok-ts-cli/.nvmrc' with version <lts/gallium>
 Now using node v16.15.0 (npm v8.5.5)
 ```
 
-In the previous step, `nvm use` also installs [NPM](https://www.npmjs.com/). If you are not familiar with *dependency manager tools*, you can think of this program as the entry point for all the important tasks development-related tasks, like installing dependencies and running tests. 
+#### For Windows:
 
+You need to install the [NVM- for Windows](https://github.com/coreybutler/nvm-windows).
+
+Run the installer `nvm-setup.exe` as Administrator.
+
+Open an elevated Command Prompt or Git Bash in the project folder (with Administrator privileges) and run:
+
+```bash
+nvm install <<version number>>
+nvm use <<version number>>
+# The version number is in the .nvmrc file (do not use codename version e.g. lts/gallium, in Windows you have to use the equivalent version number e.g. 16.15.0)
+```
+  
+#### For all:
+ 
+In the previous step, `nvm use` also installs [NPM](https://www.npmjs.com/). If you are not familiar with *dependency manager tools*, you can think of this program as the entry point for all the important tasks development-related tasks, like installing dependencies and running tests. 
+  
+  
+Expected output is the node version that will be used:
+```bash
+node -v
+```
 So now you need to use npm to install dependencies:
 
 ```bash
 # This will install all the project dependencies. Give it some time.
 npm install
 ```
+
 
 ### Running and testing
 
