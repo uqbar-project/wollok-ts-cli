@@ -63,7 +63,7 @@ nvm use <<version number>>
 # The version number is in the .nvmrc file (do not use codename version e.g. lts/gallium, in Windows you have to use the equivalent version number e.g. 16.15.0)
 ```
   
-**For all:**
+#### For all:
  
 In the previous step, `nvm use` also installs [NPM](https://www.npmjs.com/). If you are not familiar with *dependency manager tools*, you can think of this program as the entry point for all the important tasks development-related tasks, like installing dependencies and running tests. 
   
