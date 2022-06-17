@@ -50,6 +50,7 @@ export default async function (autoImportPath: string|undefined, { project, skip
         isGeneric: entity.is('Package'),
         entity: new Reference({ name: entity.fullyQualifiedName() }),
       })
+      imports.push(autoImport)
     }
     else log(failureDescription(`File ${valueDescription(autoImportPath)} doesn't exist or is outside of project!`))
   }
