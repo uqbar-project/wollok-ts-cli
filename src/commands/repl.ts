@@ -21,10 +21,21 @@ type Options = {
   skipValidations: boolean
 }
 
+//nuevas!!
+let opt: Options
+let importsfilespath: string|undefined
+let repl: any
+let environment: Environment
+let interpreter: Interpreter
+
 export default async function (autoImportPath: string|undefined, { project, skipValidations }: Options): Promise<void> {
   log(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(project)}`)
 
-  let environment: Environment
+  //nuevas lineas
+  opt = { project, skipValidations }
+  importsfilespath = autoImportPath
+
+  //let environment: Environment
   const imports: Import[] = []
 
   try {
@@ -55,9 +66,11 @@ export default async function (autoImportPath: string|undefined, { project, skip
     else log(failureDescription(`File ${valueDescription(autoImportPath)} doesn't exist or is outside of project!`))
   }
 
-  const interpreter = new Interpreter(Evaluation.build(environment, natives))
+  // const interpreter = new Interpreter(Evaluation.build(environment, natives))
+  interpreter = new Interpreter(Evaluation.build(environment, natives))
 
-  const repl = REPL({
+  // const repl = REPL({
+  repl = REPL({
     input: process.stdin,
     output: process.stdout,
     terminal: true,
@@ -104,7 +117,8 @@ commandHandler.command(':reload')
   .description('Reloads all currently imported packages and resets evaluation state')
   .allowUnknownOption()
   .action(() =>
-    console.log('RELOAD!\n') // TODO:
+    //console.log('RELOAD!\n') // TODO:
+    reload()
   )
 
 commandHandler.command(':help')
@@ -112,6 +126,55 @@ commandHandler.command(':help')
   .description('Show Wollok REPL help')
   .allowUnknownOption()
   .action(() => commandHandler.outputHelp())
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// RELOAD
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+async function reload(): Promise<void> {
+  log(`Reinitializing Wollok REPL ${importsfilespath ? `for file ${valueDescription(importsfilespath)} ` : ''}on ${valueDescription(opt.project)}`)
+
+  const imports: Import[] = []
+
+  try {
+    environment = await buildEnvironmentForProject(opt.project)
+  } catch (error) {
+    log(failureDescription('Could not build project due to errors!', error as Error))
+    return
+  }
+
+  if(!opt.skipValidations) {
+    checkValidations()
+  }
+
+  let autoImport: Import | undefined
+  importFiles(autoImport, opt.project, imports)
+
+  interpreter = new Interpreter(Evaluation.build(environment, natives))
+
+  repl.prompt()
+}
+
+
+function checkValidations(){
+  const problems = validate(environment)
+  problems.forEach(problem => log(problemDescription(problem)))
+  if(!problems.length) log(successDescription('No problems found building the environment!'))
+  else if(problems.some(_ => _.level === 'error')) return log(failureDescription('Exiting REPL due to validation errors!'))
+}
+function importFiles(autoImport: Import | undefined, project: string, imports: Import[] ){
+  if(importsfilespath) {
+    const fqn = path.relative(project, importsfilespath).split('.')[0].replace('/', '.')
+    const entity = environment.getNodeOrUndefinedByFQN<Entity>(fqn)
+    if(entity) {
+      autoImport = new Import({
+        isGeneric: entity.is('Package'),
+        entity: new Reference({ name: entity.fullyQualifiedName() }),
+      })
+      imports.push(autoImport)
+    }
+    else log(failureDescription(`File ${valueDescription(importsfilespath)} doesn't exist or is outside of project!`))
+  }
+}
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // EVALUATION
