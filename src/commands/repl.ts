@@ -1,4 +1,4 @@
-import { createInterface as REPL, CompleterResult } from 'readline'
+import { createInterface as REPL, CompleterResult, Interface } from 'readline'
 import { bold } from 'chalk'
 import { Command } from 'commander'
 import { buildEnvironmentForProject, failureDescription, problemDescription, successDescription, valueDescription } from '../utils'
@@ -21,62 +21,30 @@ type Options = {
   skipValidations: boolean
 }
 
-//nuevas!!
-let opt: Options
-let importsfilespath: string|undefined
-let repl: any
-let environment: Environment
-let interpreter: Interpreter
+type ReplConfig = {
+  autoImportPath: string
+  options: Options
+  repl: Interface
+  currentInterpreter: Interpreter
+  currentImports: Import[]
+}
+
+const config: Partial<ReplConfig> = {}
 
 export default async function (autoImportPath: string|undefined, { project, skipValidations }: Options): Promise<void> {
-  log(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(project)}`)
+  config.options = { project, skipValidations }
+  config.autoImportPath = autoImportPath
 
-  //nuevas lineas
-  opt = { project, skipValidations }
-  importsfilespath = autoImportPath
+  await load()
 
-  //let environment: Environment
-  const imports: Import[] = []
-
-  try {
-    environment = await buildEnvironmentForProject(project)
-  } catch (error) {
-    log(failureDescription('Could not build project due to errors!', error as Error))
-    return
-  }
-
-  if(!skipValidations) {
-    const problems = validate(environment)
-    problems.forEach(problem => log(problemDescription(problem)))
-    if(!problems.length) log(successDescription('No problems found building the environment!'))
-    else if(problems.some(_ => _.level === 'error')) return log(failureDescription('Exiting REPL due to validation errors!'))
-  }
-
-  let autoImport: Import | undefined
-  if(autoImportPath) {
-    const fqn = path.relative(project, autoImportPath).split('.')[0].replace('/', '.')
-    const entity = environment.getNodeOrUndefinedByFQN<Entity>(fqn)
-    if(entity) {
-      autoImport = new Import({
-        isGeneric: entity.is('Package'),
-        entity: new Reference({ name: entity.fullyQualifiedName() }),
-      })
-      imports.push(autoImport)
-    }
-    else log(failureDescription(`File ${valueDescription(autoImportPath)} doesn't exist or is outside of project!`))
-  }
-
-  // const interpreter = new Interpreter(Evaluation.build(environment, natives))
-  interpreter = new Interpreter(Evaluation.build(environment, natives))
-
-  // const repl = REPL({
-  repl = REPL({
+  const autoImportName = config.currentImports?.length && config.currentImports[0].entity.name
+  config.repl = REPL({
     input: process.stdin,
     output: process.stdout,
     terminal: true,
     removeHistoryDuplicates: true,
     tabSize: 2,
-    prompt: bold((autoImport ? `wollok:${autoImport.entity.name}` : 'wollok') + '> '),
+    prompt: bold('wollok' + (autoImportName ? ':' + autoImportName : '') + '> '),
     completer: autocomplete,
   })
     .on('close', () => log(''))
@@ -85,13 +53,58 @@ export default async function (autoImportPath: string|undefined, { project, skip
 
       if(line.length) {
         if(line.startsWith(':')) commandHandler.parse(line.split(' '), { from: 'user' })
-        else log(interprete(interpreter, imports, line))
+        else log(interprete(line))
       }
 
-      repl.prompt()
+      config.repl!.prompt()
     })
 
-  repl.prompt()
+  config.repl!.prompt()
+}
+
+async function load(){
+  let environment: Environment
+  const imports: Import[] = []
+
+  log(`Initializing Wollok REPL ${config.autoImportPath ? `for file ${valueDescription(config.autoImportPath)} ` : ''}on ${valueDescription(config.options!.project)}`)
+
+  try {
+    environment = await buildEnvironmentForProject(config.options!.project)
+  } catch (error) {
+    log(failureDescription('Could not build project due to errors!', error as Error))
+    return
+  }
+
+  if(!config.options!.skipValidations) {
+    const problems = validate(environment)
+    problems.forEach(problem => log(problemDescription(problem)))
+    if(!problems.length) log(successDescription('No problems found building the environment!'))
+    else if(problems.some(_ => _.level === 'error')) return log(failureDescription('Exiting REPL due to validation errors!'))
+  }
+
+  let autoImport: Import | undefined
+  if(config.autoImportPath) {
+    const fqn = path.relative(config.options!.project, config.autoImportPath).split('.')[0].replace('/', '.')
+    const entity = environment.getNodeOrUndefinedByFQN<Entity>(fqn)
+    if(entity) {
+      autoImport = new Import({
+        isGeneric: entity.is('Package'),
+        entity: new Reference({ name: entity.fullyQualifiedName() }),
+      })
+      imports.push(autoImport)
+    }
+    else log(failureDescription(`File ${valueDescription(config.autoImportPath)} doesn't exist or is outside of project!`))
+  }
+
+  config.currentImports = imports
+
+  // const interpreter = new Interpreter(Evaluation.build(environment, natives))
+  config.currentInterpreter = new Interpreter(Evaluation.build(environment, natives))
+}
+
+async function reload(): Promise<void> {
+  await load()
+  config.repl!.prompt()
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -117,7 +130,6 @@ commandHandler.command(':reload')
   .description('Reloads all currently imported packages and resets evaluation state')
   .allowUnknownOption()
   .action(() =>
-    //console.log('RELOAD!\n') // TODO:
     reload()
   )
 
@@ -128,66 +140,19 @@ commandHandler.command(':help')
   .action(() => commandHandler.outputHelp())
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-// RELOAD
-// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-async function reload(): Promise<void> {
-  log(`Reinitializing Wollok REPL ${importsfilespath ? `for file ${valueDescription(importsfilespath)} ` : ''}on ${valueDescription(opt.project)}`)
-
-  const imports: Import[] = []
-
-  try {
-    environment = await buildEnvironmentForProject(opt.project)
-  } catch (error) {
-    log(failureDescription('Could not build project due to errors!', error as Error))
-    return
-  }
-
-  if(!opt.skipValidations) {
-    checkValidations()
-  }
-
-  let autoImport: Import | undefined
-  importFiles(autoImport, opt.project, imports)
-
-  interpreter = new Interpreter(Evaluation.build(environment, natives))
-
-  repl.prompt()
-}
-
-
-function checkValidations(){
-  const problems = validate(environment)
-  problems.forEach(problem => log(problemDescription(problem)))
-  if(!problems.length) log(successDescription('No problems found building the environment!'))
-  else if(problems.some(_ => _.level === 'error')) return log(failureDescription('Exiting REPL due to validation errors!'))
-}
-function importFiles(autoImport: Import | undefined, project: string, imports: Import[] ){
-  if(importsfilespath) {
-    const fqn = path.relative(project, importsfilespath).split('.')[0].replace('/', '.')
-    const entity = environment.getNodeOrUndefinedByFQN<Entity>(fqn)
-    if(entity) {
-      autoImport = new Import({
-        isGeneric: entity.is('Package'),
-        entity: new Reference({ name: entity.fullyQualifiedName() }),
-      })
-      imports.push(autoImport)
-    }
-    else log(failureDescription(`File ${valueDescription(importsfilespath)} doesn't exist or is outside of project!`))
-  }
-}
-
-// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // EVALUATION
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-function interprete(interpreter: Interpreter, imports: Import[], line: string): string {
+function interprete(line: string): string {
+
   try {
+    const interpreter = config.currentInterpreter!
     const sentenceOrImport = parse.Import.or(parse.Variable).or(parse.Assignment).or(parse.Expression).tryParse(line)
     const error = [sentenceOrImport, ...sentenceOrImport.descendants()].flatMap(_ => _.problems ?? []).find(_ => _.level === 'error')
     if (error) throw error
 
     if(sentenceOrImport.is('Sentence')) {
-      const linkedSentence = linkIsolated(sentenceOrImport, interpreter.evaluation.environment, imports)
+      const linkedSentence = linkIsolated(sentenceOrImport, interpreter.evaluation.environment, config.currentImports)
       const unlinkedNode = [linkedSentence, ...linkedSentence.descendants()].find(_ => _.problems?.some(problem => problem instanceof LinkError))
 
       if(unlinkedNode) {
@@ -207,7 +172,7 @@ function interprete(interpreter: Interpreter, imports: Import[], line: string): 
           `Unknown reference ${valueDescription(sentenceOrImport.entity.name)}`
         )
 
-      imports.push(sentenceOrImport)
+      config.currentImports!.push(sentenceOrImport)
       return successDescription('')
     }
 
