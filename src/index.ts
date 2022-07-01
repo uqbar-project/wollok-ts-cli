@@ -6,7 +6,7 @@ import test from './commands/test'
 const program = new Command()
   .name('wollok')
   .description('Wollok Language command line interpreter tool')
-  .version(process.env.npm_package_version ?? 'unknown')
+  .version(process.env.npm_package_version ?? 'unkown')
 
 program.command('run')
   .description('Run a Wollok program')
