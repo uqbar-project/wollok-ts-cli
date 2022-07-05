@@ -9,7 +9,7 @@ import { notEmpty } from 'wollok-ts/dist/extensions'
 import { LinkError, linkIsolated } from 'wollok-ts/dist/linker'
 import path from 'path'
 import { ParseError } from 'wollok-ts/dist/parser'
-
+import  logger  from  'loglevel'
 // TODO:
 // - autocomplete piola
 
@@ -18,6 +18,7 @@ const { log } = console
 type Options = {
   project: string
   skipValidations: boolean
+  verbose: boolean
 }
 
 export default async function (autoImportPath: string|undefined, options: Options): Promise<void> {
@@ -56,9 +57,10 @@ export default async function (autoImportPath: string|undefined, options: Option
   repl.prompt()
 }
 
-async function initializeInterpreter(autoImportPath: string|undefined, { project, skipValidations }: Options): Promise<{ imports: Import[], interpreter: Interpreter}> {
+async function initializeInterpreter(autoImportPath: string|undefined, { project, skipValidations, verbose }: Options): Promise<{ imports: Import[], interpreter: Interpreter}> {
   let environment: Environment
   const imports: Import[] = []
+  if(verbose) logger.setLevel('DEBUG')
 
   try {
     environment = await buildEnvironmentForProject(project)

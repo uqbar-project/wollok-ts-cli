@@ -3,8 +3,10 @@ import { readFile } from 'fs/promises'
 import globby from 'globby'
 import { join } from 'path'
 import { buildEnvironment, Environment, Problem } from 'wollok-ts'
+import  logger  from  'loglevel'
 
 const { time, timeEnd } = console
+
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // ENVIRONMENT CREATION
@@ -13,15 +15,17 @@ const { time, timeEnd } = console
 export async function buildEnvironmentForProject(cwd: string): Promise<Environment> {
   const paths = await globby('**/*.@(wlk|wtest|wpgm)', { cwd })
 
-  time('Reading project files')
+  const debug = logger.getLevel() <= 1
+
+  if(debug) time('Reading project files')
   const files = await Promise.all(paths.map(async name =>
     ({ name, content: await readFile(join(cwd, name), 'utf8') })
   ))
-  timeEnd('Reading project files')
+  if(debug) timeEnd('Reading project files')
 
-  time('Building environment')
+  if(debug) time('Building environment')
   try { return buildEnvironment(files) }
-  finally { timeEnd('Building environment') }
+  finally { if(debug) timeEnd('Building environment' ) }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════

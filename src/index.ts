@@ -27,6 +27,7 @@ program.command('repl')
   .argument('[file]', 'main Wollok file to auto import')
   .option('-p, --project [filter]', 'path to project', process.cwd())
   .option('--skipValidations', 'skip code validation', false)
+  .option('-v, --verbose', 'debugging information', false)
   .action(repl)
 
 
