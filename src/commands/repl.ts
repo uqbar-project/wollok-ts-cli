@@ -62,32 +62,35 @@ async function initializeInterpreter(autoImportPath: string|undefined, { project
 
   try {
     environment = await buildEnvironmentForProject(project)
-  } catch (error) {
-    throw new Error(failureDescription('Could not build project due to errors!', error as Error))
-  }
 
-  if(!skipValidations) {
-    const problems = validate(environment)
-    problems.forEach(problem => log(problemDescription(problem)))
-    if(!problems.length) log(successDescription('No problems found building the environment!'))
-    else if(problems.some(_ => _.level === 'error')) throw new Error(failureDescription('Exiting REPL due to validation errors!'))
-  }
-
-  let autoImport: Import | undefined
-  if(autoImportPath) {
-    const fqn = path.relative(project, autoImportPath).split('.')[0].replace('/', '.')
-    const entity = environment.getNodeOrUndefinedByFQN<Entity>(fqn)
-    if(entity) {
-      autoImport = new Import({
-        isGeneric: entity.is('Package'),
-        entity: new Reference({ name: entity.fullyQualifiedName() }),
-      })
-      imports.push(autoImport)
+    if(!skipValidations) {
+      const problems = validate(environment)
+      problems.forEach(problem => log(problemDescription(problem)))
+      if(!problems.length) log(successDescription('No problems found building the environment!'))
+      else if(problems.some(_ => _.level === 'error')) throw new Error('Exiting REPL due to validation errors!')
     }
-    else log(failureDescription(`File ${valueDescription(autoImportPath)} doesn't exist or is outside of project!`))
-  }
 
-  return { imports, interpreter: new Interpreter(Evaluation.build(environment, natives)) }
+    let autoImport: Import | undefined
+    if(autoImportPath) {
+      const fqn = path.relative(project, autoImportPath).split('.')[0].replace('/', '.')
+      const entity = environment.getNodeOrUndefinedByFQN<Entity>(fqn)
+      if(entity) {
+        autoImport = new Import({
+          isGeneric: entity.is('Package'),
+          entity: new Reference({ name: entity.fullyQualifiedName() }),
+        })
+        imports.push(autoImport)
+      }
+      else log(failureDescription(`File ${valueDescription(autoImportPath)} doesn't exist or is outside of project!`))
+    }
+
+  } catch (error: any) {
+    //Que errores catcheo?
+    error instanceof Error && error.message == 'Exiting REPL due to validation errors!' ? log(failureDescription(error.message)) :
+      log(failureDescription('Uh-oh... Unexpected TypeScript Error!', error))
+    process.exit() //Funciona ¿es feo? :q hace lo mismo
+  }
+  return { imports, interpreter: new Interpreter(Evaluation.build(environment!, natives)) }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
