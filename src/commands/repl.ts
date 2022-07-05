@@ -85,10 +85,9 @@ async function initializeInterpreter(autoImportPath: string|undefined, { project
     }
 
   } catch (error: any) {
-    //Que errores catcheo?
     error instanceof Error && error.message == 'Exiting REPL due to validation errors!' ? log(failureDescription(error.message)) :
       log(failureDescription('Uh-oh... Unexpected TypeScript Error!', error))
-    process.exit() //Funciona ¿es feo? :q hace lo mismo
+    process.exit()
   }
   return { imports, interpreter: new Interpreter(Evaluation.build(environment!, natives)) }
 }
