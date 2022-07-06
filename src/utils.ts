@@ -15,7 +15,7 @@ const { time, timeEnd } = console
 export async function buildEnvironmentForProject(cwd: string): Promise<Environment> {
   const paths = await globby('**/*.@(wlk|wtest|wpgm)', { cwd })
 
-  const debug = logger.getLevel() <= 1
+  const debug = logger.getLevel() <= logger.levels.DEBUG
 
   if(debug) time('Reading project files')
   const files = await Promise.all(paths.map(async name =>
