@@ -22,7 +22,8 @@ type Options = {
 }
 
 export default async function (autoImportPath: string|undefined, options: Options): Promise<void> {
-  log(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
+  logger.setLevel('INFO')
+  logger.info(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
 
   let { imports, interpreter } = await initializeInterpreter(autoImportPath, options)
 
@@ -70,8 +71,8 @@ async function initializeInterpreter(autoImportPath: string|undefined, { project
 
   if(!skipValidations) {
     const problems = validate(environment)
-    problems.forEach(problem => log(problemDescription(problem)))
-    if(!problems.length) log(successDescription('No problems found building the environment!'))
+    problems.forEach(problem => logger.info(problemDescription(problem)))
+    if(!problems.length) logger.info(successDescription('No problems found building the environment!'))
     else if(problems.some(_ => _.level === 'error')) throw new Error(failureDescription('Exiting REPL due to validation errors!'))
   }
 
