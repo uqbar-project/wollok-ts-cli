@@ -67,7 +67,7 @@ async function initializeInterpreter(autoImportPath: string|undefined, { project
       const problems = validate(environment)
       problems.forEach(problem => log(problemDescription(problem)))
       if(!problems.length) log(successDescription('No problems found building the environment!'))
-      else if(problems.some(_ => _.level === 'error')) throw new Error('Exiting REPL due to validation errors!')
+      else if(problems.some(_ => _.level === 'error')) throw problems.find(_ => _.level === 'error')
     }
 
     let autoImport: Import | undefined
@@ -85,8 +85,8 @@ async function initializeInterpreter(autoImportPath: string|undefined, { project
     }
 
   } catch (error: any) {
-    error instanceof Error && error.message == 'Exiting REPL due to validation errors!' ? log(failureDescription(error.message)) :
-      log(failureDescription('Uh-oh... Unexpected TypeScript Error!', error))
+    error.level === 'error' ? log(failureDescription('Exiting REPL due to validation errors!')) :
+      log(failureDescription('Uh-oh... Unexpected Error!', error))
     process.exit()
   }
   return { imports, interpreter: new Interpreter(Evaluation.build(environment!, natives)) }
