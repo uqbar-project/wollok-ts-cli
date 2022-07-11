@@ -88,8 +88,12 @@ async function initializeInterpreter(autoImportPath: string|undefined, { project
     }
 
   } catch (error: any) {
-    error.level === 'error' ? log(failureDescription('Exiting REPL due to validation errors!')) :
-      log(failureDescription('Uh-oh... Unexpected Error!', error))
+    if (error.level === 'error') {
+      logger.info(failureDescription('Exiting REPL due to validation errors!'))
+    }else{
+      logger.info(failureDescription('Uh-oh... Unexpected Error!'))
+      logger.debug(failureDescription('Stack trace:', error))
+    }
     process.exit()
   }
   return { imports, interpreter: new Interpreter(Evaluation.build(environment!, natives)) }
