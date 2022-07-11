@@ -96,7 +96,7 @@ async function initializeInterpreter(autoImportPath: string|undefined, { project
     }
     process.exit()
   }
-  return { imports, interpreter: new Interpreter(Evaluation.build(environment!, natives)) }
+  return { imports, interpreter: new Interpreter(Evaluation.build(environment, natives)) }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
