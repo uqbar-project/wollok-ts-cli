@@ -25,11 +25,11 @@ export default async function (autoImportPath: string|undefined, options: Option
   logger.setLevel('INFO')
   logger.info(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
 
-  let { imports, interpreter } = await initializeInterpreter(autoImportPath, options)
+  let [interpreter, imports] = await initializeInterpreter(autoImportPath, options)
 
-  const commandHandler = defineCommands(autoImportPath, options, o => {
-    interpreter = o.interpreter
-    imports = o.imports
+  const commandHandler = defineCommands(autoImportPath, options, (newInterpreter: Interpreter, newImport: Import[]) => {
+    interpreter = newInterpreter
+    imports = newImport
     repl.prompt()
   } )
 
@@ -58,7 +58,7 @@ export default async function (autoImportPath: string|undefined, options: Option
   repl.prompt()
 }
 
-async function initializeInterpreter(autoImportPath: string|undefined, { project, skipValidations, verbose }: Options): Promise<{ imports: Import[], interpreter: Interpreter}> {
+async function initializeInterpreter(autoImportPath: string|undefined, { project, skipValidations, verbose }: Options): Promise<[Interpreter, Import[]]> {
   let environment: Environment
   const imports: Import[] = []
   if(verbose) logger.setLevel('DEBUG')
@@ -90,13 +90,13 @@ async function initializeInterpreter(autoImportPath: string|undefined, { project
     else log(failureDescription(`File ${valueDescription(autoImportPath)} doesn't exist or is outside of project!`))
   }
 
-  return { imports, interpreter: new Interpreter(Evaluation.build(environment, natives)) }
+  return [new Interpreter(Evaluation.build(environment, natives)), imports]
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // COMMANDS
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-function defineCommands( autoImportPath: string | undefined, options: Options, setInterpreter: (o: {interpreter: Interpreter, imports: Import[]}) => void ): Command {
+function defineCommands( autoImportPath: string | undefined, options: Options, setInterpreter: (interpreter: Interpreter, imports: Import[]) => void ): Command {
   const commandHandler = new Command('Write a Wollok sentence or command to evaluate')
     .usage(' ')
     .allowUnknownOption()
@@ -115,9 +115,10 @@ function defineCommands( autoImportPath: string | undefined, options: Options, s
     .alias(':r')
     .description('Reloads all currently imported packages and resets evaluation state')
     .allowUnknownOption()
-    .action(async () =>
-      setInterpreter(await initializeInterpreter(autoImportPath, options))
-    )
+    .action(async () => {
+      const [interpreter, imports] = await initializeInterpreter(autoImportPath, options);
+      setInterpreter(interpreter, imports)
+    })
 
   commandHandler.command(':help')
     .alias(':h')
