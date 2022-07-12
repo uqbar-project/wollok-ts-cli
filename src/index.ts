@@ -2,6 +2,7 @@ import { Command } from 'commander'
 import repl from './commands/repl'
 import run from './commands/run'
 import test from './commands/test'
+import  logger  from  'loglevel'
 
 const program = new Command()
   .name('wollok')
@@ -28,6 +29,9 @@ program.command('repl')
   .option('-p, --project [filter]', 'path to project', process.cwd())
   .option('--skipValidations', 'skip code validation', false)
   .option('-v, --verbose', 'print debugging information', false)
+  .hook('preAction', (thisCommand) => {
+    thisCommand.opts().verbose ? logger.setLevel('DEBUG') : logger.setLevel('INFO')
+  })
   .action(repl)
 
 
