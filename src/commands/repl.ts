@@ -89,9 +89,9 @@ async function initializeInterpreter(autoImportPath: string|undefined, { project
 
   } catch (error: any) {
     if (error.level === 'error') {
-      logger.info(failureDescription('Exiting REPL due to validation errors!'))
+      logger.error(failureDescription('Exiting REPL due to validation errors!'))
     }else{
-      logger.info(failureDescription('Uh-oh... Unexpected Error!'))
+      logger.error(failureDescription('Uh-oh... Unexpected Error!'))
       logger.debug(failureDescription('Stack trace:', error))
     }
     process.exit()
