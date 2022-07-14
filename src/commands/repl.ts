@@ -123,7 +123,7 @@ function defineCommands( autoImportPath: string | undefined, options: Options, s
     .description('Reloads all currently imported packages and resets evaluation state')
     .allowUnknownOption()
     .action(async () => {
-      const [interpreter, imports] = await initializeInterpreter(autoImportPath, options);
+      const [interpreter, imports] = await initializeInterpreter(autoImportPath, options)
       setInterpreter(interpreter, imports)
     })
 
