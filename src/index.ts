@@ -8,12 +8,16 @@ const program = new Command()
   .name('wollok')
   .description('Wollok Language command line interpreter tool')
   .version(process.env.npm_package_version ?? 'unkown')
+  .hook('preAction', (thisCommand, actionCommand) =>  {
+    actionCommand.opts().verbose ? logger.setLevel('DEBUG') : logger.setLevel('INFO')
+  })
 
 program.command('run')
   .description('Run a Wollok program')
   .argument('<program>', 'program\'s fully qualified name')
   .option('-p, --project <path>', 'path to project', process.cwd())
   .option('--skipValidations', 'skip code validation', false)
+  .option('-v, --verbose', 'print debugging information', false)
   .action(run)
 
 program.command('test')
@@ -21,6 +25,7 @@ program.command('test')
   .argument('[filter]', 'filter pattern for a test, describe or package')
   .option('-p, --project [filter]', 'path to project', process.cwd())
   .option('--skipValidations', 'skip code validation', false)
+  .option('-v, --verbose', 'print debugging information', false)
   .action(test)
 
 program.command('repl')
@@ -29,9 +34,6 @@ program.command('repl')
   .option('-p, --project [filter]', 'path to project', process.cwd())
   .option('--skipValidations', 'skip code validation', false)
   .option('-v, --verbose', 'print debugging information', false)
-  .hook('preAction', (thisCommand) => {
-    thisCommand.opts().verbose ? logger.setLevel('DEBUG') : logger.setLevel('INFO')
-  })
   .action(repl)
 
 
