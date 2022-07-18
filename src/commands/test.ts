@@ -4,6 +4,7 @@ import interpret from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { buildEnvironmentForProject, failureDescription, problemDescription, successDescription, valueDescription } from '../utils'
 import { bold } from 'chalk'
+import  logger  from  'loglevel'
 
 const { log } = console
 
@@ -13,15 +14,15 @@ type Options = {
 }
 
 export default async function (filter: string | undefined, { project, skipValidations }: Options): Promise<void> {
-  log(`Running all tests ${filter ? `matching ${valueDescription(filter)} ` : ''}on ${valueDescription(project)}`)
+  logger.info(`Running all tests ${filter ? `matching ${valueDescription(filter)} ` : ''}on ${valueDescription(project)}`)
 
   const environment = await buildEnvironmentForProject(project)
 
   if(!skipValidations) {
     const problems = validate(environment)
-    problems.forEach(problem => log(problemDescription(problem)))
-    if(!problems.length) log(successDescription('No problems found building the environment!'))
-    else if(problems.some(_ => _.level === 'error')) return log(failureDescription('Aborting run due to validation errors!'))
+    problems.forEach(problem => logger.info(problemDescription(problem)))
+    if(!problems.length) logger.info(successDescription('No problems found building the environment!'))
+    else if(problems.some(_ => _.level === 'error')) return logger.error(failureDescription('Aborting run due to validation errors!'))
   }
 
   const targets = environment.descendants().filter(is('Test')).filter(test =>
@@ -29,9 +30,10 @@ export default async function (filter: string | undefined, { project, skipValida
     !test.siblings().some(sibling => sibling.is('Test') && sibling.isOnly)
   )
 
-  log(`Running ${targets.length} tests...`)
+  logger.info(`Running ${targets.length} tests...`)
 
-  time('Run finished')
+  const debug = logger.getLevel() <= logger.levels.DEBUG
+  if (debug) time('Run finished')
   const interpreter = interpret(environment, natives)
   const failures: [Test, Error][] = []
   let successes = 0
@@ -42,31 +44,32 @@ export default async function (filter: string | undefined, { project, skipValida
         const tabulation = '  '.repeat(node.fullyQualifiedName().split('.').length - 1)
         try {
           interpreter.fork().exec(node)
-          log(tabulation, successDescription(node.name))
+          logger.info(tabulation, successDescription(node.name))
           successes++
         } catch (error: any) {
-          log(tabulation, failureDescription(node.name))
+          logger.info(tabulation, failureDescription(node.name))
           failures.push([node, error])
         }
       }
     },
     Entity: node => {
       const tabulation = '  '.repeat(node.fullyQualifiedName().split('.').length - 1)
-      if(targets.some(target => node.descendants().includes(target)))
-        log(tabulation, node.name)
+      if(targets.some(target => node.descendants().includes(target))){
+        logger.info(tabulation, node.name)
+      }
     },
     Node: _ => { },
   }))
 
   log()
-  timeEnd('Run finished')
+  if (debug) timeEnd('Run finished')
 
   failures.forEach(([test, error]) => {
     log()
-    log(failureDescription(bold(test.fullyQualifiedName()), error))
+    logger.error(failureDescription(bold(test.fullyQualifiedName()), error))
   })
 
-  log(
+  logger.info(
     '\n',
     successDescription(`${successes} passing`),
     failureDescription(`${failures.length} failing`),
