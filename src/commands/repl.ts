@@ -18,11 +18,9 @@ const { log } = console
 type Options = {
   project: string
   skipValidations: boolean
-  verbose: boolean
 }
 
 export default async function (autoImportPath: string|undefined, options: Options): Promise<void> {
-  logger.setLevel('INFO')
   logger.info(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
 
   let [interpreter, imports] = await initializeInterpreter(autoImportPath, options)
@@ -58,10 +56,10 @@ export default async function (autoImportPath: string|undefined, options: Option
   repl.prompt()
 }
 
-async function initializeInterpreter(autoImportPath: string|undefined, { project, skipValidations, verbose }: Options): Promise<[Interpreter, Import[]]> {
+async function initializeInterpreter(autoImportPath: string|undefined, { project, skipValidations }: Options): Promise<[Interpreter, Import[]]> {
+
   let environment: Environment
   const imports: Import[] = []
-  if(verbose) logger.setLevel('DEBUG')
 
   try {
     environment = await buildEnvironmentForProject(project)
