@@ -10,6 +10,8 @@ import { LinkError, linkIsolated } from 'wollok-ts/dist/linker'
 import path from 'path'
 import { ParseError } from 'wollok-ts/dist/parser'
 import  logger  from  'loglevel'
+import { app, BrowserWindow } from 'electron'
+
 // TODO:
 // - autocomplete piola
 
@@ -123,6 +125,22 @@ function defineCommands( autoImportPath: string | undefined, options: Options, s
     .action(async () => {
       const [interpreter, imports] = await initializeInterpreter(autoImportPath, options)
       setInterpreter(interpreter, imports)
+    })
+
+  commandHandler.command(':diagram')
+    .alias(':d')
+    .description('Opens the Object Diagram')
+    .allowUnknownOption()
+    .action(() => {
+      app.whenReady().then(() => {
+        const win = new BrowserWindow({
+          width: 800,
+          height: 600,
+          icon: __dirname + 'wollok.ico',
+        })
+        win.removeMenu()
+        win.loadFile('./public/index.html')
+      })
     })
 
   commandHandler.command(':help')

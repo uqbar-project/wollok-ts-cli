@@ -5,9 +5,11 @@
   "repository": "https://github.com/uqbar-project/wollok-ts-cli",
   "license": "MIT",
   "scripts": {
-    "start": "node -r ts-node/register src/index.ts",
-    "build": "rm -rf dist && tsc && pkg .",
-    "build:win": "rm -rf dist && tsc && pkg -t win ."
+    "build": "rm -rf dist/* && cp -r ./public ./dist && tsc",
+    "watch": "npm run build -- -w",
+    "start": "electron ./dist/index.js",
+    "pack": "npm run build && pkg .",
+    "pack:win": "npm run build && pkg -t win ."
   },
   "bin": {
     "wollok": "./dist/index.js"
@@ -26,6 +28,7 @@
     "@types/node": "^16.11.10",
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",
+    "electron": "^19.0.8",
     "eslint": "^8.3.0",
     "pkg": "^5.6.0",
     "ts-node": "10.4.0",
