@@ -1,17 +1,19 @@
-import { createInterface as REPL, CompleterResult } from 'readline'
 import { bold } from 'chalk'
 import { Command } from 'commander'
-import { buildEnvironmentForProject, failureDescription, problemDescription, successDescription, valueDescription } from '../utils'
-import { Entity, Environment, Evaluation, Import, parse, Reference, validate, WollokException } from 'wollok-ts'
-import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
-import natives from 'wollok-ts/dist/wre/wre.natives'
-import { notEmpty } from 'wollok-ts/dist/extensions'
-import { LinkError, linkIsolated } from 'wollok-ts/dist/linker'
+import { app as client, BrowserWindow } from 'electron'
+import express from 'express'
+import http from 'http'
+import logger from 'loglevel'
 import path from 'path'
+import { CompleterResult, createInterface as REPL } from 'readline'
+import { Entity, Environment, Evaluation, Import, parse, Reference, validate, WollokException } from 'wollok-ts'
+import { notEmpty } from 'wollok-ts/dist/extensions'
+import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
+import { LinkError, linkIsolated } from 'wollok-ts/dist/linker'
 import { ParseError } from 'wollok-ts/dist/parser'
-import  logger  from  'loglevel'
-import { app, BrowserWindow } from 'electron'
-
+import natives from 'wollok-ts/dist/wre/wre.natives'
+import { buildEnvironmentForProject, failureDescription, problemDescription, successDescription, valueDescription } from '../utils'
+import { Server } from 'socket.io'
 // TODO:
 // - autocomplete piola
 
@@ -127,21 +129,48 @@ function defineCommands( autoImportPath: string | undefined, options: Options, s
       setInterpreter(interpreter, imports)
     })
 
+  // Esto es código falopa de referencia deberíamos reemplazarlo por el posta
+
   commandHandler.command(':diagram')
     .alias(':d')
     .description('Opens the Object Diagram')
     .allowUnknownOption()
-    .action(() => {
-      app.whenReady().then(() => {
-        const win = new BrowserWindow({
-          width: 800,
-          height: 600,
-          icon: __dirname + 'wollok.ico',
+    .action(async () => {
+      const server = http.createServer(express())
+      const io = new Server(server)
+
+      io.on('connection', socket => {
+        log('Client connected!')
+        socket.on('disconnect', () => { log('Client disconnected!') })
+
+        let count = 0
+
+        socket.on('pong', payload => {
+          log(`Received pong from client with value: ${payload}`)
+          count = payload
         })
-        win.removeMenu()
-        win.loadFile('./public/index.html')
+
+        commandHandler.command(':ping')
+          .alias(':p')
+          .description('Sends ping to the client')
+          .allowUnknownOption()
+          .action(() => { socket.emit('ping', ++count) })
       })
+
+      server.listen(3000)
+
+      await client.whenReady()
+      const win = new BrowserWindow({
+        width: 800,
+        height: 600,
+        icon: __dirname + 'wollok.ico',
+      })
+      win.removeMenu()
+      // win.webContents.openDevTools()
+      win.loadFile('./public/index.html')
     })
+
+  // Fin del código falopa
 
   commandHandler.command(':help')
     .alias(':h')
