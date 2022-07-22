@@ -82,7 +82,7 @@ npm install
 
 ### Running and testing
 
-After that, you are ready to start working. You can build the project by running `npm run build`; this will compile all assets to the `/dist` folder, leaving everything ready to run but, **if you are a developer, you will probably want to run `npm run watch` instead and leave it running in a separate window so it will update the `/dist` folder whenever any code is changed** (notice that this only works for TS changes, to update any other kind of file you have to restart the watch).
+After that, you are ready to start working. You can build the project by running `npm run build`; this will compile all assets to the `/build` folder, leaving everything ready to run but, **if you are a developer, you will probably want to run `npm run watch` instead and leave it running in a separate window so it will update the `/build` folder whenever any code is changed** (notice that this only works for TS changes, to update any other kind of file you have to restart the watch).
 
 Once the code has been built, you can **run the CLI** by running `npm start`. Remember that, while running through npm, you will need to add a `--` before any non npm related flags. For example, to see the application manual you can run 
 
@@ -100,8 +100,6 @@ Finally, you can generate wollok-cli **executable binaries** (a.k.a. the distrib
 
 ```bash
 npm run pack
-# If you're in Windows, run:
-npm run pack:win
 ```
 
 And checking the `/dist` folder.

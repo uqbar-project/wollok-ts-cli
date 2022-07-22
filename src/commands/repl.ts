@@ -61,7 +61,6 @@ export default async function (autoImportPath: string|undefined, options: Option
 }
 
 async function initializeInterpreter(autoImportPath: string|undefined, { project, skipValidations }: Options): Promise<[Interpreter, Import[]]> {
-
   let environment: Environment
   const imports: Import[] = []
 

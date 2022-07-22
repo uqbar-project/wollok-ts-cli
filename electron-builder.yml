@@ -1,0 +1,27 @@
+appId: wollok-cli
+# icon: public/wollok.ico
+
+# Package electron code into a asar archive. Set to false to debug issues.
+# asar: true
+
+files:
+  - build/
+  - package.json
+  # - "!node_modules/jschardet/"
+
+# extraResources:
+  # - from: "python/dist/main"
+    # to: "python-rpc"
+    # filter:
+      # - "**/*"
+  # - "ThirdPartyNotices.txt"
+  # - "data"
+  # - "i18n"
+  # - "node_modules/jschardet/"
+
+linux:
+  category: Development
+  target:
+    - AppImage
+    - deb
+    - rpm
