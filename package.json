@@ -10,7 +10,7 @@
   },
   "main": "./build/index.js",
   "scripts": {
-    "build": "rm -rf build/* && cp -r ./src/public ./build/public && tsc",
+    "build": "rm -rf build/* && mkdir ./build && cp -r ./src/public ./build/public && tsc",
     "watch": "npm run build -- -w",
     "start": "electron ./build/index.js",
     "pack": "electron-builder"
