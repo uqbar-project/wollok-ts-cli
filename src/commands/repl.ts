@@ -16,6 +16,7 @@ import { Server } from 'socket.io'
 import { spawn } from 'child_process'
 import electron from 'electron'
 
+
 // TODO:
 // - autocomplete piola
 
@@ -162,7 +163,8 @@ function defineCommands( autoImportPath: string | undefined, options: Options, s
 
       server.listen(3000)
 
-      const electronProcess = spawn(electron as any, ['electron.js'], { cwd: __dirname })
+      const electronPath = process.resourcesPath ? path.join(process.resourcesPath, 'node_modules/electron/dist/electron') : 'electron'
+      const electronProcess = spawn(electronPath, ['electron.js'], { cwd: __dirname })
     })
 
   // Fin del código falopa

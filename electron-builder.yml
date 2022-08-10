@@ -2,7 +2,10 @@ appId: wollok-cli
 # icon: public/wollok.ico
 
 # Package electron code into a asar archive. Set to false to debug issues.
-asar: true
+asar: false
+
+extraResources:
+  - node_modules/electron/**
 
 files:
   - build/
