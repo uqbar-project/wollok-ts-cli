@@ -26,7 +26,7 @@ type Options = {
   skipValidations: boolean
 }
 
-process.stdin.on("end", () => console.log("AAAAAAHHHH TODO ESTA MAALLL!!!!")) 
+process.stdin.on('end', () => console.log('AAAAAAHHHH TODO ESTA MAALLL!!!!'))
 
 export default async function (autoImportPath: string|undefined, options: Options): Promise<void> {
   logger.info(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
@@ -162,13 +162,13 @@ function defineCommands( autoImportPath: string | undefined, options: Options, s
 
       server.listen(3000)
 
-      const electronProcess = spawn('../../node_modules/electron/dist/electron.exe', ["electron.js"], { cwd: __dirname })
+      const electronProcess = spawn(electron as any, ['electron.js'], { cwd: __dirname })
     })
 
   // Fin del código falopa
 
   commandHandler.command(':help')
-    .alias(':h') 
+    .alias(':h')
     .description('Show Wollok REPL help')
     .allowUnknownOption()
     .action(() => commandHandler.outputHelp())
