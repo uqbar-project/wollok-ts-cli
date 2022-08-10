@@ -1,6 +1,5 @@
 import { bold } from 'chalk'
 import { Command } from 'commander'
-import { app as client, BrowserWindow } from 'electron'
 import express from 'express'
 import http from 'http'
 import logger from 'loglevel'
@@ -14,6 +13,9 @@ import { ParseError } from 'wollok-ts/dist/parser'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { buildEnvironmentForProject, failureDescription, problemDescription, successDescription, valueDescription } from '../utils'
 import { Server } from 'socket.io'
+import { spawn } from 'child_process'
+import electron from 'electron'
+
 // TODO:
 // - autocomplete piola
 
@@ -23,6 +25,8 @@ type Options = {
   project: string
   skipValidations: boolean
 }
+
+process.stdin.on("end", () => console.log("AAAAAAHHHH TODO ESTA MAALLL!!!!")) 
 
 export default async function (autoImportPath: string|undefined, options: Options): Promise<void> {
   logger.info(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
@@ -158,21 +162,13 @@ function defineCommands( autoImportPath: string | undefined, options: Options, s
 
       server.listen(3000)
 
-      await client.whenReady()
-      const win = new BrowserWindow({
-        width: 800,
-        height: 600,
-        icon: __dirname + 'wollok.ico',
-      })
-      win.removeMenu()
-      // win.webContents.openDevTools()
-      win.loadFile('./public/index.html')
+      const electronProcess = spawn('../../node_modules/electron/dist/electron.exe', ["electron.js"], { cwd: __dirname })
     })
 
   // Fin del código falopa
 
   commandHandler.command(':help')
-    .alias(':h')
+    .alias(':h') 
     .description('Show Wollok REPL help')
     .allowUnknownOption()
     .action(() => commandHandler.outputHelp())
