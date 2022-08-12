@@ -163,9 +163,10 @@ function defineCommands( autoImportPath: string | undefined, options: Options, s
         width: 800,
         height: 600,
         icon: __dirname + 'wollok.ico',
+        webPreferences: { nodeIntegration: true, contextIsolation: false },
       })
       win.removeMenu()
-      // win.webContents.openDevTools()
+      win.webContents.openDevTools()
       win.loadFile('./public/index.html')
     })
 
