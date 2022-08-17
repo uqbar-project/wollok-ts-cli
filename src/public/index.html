@@ -4,9 +4,16 @@
 <head>
   <meta charset="UTF-8">
   <title>Object Diagram</title>
-  <script>var exports = {};</script>
-  <script type="module" src="../diagram.js"></script>
-  <!--<script type="module" src="socket.js"></script>-->
+  <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+
+  <style>
+    #cy {
+      width: 90vw;
+      height: 85vh;
+      display: block;
+    }
+  </style>
+
 </head>
 
 <body>
@@ -20,15 +27,8 @@
   </div>
   <button id="sendPong">MANDAR PONG</button>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.min.js"></script>
-  
-  <!--<script src="http://localhost:3000/socket.io/socket.io.js"></script>-->
-  <!--<script src="socket.io/socket.io.js"></script>-->
   <script>
     const socket = io('http://localhost:3000')
-    /*window.onload= function(){
-      var socket = io('http://localhost:3000');
-    }*/
     socket.on('connect', function () { console.log("conectado!") })
     socket.on('event', function (data) { console.log(`evento! ${data}`) })
     socket.on('disconnect', function () { console.log("desconectado!") })
@@ -46,20 +46,22 @@
       console.log(`Received ping from server with value: ${payload}`)
       label.innerText = `${payload}`
     })
-
   </script>
 
   <div id="cy"></div>
   <input id="object" type="text">
   <input id="relation" type="text">
   <button id="btn">conect</button>
-  <style>
-      #cy {
-          width: 90vw;
-          height: 85vh;
-          display: block;
-      }
-  </style>
+
+  <script>
+    const { initializeCytoscape, addObject } = require("../diagram.js")
+
+    initializeCytoscape(document.getElementById('cy'))
+
+    document.getElementById('btn').addEventListener('click', () =>
+      addObject(document.getElementById('object').value, document.getElementById('relation').value)
+    )
+  </script>
 </body>
 
 </html>
