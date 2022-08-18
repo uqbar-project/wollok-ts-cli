@@ -6,7 +6,7 @@ import http from 'http'
 import logger from 'loglevel'
 import path from 'path'
 import { CompleterResult, createInterface as REPL } from 'readline'
-import { Entity, Environment, Evaluation, Import, parse, Reference, validate, WollokException } from 'wollok-ts'
+import { Entity, Environment, Evaluation, Import, parse, Reference, RuntimeObject, validate, WollokException } from 'wollok-ts'
 import { notEmpty } from 'wollok-ts/dist/extensions'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import { LinkError, linkIsolated } from 'wollok-ts/dist/linker'
@@ -14,6 +14,8 @@ import { ParseError } from 'wollok-ts/dist/parser'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { buildEnvironmentForProject, failureDescription, problemDescription, successDescription, valueDescription } from '../utils'
 import { Server } from 'socket.io'
+import { ElementDefinition } from 'cytoscape'
+
 // TODO:
 // - autocomplete piola
 
@@ -28,12 +30,15 @@ export default async function (autoImportPath: string|undefined, options: Option
   logger.info(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
 
   let [interpreter, imports] = await initializeInterpreter(autoImportPath, options)
-
-  const commandHandler = defineCommands(autoImportPath, options, (newInterpreter: Interpreter, newImport: Import[]) => {
+  let io: Server
+  const commandHandler = defineCommands(autoImportPath, options, (newIo) => {
+    io = newIo
+    io.emit('evaluation', getDataDiagram(interpreter.evaluation))
+  }, (newInterpreter: Interpreter, newImport: Import[]) => {
     interpreter = newInterpreter
     imports = newImport
     repl.prompt()
-  } )
+  })
 
   const autoImportName = imports?.length && imports[0].entity.name
   const repl = REPL({
@@ -51,9 +56,11 @@ export default async function (autoImportPath: string|undefined, options: Option
 
       if(line.length) {
         if(line.startsWith(':')) commandHandler.parse(line.split(' '), { from: 'user' })
-        else log(interprete(interpreter, imports, line))
+        else {
+          log(interprete(interpreter, imports, line))
+          io?.emit('evaluation', getDataDiagram(interpreter.evaluation))
+        }
       }
-
       repl.prompt()
     })
 
@@ -104,7 +111,7 @@ async function initializeInterpreter(autoImportPath: string|undefined, { project
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // COMMANDS
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-function defineCommands( autoImportPath: string | undefined, options: Options, setInterpreter: (interpreter: Interpreter, imports: Import[]) => void ): Command {
+function defineCommands( autoImportPath: string | undefined, options: Options, setIo: (io: Server) => void, setInterpreter: (interpreter: Interpreter, imports: Import[]) => void ): Command {
   const commandHandler = new Command('Write a Wollok sentence or command to evaluate')
     .usage(' ')
     .allowUnknownOption()
@@ -135,42 +142,8 @@ function defineCommands( autoImportPath: string | undefined, options: Options, s
     .description('Opens the Object Diagram')
     .allowUnknownOption()
     .action(async () => {
-      const server = http.createServer(express())
-      const io = new Server(server)
-
-      io.on('connection', socket => {
-        log('Client connected!')
-        socket.on('disconnect', () => { log('Client disconnected!') })
-
-        let count = 0
-
-        socket.on('pong', payload => {
-          log(`Received pong from client with value: ${payload}`)
-          count = payload
-        })
-
-        commandHandler.command(':ping')
-          .alias(':p')
-          .description('Sends ping to the client')
-          .allowUnknownOption()
-          .action(() => { socket.emit('ping', ++count) })
-      })
-
-      server.listen(3000)
-
-      await client.whenReady()
-      const win = new BrowserWindow({
-        width: 800,
-        height: 600,
-        icon: __dirname + 'wollok.ico',
-        webPreferences: {
-          nodeIntegration: true,
-          contextIsolation: false,
-        },
-      })
-      win.removeMenu()
-      win.webContents.openDevTools()
-      win.loadFile('./public/index.html')
+      const io = await initializeClient()
+      setIo(io)
     })
 
   // Fin del código falopa
@@ -234,4 +207,80 @@ async function autocomplete(input: string): Promise<CompleterResult> {
   const hits = completions.filter((c) => c.startsWith(input))
   // Show all completions if none found
   return [hits.length ? hits : completions, input]
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// SERVER/CLIENT
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+async function initializeClient() {
+  const server = http.createServer(express())
+  const io = new Server(server)
+
+  io.on('connection', socket => {
+    log('Client connected!')
+    socket.on('disconnect', () => { log('Client disconnected!') })
+  })
+
+  server.listen(3000)
+
+  await client.whenReady()
+  const win = new BrowserWindow({
+    width: 800,
+    height: 600,
+    icon: __dirname + 'wollok.ico',
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+    },
+  })
+  win.removeMenu()
+  // win.webContents.openDevTools()
+  win.loadFile('./public/index.html')
+  return io
+}
+
+// De acá se obtiene la lista de objetos a dibujar
+function decoration(obj: RuntimeObject) {
+  const { id, innerValue, module } = obj
+  const moduleName: string = module.fullyQualifiedName()
+
+  if (obj.innerValue === null || moduleName === 'wollok.lang.Number') return {
+    type: 'literal',
+    label: `${innerValue}`,
+  }
+
+  if (moduleName === 'wollok.lang.String') return {
+    type: 'literal',
+    label: `"${innerValue}"`,
+  }
+
+  if (module.is('Singleton') && module.name) return {
+    type: 'object',
+    label: module.name,
+  }
+
+  return { label: `${module.name}#${id.slice(31)}` }
+}
+
+function elementFromObject(obj: RuntimeObject, alreadyVisited: string[] = []): ElementDefinition[] {
+  const { id } = obj
+  if (alreadyVisited.includes(id)) return []
+  return [
+    { data: { id, ...decoration(obj) } },
+    ...[...obj.locals.keys()].filter(key => key !== 'self').flatMap(name => [
+      { data: { id: `${id}_${obj.get(name)?.id}`, label: name, source: id, target: obj.get(name)?.id } },
+      ...elementFromObject(obj.get(name)!, [...alreadyVisited, id]),
+    ]),
+  ]
+}
+
+function getDataDiagram(evaluation: Evaluation): ElementDefinition[] {
+  return [...evaluation.allInstances()]
+    .filter((obj) => {
+      const name = obj.module.fullyQualifiedName()
+      return name && name !== 'worksheet.main.repl' && !name.startsWith('wollok')
+    })
+    .flatMap(obj => elementFromObject(obj))
 }

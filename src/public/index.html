@@ -8,59 +8,32 @@
 
   <style>
     #cy {
-      width: 90vw;
-      height: 85vh;
+      width: 790px;
+      height: 590px;
       display: block;
     }
   </style>
 
 </head>
 
-<body>
-  <h1>Hello World!</h1>
-  We are using Node.js <span id="node-version"></span>,
-  Chromium <span id="chrome-version"></span>,
-  and Electron <span id="electron-version"></span>.
-  <img src="wollok.ico" />
-  <div>
-    Pings recibidos: <span id="pings">0</span>
-  </div>
-  <button id="sendPong">MANDAR PONG</button>
-
+<body>  
   <script>
     const socket = io('http://localhost:3000')
     socket.on('connect', function () { console.log("conectado!") })
     socket.on('event', function (data) { console.log(`evento! ${data}`) })
     socket.on('disconnect', function () { console.log("desconectado!") })
-
-    const button = document.getElementById('sendPong')
-    const label = document.getElementById('pings')
-
-    button.addEventListener('click', e => {
-      console.log("Sending Pong!")
-      e.preventDefault()
-      socket.emit('pong', Number(label.innerText))
-    })
-
-    socket.on('ping', payload => {
-      console.log(`Received ping from server with value: ${payload}`)
-      label.innerText = `${payload}`
-    })
   </script>
 
   <div id="cy"></div>
-  <input id="object" type="text">
-  <input id="relation" type="text">
-  <button id="btn">conect</button>
 
   <script>
-    const { initializeCytoscape, addObject } = require("../diagram.js")
+    const { initializeCytoscape, reloadDiagram } = require("../diagram.js")
 
     initializeCytoscape(document.getElementById('cy'))
 
-    document.getElementById('btn').addEventListener('click', () =>
-      addObject(document.getElementById('object').value, document.getElementById('relation').value)
-    )
+    socket.on('evaluation', elements => {
+      reloadDiagram(elements)
+    })
   </script>
 </body>
 

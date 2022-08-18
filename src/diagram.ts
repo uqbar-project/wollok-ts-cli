@@ -6,24 +6,24 @@ export function initializeCytoscape(container: HTMLElement): void {
   cy = cytoscape({
     container,
 
-    zoom: 0.2,
+    zoom: 1,
     maxZoom: 1,
-    elements: [
-      { data: { id: 'Hola mundo' } },
-    ],
+    minZoom: 0.5,
+    elements: [],
 
     style: [ // the stylesheet for the graph
       {
         selector: 'node',
         style: {
           'background-color': '#666',
-          'label': 'data(id)',
+          'label': 'data(label)',
         },
       },
 
       {
         selector: 'edge',
         style: {
+          'label': 'data(label)',
           'width': 1,
           'line-color': '#ccc',
           'target-arrow-color': '#ccc',
@@ -35,8 +35,9 @@ export function initializeCytoscape(container: HTMLElement): void {
   })
 }
 
-export function addObject(id: string, target: string): void {
-  cy.add({ data: target ? { id: id + target, source: id, target } : { id } })
+export function reloadDiagram(elements: any): void {
+  //No funciona? cy.elements().remove
+  cy.add(elements)
   cy.layout({
     name: 'cose',
     animate: false,
