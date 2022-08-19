@@ -33,7 +33,9 @@ export default async function (autoImportPath: string|undefined, options: Option
   let io: Server
   const commandHandler = defineCommands(autoImportPath, options, (newIo) => {
     io = newIo
-    io.emit('evaluation', getDataDiagram(interpreter.evaluation))
+    io.on('connection', socket => {
+      socket.emit('evaluation', getDataDiagram(interpreter.evaluation))
+    })
   }, (newInterpreter: Interpreter, newImport: Import[]) => {
     interpreter = newInterpreter
     imports = newImport
@@ -236,7 +238,7 @@ async function initializeClient() {
     },
   })
   win.removeMenu()
-  // win.webContents.openDevTools()
+  win.webContents.openDevTools()
   win.loadFile('./public/index.html')
   return io
 }

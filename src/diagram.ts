@@ -36,16 +36,12 @@ export function initializeCytoscape(container: HTMLElement): void {
 }
 
 export function reloadDiagram(elements: any): void {
-  //No funciona? cy.elements().remove
+  cy.elements().remove()
   cy.add(elements)
   cy.layout({
     name: 'cose',
     animate: false,
     nodeDimensionsIncludeLabels: true,
-    fit: false,
+    fit: true,
   }).run()
-  cy.pan({
-    x: 100,
-    y: 100,
-  })
 }
