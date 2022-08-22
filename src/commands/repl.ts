@@ -238,7 +238,6 @@ async function initializeClient() {
     },
   })
   win.removeMenu()
-  win.webContents.openDevTools()
   win.loadFile('./public/index.html')
   return io
 }
