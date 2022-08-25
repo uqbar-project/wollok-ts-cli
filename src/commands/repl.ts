@@ -34,7 +34,7 @@ export default async function (autoImportPath: string|undefined, options: Option
   const commandHandler = defineCommands(autoImportPath, options, (newIo) => {
     io = newIo
     io.on('connection', socket => {
-      socket.emit('evaluation', getDataDiagram(interpreter.evaluation))
+      socket.emit('updateDiagram', getDataDiagram(interpreter.evaluation))
     })
   }, (newInterpreter: Interpreter, newImport: Import[]) => {
     interpreter = newInterpreter
@@ -60,7 +60,7 @@ export default async function (autoImportPath: string|undefined, options: Option
         if(line.startsWith(':')) commandHandler.parse(line.split(' '), { from: 'user' })
         else {
           log(interprete(interpreter, imports, line))
-          io?.emit('evaluation', getDataDiagram(interpreter.evaluation))
+          io?.emit('updateDiagram', getDataDiagram(interpreter.evaluation))
         }
       }
       repl.prompt()
@@ -247,7 +247,7 @@ function decoration(obj: RuntimeObject) {
   const { id, innerValue, module } = obj
   const moduleName: string = module.fullyQualifiedName()
 
-  if (obj.innerValue === null || moduleName === 'wollok.lang.Number') return {
+  if (!obj.assertIsNotNull() || moduleName === 'wollok.lang.Number') return {
     type: 'literal',
     label: `${innerValue}`,
   }

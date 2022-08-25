@@ -31,7 +31,7 @@
 
     initializeCytoscape(document.getElementById('cy'))
 
-    socket.on('evaluation', elements => {
+    socket.on('updateDiagram', elements => {
       reloadDiagram(elements)
     })
   </script>
