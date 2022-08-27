@@ -247,7 +247,7 @@ function decoration(obj: RuntimeObject) {
   const { id, innerValue, module } = obj
   const moduleName: string = module.fullyQualifiedName()
 
-  if (!obj.assertIsNotNull() || moduleName === 'wollok.lang.Number') return {
+  if (obj.innerValue === null || moduleName === 'wollok.lang.Number') return {
     type: 'literal',
     label: `${innerValue}`,
   }
