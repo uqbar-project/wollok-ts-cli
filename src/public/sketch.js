@@ -1,28 +1,33 @@
-//var socket;
 var fondo1
+var visualsImages = []
+var positionsImages
+var widthh
+var heightt
 function preload(){
-  socket.on('fondo', fondo =>{
-    console.log(fondo)
+  socket.on('getPathBackround', fondo =>{
     fondo1 = loadImage(fondo);
-  })
+  });
+  socket.on('VisualsImage', images =>{
+    for(i = 0; i < images.length ; i++){
+      visualsImages.push(loadImage(images[i]))
+    }
+  });
+  socket.on('VisualsPositions', positions =>{
+    positionsImages = positions;
+  });
+  socket.on('tamanopantalla', size =>{
+    widthh= size[0]
+    heightt = size[1]
+  });
 }
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  background(0);
-  socket.on('mouse',
-    
-    function(data) {
-      console.log("Got: " + data.x + " " + data.y);
-      fill(0,0,255);
-      noStroke();
-      ellipse(data.x,data.y,80,80);
-    }
-  );
 }
 function draw() {
   background(fondo1 ? fondo1 : 'red')
-  ellipse(0, 0, 30, 30);
-  
+  for(i=0; i < visualsImages.length; i++){
+    image(visualsImages[i], (positionsImages[i].x)*50  , positionsImages[i].y == 0 ? windowHeight-100 : ((windowHeight-100) - positionsImages[i].y*50)) 
+  }
 }
 
 

@@ -1,4 +1,4 @@
-import { Evaluation, Name, validate } from 'wollok-ts'
+import { Evaluation, InnerValue, Name, RuntimeObject, validate } from 'wollok-ts'
 import interpret, { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { buildEnvironmentForProject, failureDescription, problemDescription, successDescription, valueDescription } from '../utils'
@@ -49,16 +49,25 @@ export default async function (programFQN: Name, { project, skipValidations }: O
   const title = interp ? interp?.send('title', game!)?.innerString : 'Wollok Game'
   const width = interp?.send('width', game!)?.innerNumber
   const height = interp?.send('height', game!)?.innerNumber
-
+  const size = [width,height]
   const pathDirname = path.dirname(project)
 
   const background = game.get('boardGround') ? game.get('boardGround')?.innerString : 'default'
   const pathBackground = path.join(pathDirname,'/imagenes/', background! )
   
-  console.log(pathBackground)
-
-  let visuals = game.get('AllVisuals')
-  console.log(visuals?.innerCollection)
+  
+  // console.log(visuals)
+  let visualsGame = game.get('visuals')
+  // console.log(visualsGame)
+  let visualsImages: (string | number | boolean | Error | RuntimeObject[] | null | undefined)[] = []
+  let positions: { x: InnerValue | undefined; y: InnerValue | undefined }[] = []
+  visualsGame?.innerCollection?.forEach(v => {
+    let image = interp.send('image', v)?.innerString
+    visualsImages.push(path.join(pathDirname,'/imagenes/', image! ))
+    let x = interp.send('position', v)?.get('x')?.innerValue
+    let y = interp.send('position', v)?.get('y')?.innerValue
+    positions.push({'x': x,'y':y})
+   })
 
   log()
   const server = http.createServer(express())
@@ -75,14 +84,18 @@ export default async function (programFQN: Name, { project, skipValidations }: O
           log(`Received pong from client with value: ${payload}`)
           count = payload
         })
-        socket.emit('fondo', pathBackground)
+        socket.emit('getPathBackround', pathBackground)
+        socket.emit('VisualsImage', visualsImages)
+        socket.emit('VisualsPositions', positions)
+        socket.emit('tamanopantalla', size)
+        // socket.emit('getPathDirname', pathDirname)
     })
     server.listen(3000)
 
     await client.whenReady()
     const win = new BrowserWindow({
-        width: width ? width*100 : 800,
-        height: height ? height*100 : 600,
+        width: width ? width*50 : 800,
+        height: height ? height*50 : 600,
         icon: __dirname + 'wollok.ico',
         title: title,
         webPreferences: { 
@@ -90,9 +103,8 @@ export default async function (programFQN: Name, { project, skipValidations }: O
             contextIsolation: false
             }
     })
-    
+
     win.removeMenu()
     win.webContents.openDevTools()
-    console.log('dsp de devtools')
     win.loadFile('./public/indexGame.html')
 }
