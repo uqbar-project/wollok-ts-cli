@@ -11,6 +11,10 @@ import path from 'path'
 
 
 const { time, timeEnd, log } = console
+const carpetaImgs = 'imagenes'
+// TO-DO
+//Acá habria que ver como hacer para agregar todos los nombres 
+//posibles de la carpeta que contiene las imagenes (assets)
 
 type Options = {
   project: string
@@ -49,26 +53,14 @@ export default async function (programFQN: Name, { project, skipValidations }: O
   const title = interp ? interp?.send('title', game!)?.innerString : 'Wollok Game'
   const width = interp?.send('width', game!)?.innerNumber
   const height = interp?.send('height', game!)?.innerNumber
-  const size = [width,height]
+
   const pathDirname = path.dirname(project)
 
   const background = game.get('boardGround') ? game.get('boardGround')?.innerString : 'default'
-  const pathBackground = path.join(pathDirname,'/imagenes/', background! )
-  
-  
-  // console.log(visuals)
-  let visualsGame = game.get('visuals')
-  // console.log(visualsGame)
-  let visualsImages: (string | number | boolean | Error | RuntimeObject[] | null | undefined)[] = []
-  let positions: { x: InnerValue | undefined; y: InnerValue | undefined }[] = []
-  visualsGame?.innerCollection?.forEach(v => {
-    let image = interp.send('image', v)?.innerString
-    visualsImages.push(path.join(pathDirname,'/imagenes/', image! ))
-    let x = interp.send('position', v)?.get('x')?.innerValue
-    let y = interp.send('position', v)?.get('y')?.innerValue
-    positions.push({'x': x,'y':y})
-   })
-
+  const pathBackground = path.join(pathDirname,'/',carpetaImgs,'/', background! )
+  const visualsImages = getImages(game,pathDirname)
+  const positions = getPositions(game,interp,pathDirname)
+ 
   log()
   const server = http.createServer(express())
     const io = new Server(server)
@@ -85,10 +77,11 @@ export default async function (programFQN: Name, { project, skipValidations }: O
           count = payload
         })
         socket.emit('getPathBackround', pathBackground)
+        console.log(pathBackground)
         socket.emit('VisualsImage', visualsImages)
+        console.log(visualsImages)
         socket.emit('VisualsPositions', positions)
-        socket.emit('tamanopantalla', size)
-        // socket.emit('getPathDirname', pathDirname)
+        console.log(positions)
     })
     server.listen(3000)
 
@@ -107,4 +100,21 @@ export default async function (programFQN: Name, { project, skipValidations }: O
     win.removeMenu()
     win.webContents.openDevTools()
     win.loadFile('./public/indexGame.html')
+}
+function getImages(game : RuntimeObject, pathProject : string){
+  let visualsImages: (string | number | boolean | Error | RuntimeObject[] | null | undefined)[] = []
+  game.get('visuals')?.innerCollection?.forEach(v => {
+    let image = interp.send('image', v)?.innerString
+    visualsImages.push(path.join(pathProject,'/',carpetaImgs,'/', image! ))
+   })
+  return visualsImages
+}
+function getPositions(game: RuntimeObject, interpreter : Interpreter, pathProject : string){
+  let positions: { x: InnerValue | undefined; y: InnerValue | undefined }[] = []
+  game.get('visuals')?.innerCollection?.forEach(v => {
+    let x = interp.send('position', v)?.get('x')?.innerValue
+    let y = interp.send('position', v)?.get('y')?.innerValue
+    positions.push({'x': x,'y':y})
+   })
+  return positions
 }

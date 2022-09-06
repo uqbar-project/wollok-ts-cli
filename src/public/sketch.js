@@ -1,34 +1,48 @@
-var fondo1
+var backgroundImage
 var visualsImages = []
 var positionsImages
-var widthh
-var heightt
 function preload(){
-  socket.on('getPathBackround', fondo =>{
-    fondo1 = loadImage(fondo);
-  });
-  socket.on('VisualsImage', images =>{
-    for(i = 0; i < images.length ; i++){
-      visualsImages.push(loadImage(images[i]))
-    }
-  });
-  socket.on('VisualsPositions', positions =>{
-    positionsImages = positions;
-  });
-  socket.on('tamanopantalla', size =>{
-    widthh= size[0]
-    heightt = size[1]
-  });
+  loadBackground()
+  loadVisuals()
+  loadPositionsVisuals()
 }
 function setup() {
   createCanvas(windowWidth, windowHeight);
 }
 function draw() {
-  background(fondo1 ? fondo1 : 'red')
+  background(backgroundImage ? backgroundImage : 'grey')
+  drawVisuals()
+}
+
+function loadBackground(){
+  socket.on('getPathBackround', fondo =>{
+    backgroundImage = loadImage(fondo);
+  });
+}
+
+function loadVisuals(){
+  socket.on('VisualsImage', images =>{
+    for(i = 0; i < images.length ; i++){
+      visualsImages.push(loadImage(images[i]))
+    }
+  });
+}
+
+function loadPositionsVisuals(){
+  socket.on('VisualsPositions', positions =>{
+    positionsImages = positions;
+  });
+}
+
+function drawVisuals(){
+  var heightWin = windowHeight-100
   for(i=0; i < visualsImages.length; i++){
-    image(visualsImages[i], (positionsImages[i].x)*50  , positionsImages[i].y == 0 ? windowHeight-100 : ((windowHeight-100) - positionsImages[i].y*50)) 
+    var positionX = (positionsImages[i].x)*50
+    var positionY = positionsImages[i].y == 0 ? heightWin : ((heightWin) - positionsImages[i].y*50)
+    image(visualsImages[i], positionX, positionY)
   }
 }
+
 
 
 
