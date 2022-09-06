@@ -77,11 +77,8 @@ export default async function (programFQN: Name, { project, skipValidations }: O
           count = payload
         })
         socket.emit('getPathBackround', pathBackground)
-        console.log(pathBackground)
         socket.emit('VisualsImage', visualsImages)
-        console.log(visualsImages)
         socket.emit('VisualsPositions', positions)
-        console.log(positions)
     })
     server.listen(3000)
 
