@@ -59,28 +59,22 @@ export default async function (programFQN: Name, { project, skipValidations }: O
   const background = game.get('boardGround') ? game.get('boardGround')?.innerString : 'default'
   const pathBackground = path.join(pathDirname,'/',carpetaImgs,'/', background! )
   const visualsImages = getImages(game,pathDirname)
-  const positions = getPositions(game,interp,pathDirname)
- 
+  const positions = getPositions(game,interp)
   log()
   const server = http.createServer(express())
-    const io = new Server(server)
-    const url = require('url');
+  const io = new Server(server)
+  const url = require('url');
 
-    io.on('connection', socket => {
+     io.on('connection', socket => {
         log('Client connected!')
         socket.on('disconnect', () => { log('Client disconnected!') })
 
-        let count = 0
-
-        socket.on('pong', payload => {
-          log(`Received pong from client with value: ${payload}`)
-          count = payload
-        })
         socket.emit('getPathBackround', pathBackground)
         socket.emit('VisualsImage', visualsImages)
         socket.emit('VisualsPositions', positions)
-    })
-    server.listen(3000)
+
+     })
+     server.listen(3000)
 
     await client.whenReady()
     const win = new BrowserWindow({
@@ -97,7 +91,42 @@ export default async function (programFQN: Name, { project, skipValidations }: O
     win.removeMenu()
     win.webContents.openDevTools()
     win.loadFile('./public/indexGame.html')
+
+    Singleton.Instance.start(io,interp,project)
 }
+
+class Singleton {
+    private static instance: Singleton;
+
+    private constructor() {
+      if (Singleton.instance) {
+        return Singleton.instance;
+      }
+      Singleton.instance = this;
+    }
+    public static get Instance() {
+      return this.instance || (this.instance = new this());
+    }
+
+    public start(io : Server, interp : Interpreter, project: string){
+      setInterval(this.dibujar, 5000, io, interp, project)
+    }
+    public dibujar(io: Server, interp : Interpreter, project: string){
+      const game = interp.object('wollok.game.game')
+      const pathDirname = path.dirname(project)
+      const background = game.get('boardGround') ? game.get('boardGround')?.innerString : 'default'
+      const pathBackground = path.join(pathDirname,'/',carpetaImgs,'/', background! )
+      const visualsImages = getImages(game,pathDirname)
+      const positions = getPositions(game,interp)
+
+      io.emit('getPathBackround', pathBackground)
+      io.emit('VisualsImage', visualsImages)
+      io.emit('VisualsPositions', positions)
+     }
+
+}
+
+
 function getImages(game : RuntimeObject, pathProject : string){
   let visualsImages: (string | number | boolean | Error | RuntimeObject[] | null | undefined)[] = []
   game.get('visuals')?.innerCollection?.forEach(v => {
@@ -106,7 +135,7 @@ function getImages(game : RuntimeObject, pathProject : string){
    })
   return visualsImages
 }
-function getPositions(game: RuntimeObject, interpreter : Interpreter, pathProject : string){
+function getPositions(game: RuntimeObject, interp : Interpreter){
   let positions: { x: InnerValue | undefined; y: InnerValue | undefined }[] = []
   game.get('visuals')?.innerCollection?.forEach(v => {
     let x = interp.send('position', v)?.get('x')?.innerValue

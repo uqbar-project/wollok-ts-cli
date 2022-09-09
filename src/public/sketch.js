@@ -4,13 +4,13 @@ var positionsImages
 function preload(){
   loadBackground()
   loadVisuals()
-  loadPositionsVisuals()
 }
 function setup() {
   createCanvas(windowWidth, windowHeight);
 }
 function draw() {
   background(backgroundImage ? backgroundImage : 'grey')
+  loadPositionsVisuals()
   drawVisuals()
 }
 
