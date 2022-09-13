@@ -4,6 +4,7 @@ import globby from 'globby'
 import { join } from 'path'
 import { buildEnvironment, Environment, Problem } from 'wollok-ts'
 import  logger  from  'loglevel'
+import { shouldNotCompareAgainstBooleanLiterals } from 'wollok-ts/dist/validator'
 
 const { time, timeEnd } = console
 
@@ -14,13 +15,14 @@ const { time, timeEnd } = console
 
 export async function buildEnvironmentForProject(cwd: string): Promise<Environment> {
   const paths = await globby('**/*.@(wlk|wtest|wpgm)', { cwd })
-
+  
   const debug = logger.getLevel() <= logger.levels.DEBUG
 
   if(debug) time('Reading project files')
   const files = await Promise.all(paths.map(async name =>
     ({ name, content: await readFile(join(cwd, name), 'utf8') })
   ))
+  
   if(debug) timeEnd('Reading project files')
 
   if(debug) time('Building environment')

@@ -1,7 +1,22 @@
 <html>
+  <head>
+    <link rel="stylesheet" href="./indexGame.css">
+    <script>var exports = {};</script>
+    <script src="../game/index.js"></script>
+  </head>
+  <body>
+    <span id="title-input">Cargue el proyecto del juego</span>
+    <input id="input-project" type="file" webkitdirectory multiple>
+    <main class="container">
+      <div id="game" class="game"></div>
+    </main>
+    <script src="./main.js"></script>
+  </body>
+</html>
+<!-- <html>
 <head>
   <meta charset="UTF-8">
-  <!-- <title>Game</title> -->
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.2.0/p5.js"></script>
   <script src="http://localhost:3000/socket.io/socket.io.js"></script>
   <script language="javascript" type="text/javascript" src="./sketch.js"></script>
@@ -9,7 +24,7 @@
 
 <body>
   
-    <!-- <div id='game'></div> -->
+
   <script>
     const socket = io('http://localhost:3000')
     socket.on('connect', function () { console.log("conectado!") })
@@ -20,4 +35,4 @@
   
 </body>
 
-</html>
+</html> -->

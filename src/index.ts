@@ -3,6 +3,7 @@ import repl from './commands/repl'
 import run from './commands/run'
 import test from './commands/test'
 import  logger  from  'loglevel'
+import runGame from './commands/runGame'
 
 const program = new Command()
   .name('wollok')
@@ -19,6 +20,10 @@ program.command('run')
   .option('--skipValidations', 'skip code validation', false)
   .option('-v, --verbose', 'print debugging information', false)
   .action(run)
+
+program.command('runGame')
+  .description('Run a Wollok Game')
+  .action(runGame)
 
 program.command('test')
   .description('Run Wollok tests')
