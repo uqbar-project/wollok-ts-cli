@@ -27,7 +27,7 @@ export default async function (programFQN: Name, { project, skipValidations }: O
   logger.info(`Running ${valueDescription(programFQN)} on ${valueDescription(project)}`)
 
   let environment = await buildEnvironmentForProject(project)
-  environment = link([parse.File('applier').tryParse('object applier{ method apply() native }')], environment)
+  environment = link([parse.File('draw').tryParse('object drawer{ method apply() native; method number() = 3000; method name()="hola" }')], environment)
 
   if(!skipValidations) {
     const problems = validate(environment)
@@ -42,14 +42,14 @@ export default async function (programFQN: Name, { project, skipValidations }: O
     const debug = logger.getLevel() <= logger.levels.DEBUG
     if(debug) time(successDescription('Run finalized successfully'))
 
-    const nativesAndApply = {
+    const nativesAndDraw = {
       ...natives,
-      applier: {
-        applier: { *apply() { console.log("llegamos? Sí. Llegamos.")} },
+      draw: {
+        drawer: { *apply() { console.log("llegamos? Sí. Llegamos.")} },
       },
     }
 
-    interp = interpret(environment, nativesAndApply)
+    interp = interpret(environment, nativesAndDraw)
     interp.run(programFQN)
 
     if(debug) timeEnd(successDescription('Run finalized successfully'))
@@ -104,7 +104,8 @@ export default async function (programFQN: Name, { project, skipValidations }: O
   win.removeMenu()
   win.webContents.openDevTools()
   win.loadFile('./public/indexGame.html')
-  interp.send('apply', interp.object('applier.applier'))
+
+  interp.send('onTick', interp.object('wollok.game.game'), interp.send('number', interp.object('draw.drawer'))!, interp.send('name', interp.object('draw.drawer'))!, interp.send('apply', interp.object('draw.drawer'))!)
 }
 
 function getImages(game : RuntimeObject, pathProject : string){
