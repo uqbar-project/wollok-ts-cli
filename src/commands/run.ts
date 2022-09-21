@@ -12,7 +12,7 @@ import { appendFileSync } from 'fs'
 
 
 const { time, timeEnd, log } = console
-const carpetaImgs = 'imagenes'
+const carpetaImgs = 'assets'
 // TO-DO
 //Acá habria que ver como hacer para agregar todos los nombres 
 //posibles de la carpeta que contiene las imagenes (assets)
@@ -45,7 +45,20 @@ export default async function (programFQN: Name, { project, skipValidations }: O
     const nativesAndDraw = {
       ...natives,
       draw: {
-        drawer: { *apply() { console.log("llegamos? Sí. Llegamos.")} },
+        drawer: { *apply() {
+          console.log("llegamos? Sí. Llegamos.")
+          const game = interp?.object('wollok.game.game')
+          const pathDirname = path.dirname(project)
+
+          const background = game.get('boardGround') ? game.get('boardGround')?.innerString : 'default'
+          const pathBackground = path.join(pathDirname, '/', carpetaImgs, '/', background! )
+          const visualsImages = getImages(game, pathDirname)
+          const positions = getPositions(game)
+          
+          io.emit('getPathBackround', pathBackground)
+          io.emit('VisualsImage', visualsImages)
+          io.emit('VisualsPositions', positions)   
+          } },
       },
     }
 
@@ -62,12 +75,12 @@ export default async function (programFQN: Name, { project, skipValidations }: O
   const width = interp?.send('width', game!)?.innerNumber
   const height = interp?.send('height', game!)?.innerNumber
 
-  const pathDirname = path.dirname(project)
+  // const pathDirname = path.dirname(project)
 
-  const background = game.get('boardGround') ? game.get('boardGround')?.innerString : 'default'
-  const pathBackground = path.join(pathDirname, '/', carpetaImgs, '/', background! )
-  const visualsImages = getImages(game, pathDirname)
-  const positions = getPositions(game)
+  // const background = game.get('boardGround') ? game.get('boardGround')?.innerString : 'default'
+  // const pathBackground = path.join(pathDirname, '/', carpetaImgs, '/', background! )
+  // const visualsImages = getImages(game, pathDirname)
+  // const positions = getPositions(game)
 
   const server = http.createServer(express())
   const io = new Server(server)
@@ -83,9 +96,9 @@ export default async function (programFQN: Name, { project, skipValidations }: O
       log(`Received pong from client with value: ${payload}`)
       count = payload
     })
-    socket.emit('getPathBackround', pathBackground)
-    socket.emit('VisualsImage', visualsImages)
-    socket.emit('VisualsPositions', positions)
+    // socket.emit('getPathBackround', pathBackground)
+    // socket.emit('VisualsImage', visualsImages)
+    // socket.emit('VisualsPositions', positions)
   })
   server.listen(3000)
 
@@ -105,7 +118,8 @@ export default async function (programFQN: Name, { project, skipValidations }: O
   win.webContents.openDevTools()
   win.loadFile('./public/indexGame.html')
 
-  interp.send('onTick', interp.object('wollok.game.game'), interp.send('number', interp.object('draw.drawer'))!, interp.send('name', interp.object('draw.drawer'))!, interp.send('apply', interp.object('draw.drawer'))!)
+  setInterval(() => {interp.send('apply', interp.object('draw.drawer'))}, 500)
+  //interp.send('onTick', interp.object('wollok.game.game'), interp.send('number', interp.object('draw.drawer'))!, interp.send('name', interp.object('draw.drawer'))!, interp.send('apply', interp.object('draw.drawer'))!)
 }
 
 function getImages(game : RuntimeObject, pathProject : string){
