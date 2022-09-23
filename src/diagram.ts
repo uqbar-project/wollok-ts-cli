@@ -15,8 +15,10 @@ export function initializeCytoscape(container: HTMLElement): void {
       {
         selector: 'node',
         style: {
-          'background-color': '#666',
+          'background-color': '#02e',
           'label': 'data(label)',
+          'font-weight': 'bold',
+          'color': '#000',
         },
       },
 
@@ -29,6 +31,15 @@ export function initializeCytoscape(container: HTMLElement): void {
           'target-arrow-color': '#ccc',
           'target-arrow-shape': 'triangle',
           'curve-style': 'bezier',
+        },
+      },
+      {
+        selector: 'node[type = "literal"]',
+        style: {
+          'background-opacity': 0,
+          'text-valign': 'center',
+          'color': '#ff3bc3',
+          'font-weight': 'bold',
         },
       },
     ],
