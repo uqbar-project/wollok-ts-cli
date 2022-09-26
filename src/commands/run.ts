@@ -1,4 +1,4 @@
-import { Evaluation, InnerValue, link, parse, Name, RuntimeObject, validate } from 'wollok-ts'
+import { InnerValue, link, parse, Name, RuntimeObject, validate } from 'wollok-ts'
 import interpret, { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { buildEnvironmentForProject, failureDescription, problemDescription, successDescription, valueDescription } from '../utils'
@@ -8,9 +8,6 @@ import express from 'express'
 import http from 'http'
 import { app as client, BrowserWindow } from 'electron'
 import path from 'path'
-import { appendFileSync } from 'fs'
-import globby from 'globby'
-
 
 const { time, timeEnd, log } = console
 
@@ -49,7 +46,7 @@ export default async function (programFQN: Name, { project, skipValidations }: O
             console.log("llegamos? Sí. Llegamos.", new Date()) 
             const game = interp?.object('wollok.game.game')
             const background = game.get('boardGround') ? game.get('boardGround')?.innerString : 'default'
-            const visuals = getPositions(game, project)
+            const visuals = getPositions(game)
             ioo.emit('background', background)
             ioo.emit('visuals', visuals)
           } catch (e){
@@ -76,7 +73,6 @@ export default async function (programFQN: Name, { project, skipValidations }: O
   const title = interp ? interp?.send('title', game!)?.innerString : 'Wollok Game'
   const width = interp?.send('width', game!)?.innerNumber
   const height = interp?.send('height', game!)?.innerNumber
-
 
   const server = http.createServer(express())
   ioo = new Server(server)
@@ -111,7 +107,7 @@ export default async function (programFQN: Name, { project, skipValidations }: O
 
 }
 function getImages(pathProject : string){
-  let images: { name : any , url:any }[] = []
+  let images: { name : any , url: any }[] = []
   const fs = require('fs');
   const pathDirname = path.dirname(pathProject)
   
@@ -125,8 +121,8 @@ function getImages(pathProject : string){
   return images
 }
 
-function getPositions(game: RuntimeObject, pathProject :string){
-  let visuals: { image : any , x: InnerValue | undefined; y: InnerValue | undefined }[] = []
+function getPositions(game: RuntimeObject){
+  let visuals: { image : any , x: any; y: any }[] = []
   game.get('visuals')?.innerCollection?.forEach(v => {
     const image = interp.send('image', v)?.innerString!
     let x = interp.send('position', v)?.get('x')?.innerValue
