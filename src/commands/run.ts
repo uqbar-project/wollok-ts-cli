@@ -9,13 +9,10 @@ import http from 'http'
 import { app as client, BrowserWindow } from 'electron'
 import path from 'path'
 import { appendFileSync } from 'fs'
+import globby from 'globby'
 
 
 const { time, timeEnd, log } = console
-const carpetaImgs = 'assets'
-// TO-DO
-//Acá habria que ver como hacer para agregar todos los nombres 
-//posibles de la carpeta que contiene las imagenes (assets)
 
 type Options = {
   project: string
@@ -23,6 +20,7 @@ type Options = {
 }
 let interp: Interpreter
 let ioo: Server
+let folderImages : string
 
 export default async function (programFQN: Name, { project, skipValidations }: Options): Promise<void> {
   logger.info(`Running ${valueDescription(programFQN)} on ${valueDescription(project)}`)
@@ -50,24 +48,17 @@ export default async function (programFQN: Name, { project, skipValidations }: O
           try {
             console.log("llegamos? Sí. Llegamos.", new Date()) 
             const game = interp?.object('wollok.game.game')
-            const pathDirname = path.dirname(project)
             const background = game.get('boardGround') ? game.get('boardGround')?.innerString : 'default'
-            const pathBackground = path.join(pathDirname, '/', carpetaImgs, '/', background! )
-            const visualsImages = getImages(game, pathDirname)
-            const positions = getPositions(game)
-            
-            ioo.emit('getPathBackround', pathBackground)
-            ioo.emit('VisualsImage', visualsImages)
-            ioo.emit('VisualsPositions', positions)
+            const visuals = getPositions(game, project)
+            ioo.emit('background', background)
+            ioo.emit('visuals', visuals)
           } catch (e){
             console.log(e)
           }
-         
-          } },
+        }},
       },
     }
 
-    
     interp = interpret(environment, nativesAndDraw)
 
     const game = interp?.object('wollok.game.game')
@@ -86,6 +77,7 @@ export default async function (programFQN: Name, { project, skipValidations }: O
   const width = interp?.send('width', game!)?.innerNumber
   const height = interp?.send('height', game!)?.innerNumber
 
+
   const server = http.createServer(express())
   ioo = new Server(server)
   const url = require('url');
@@ -94,14 +86,10 @@ export default async function (programFQN: Name, { project, skipValidations }: O
     log('Client connected!')
     socket.on('disconnect', () => { log('Client disconnected!') })
 
-    let count = 0
+    socket.emit('images', getImages(project))
 
-    socket.on('pong', payload => {
-      log(`Received pong from client with value: ${payload}`)
-      count = payload
-    })
     let timmer = 0
-    setInterval(() => {interp.send('flushEvents', game, interp.reify(timmer)); timmer+=1000/30 },1000/30)
+    setInterval(() => {interp.send('flushEvents', game, interp.reify(timmer)); timmer+=5000 },5000)
   })
   server.listen(3000)
 
@@ -122,22 +110,28 @@ export default async function (programFQN: Name, { project, skipValidations }: O
   win.loadFile('./public/indexGame.html')
 
 }
-
-function getImages(game : RuntimeObject, pathProject : string){
-  const visualsImages: (string | number | boolean | Error | RuntimeObject[] | null | undefined)[] = []
-  game.get('visuals')?.innerCollection?.forEach(v => {
-    const image = interp.send('image', v)?.innerString
-    visualsImages.push(path.join(pathProject,'/',carpetaImgs,'/', image! ))
+function getImages(pathProject : string){
+  let images: { name : any , url:any }[] = []
+  const fs = require('fs');
+  const pathDirname = path.dirname(pathProject)
+  
+  fs.readdirSync(pathDirname).forEach((file:any) => {
+    if (file == 'assets' || file == 'imagenes'){  folderImages = file }
   })
-  return visualsImages
+  const pathImage = path.join(pathDirname,'/',folderImages)
+  fs.readdirSync(pathImage).filter((file:any) => {
+    images.push({'name': file , 'url': path.join(pathDirname,'/',folderImages,'/', file )})
+  });
+  return images
 }
 
-function getPositions(game: RuntimeObject){
-  const positions: { x: InnerValue | undefined; y: InnerValue | undefined }[] = []
+function getPositions(game: RuntimeObject, pathProject :string){
+  let visuals: { image : any , x: InnerValue | undefined; y: InnerValue | undefined }[] = []
   game.get('visuals')?.innerCollection?.forEach(v => {
-    const x = interp.send('position', v)?.get('x')?.innerValue
-    const y = interp.send('position', v)?.get('y')?.innerValue
-    positions.push({'x': x,'y':y})
+    const image = interp.send('image', v)?.innerString!
+    let x = interp.send('position', v)?.get('x')?.innerValue
+    let y = interp.send('position', v)?.get('y')?.innerValue
+    visuals.push({'image':image,'x': x,'y':y})
   })
-  return positions
+  return visuals
 }
