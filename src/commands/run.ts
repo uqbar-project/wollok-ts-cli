@@ -22,12 +22,13 @@ type Options = {
   skipValidations: boolean
 }
 let interp: Interpreter
+let ioo: Server
 
 export default async function (programFQN: Name, { project, skipValidations }: Options): Promise<void> {
   logger.info(`Running ${valueDescription(programFQN)} on ${valueDescription(project)}`)
 
   let environment = await buildEnvironmentForProject(project)
-  environment = link([parse.File('draw').tryParse('object drawer{ method apply() native; method number() = 3000; method name()="hola" }')], environment)
+  environment = link([parse.File('draw').tryParse('object drawer{ method apply() native }')], environment)
 
   if(!skipValidations) {
     const problems = validate(environment)
@@ -46,23 +47,33 @@ export default async function (programFQN: Name, { project, skipValidations }: O
       ...natives,
       draw: {
         drawer: { *apply() {
-          console.log("llegamos? Sí. Llegamos.")
-          const game = interp?.object('wollok.game.game')
-          const pathDirname = path.dirname(project)
-
-          const background = game.get('boardGround') ? game.get('boardGround')?.innerString : 'default'
-          const pathBackground = path.join(pathDirname, '/', carpetaImgs, '/', background! )
-          const visualsImages = getImages(game, pathDirname)
-          const positions = getPositions(game)
-          
-          io.emit('getPathBackround', pathBackground)
-          io.emit('VisualsImage', visualsImages)
-          io.emit('VisualsPositions', positions)   
+          try {
+            console.log("llegamos? Sí. Llegamos.", new Date()) 
+            const game = interp?.object('wollok.game.game')
+            const pathDirname = path.dirname(project)
+            const background = game.get('boardGround') ? game.get('boardGround')?.innerString : 'default'
+            const pathBackground = path.join(pathDirname, '/', carpetaImgs, '/', background! )
+            const visualsImages = getImages(game, pathDirname)
+            const positions = getPositions(game)
+            
+            ioo.emit('getPathBackround', pathBackground)
+            ioo.emit('VisualsImage', visualsImages)
+            ioo.emit('VisualsPositions', positions)
+          } catch (e){
+            console.log(e)
+          }
+         
           } },
       },
     }
 
+    
     interp = interpret(environment, nativesAndDraw)
+
+    const game = interp?.object('wollok.game.game')
+    const drawer = interp.object('draw.drawer')
+    interp.send('onTick', game, interp.reify(1000), interp.reify('probando'), drawer )
+
     interp.run(programFQN)
 
     if(debug) timeEnd(successDescription('Run finalized successfully'))
@@ -75,18 +86,11 @@ export default async function (programFQN: Name, { project, skipValidations }: O
   const width = interp?.send('width', game!)?.innerNumber
   const height = interp?.send('height', game!)?.innerNumber
 
-  // const pathDirname = path.dirname(project)
-
-  // const background = game.get('boardGround') ? game.get('boardGround')?.innerString : 'default'
-  // const pathBackground = path.join(pathDirname, '/', carpetaImgs, '/', background! )
-  // const visualsImages = getImages(game, pathDirname)
-  // const positions = getPositions(game)
-
   const server = http.createServer(express())
-  const io = new Server(server)
+  ioo = new Server(server)
   const url = require('url');
 
-  io.on('connection', socket => {
+  ioo.on('connection', socket => {
     log('Client connected!')
     socket.on('disconnect', () => { log('Client disconnected!') })
 
@@ -96,9 +100,8 @@ export default async function (programFQN: Name, { project, skipValidations }: O
       log(`Received pong from client with value: ${payload}`)
       count = payload
     })
-    // socket.emit('getPathBackround', pathBackground)
-    // socket.emit('VisualsImage', visualsImages)
-    // socket.emit('VisualsPositions', positions)
+    let timmer = 0
+    setInterval(() => {interp.send('flushEvents', game, interp.reify(timmer)); timmer+=1000/30 },1000/30)
   })
   server.listen(3000)
 
@@ -118,8 +121,6 @@ export default async function (programFQN: Name, { project, skipValidations }: O
   win.webContents.openDevTools()
   win.loadFile('./public/indexGame.html')
 
-  setInterval(() => {interp.send('apply', interp.object('draw.drawer'))}, 500)
-  //interp.send('onTick', interp.object('wollok.game.game'), interp.send('number', interp.object('draw.drawer'))!, interp.send('name', interp.object('draw.drawer'))!, interp.send('apply', interp.object('draw.drawer'))!)
 }
 
 function getImages(game : RuntimeObject, pathProject : string){

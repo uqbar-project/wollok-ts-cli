@@ -12,6 +12,7 @@ function setup() {
 function draw() {
   background(backgroundImage ? backgroundImage : 'grey')
   drawVisuals()
+
 }
 
 function loadBackground(){
