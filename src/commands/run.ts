@@ -1,4 +1,4 @@
-import { InnerValue, link, parse, Name, RuntimeObject, validate } from 'wollok-ts'
+import { InnerValue, link, parse, Name, RuntimeObject, validate, WollokException } from 'wollok-ts'
 import interpret, { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { buildEnvironmentForProject, failureDescription, problemDescription, successDescription, valueDescription } from '../utils'
@@ -16,8 +16,9 @@ type Options = {
   skipValidations: boolean
 }
 let interp: Interpreter
+let stop = false
 let ioo: Server
-let folderImages : string
+let folderImages: string
 
 export default async function (programFQN: Name, { project, skipValidations }: Options): Promise<void> {
   logger.info(`Running ${valueDescription(programFQN)} on ${valueDescription(project)}`)
@@ -43,14 +44,15 @@ export default async function (programFQN: Name, { project, skipValidations }: O
       draw: {
         drawer: { *apply() {
           try {
-            console.log("llegamos? Sí. Llegamos.", new Date()) 
             const game = interp?.object('wollok.game.game')
             const background = game.get('boardGround') ? game.get('boardGround')?.innerString : 'default'
             const visuals = getPositions(game)
             ioo.emit('background', background)
             ioo.emit('visuals', visuals)
-          } catch (e){
-            console.log(e)
+          } catch (e: any){
+            if (e instanceof WollokException) logger.error(e.message)
+            stop = true
+            interp.send('stop', game)
           }
         }},
       },
@@ -85,7 +87,11 @@ export default async function (programFQN: Name, { project, skipValidations }: O
     socket.emit('images', getImages(project))
 
     let timmer = 0
-    setInterval(() => {interp.send('flushEvents', game, interp.reify(timmer)); timmer+=5000 },5000)
+    const id = setInterval(() => {
+      interp.send('flushEvents', game, interp.reify(timmer))
+      timmer+=100
+      if(stop){clearInterval(id)}
+    }, 100)
   })
   server.listen(3000)
 
@@ -106,27 +112,28 @@ export default async function (programFQN: Name, { project, skipValidations }: O
   win.loadFile('./public/indexGame.html')
 
 }
+
 function getImages(pathProject : string){
-  let images: { name : any , url: any }[] = []
+  const images: { name: any, url: any }[] = []
   const fs = require('fs');
   const pathDirname = path.dirname(pathProject)
-  
-  fs.readdirSync(pathDirname).forEach((file:any) => {
+
+  fs.readdirSync(pathDirname).forEach((file: any) => {
     if (file == 'assets' || file == 'imagenes'){  folderImages = file }
   })
   const pathImage = path.join(pathDirname,'/',folderImages)
   fs.readdirSync(pathImage).filter((file:any) => {
     images.push({'name': file , 'url': path.join(pathDirname,'/',folderImages,'/', file )})
-  });
+  })
   return images
 }
 
 function getPositions(game: RuntimeObject){
-  let visuals: { image : any , x: any; y: any }[] = []
+  const visuals: { image: any, x: any; y: any }[] = []
   game.get('visuals')?.innerCollection?.forEach(v => {
-    const image = interp.send('image', v)?.innerString!
-    let x = interp.send('position', v)?.get('x')?.innerValue
-    let y = interp.send('position', v)?.get('y')?.innerValue
+    const image = interp.send('image', v)!.innerString!
+    const x = interp.send('position', v)?.get('x')?.innerValue
+    const y = interp.send('position', v)?.get('y')?.innerValue
     visuals.push({'image':image,'x': x,'y':y})
   })
   return visuals
