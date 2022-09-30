@@ -1,4 +1,4 @@
-import { InnerValue, link, parse, Name, RuntimeObject, validate, WollokException } from 'wollok-ts'
+import { link, parse, Name, RuntimeObject, validate, WollokException } from 'wollok-ts'
 import interpret, { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { buildEnvironmentForProject, failureDescription, problemDescription, successDescription, valueDescription } from '../utils'
@@ -17,7 +17,7 @@ type Options = {
 }
 let interp: Interpreter
 let stop = false
-let ioo: Server
+let io: Server
 let folderImages: string
 
 export default async function (programFQN: Name, { project, skipValidations }: Options): Promise<void> {
@@ -47,10 +47,10 @@ export default async function (programFQN: Name, { project, skipValidations }: O
             const game = interp?.object('wollok.game.game')
             const background = game.get('boardGround') ? game.get('boardGround')?.innerString : 'default'
             const visuals = getPositions(game)
-            ioo.emit('background', background)
-            ioo.emit('visuals', visuals)
+            io.emit('background', background)
+            io.emit('visuals', visuals)
           } catch (e: any){
-            if (e instanceof WollokException) logger.error(e.message)
+            if (e instanceof WollokException) logger.error(failureDescription(e.message))
             stop = true
             interp.send('stop', game)
           }
@@ -77,10 +77,10 @@ export default async function (programFQN: Name, { project, skipValidations }: O
   const height = interp?.send('height', game!)?.innerNumber
 
   const server = http.createServer(express())
-  ioo = new Server(server)
+  io = new Server(server)
   const url = require('url');
 
-  ioo.on('connection', socket => {
+  io.on('connection', socket => {
     log('Client connected!')
     socket.on('disconnect', () => { log('Client disconnected!') })
 
