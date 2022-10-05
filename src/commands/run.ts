@@ -8,6 +8,7 @@ import express from 'express'
 import http from 'http'
 import { app as client, BrowserWindow } from 'electron'
 import path from 'path'
+import { setTimeout } from 'timers/promises'
 
 const { time, timeEnd, log } = console
 
@@ -51,7 +52,6 @@ export default async function (programFQN: Name, { project, skipValidations }: O
             io.emit('visuals', visuals)
           } catch (e: any){
             if (e instanceof WollokException) logger.error(failureDescription(e.message))
-            stop = true
             interp.send('stop', game)
           }
         }},
@@ -88,9 +88,16 @@ export default async function (programFQN: Name, { project, skipValidations }: O
 
     let timmer = 0
     const id = setInterval(() => {
-      interp.send('flushEvents', game, interp.reify(timmer))
-      timmer+=100
-      if(stop){clearInterval(id)}
+      try {
+        interp.send('flushEvents', game, interp.reify(timmer))
+        timmer+=100
+        if(!game.get('running')) {clearInterval(id)}
+      } catch(e: any){
+        interp.send('stop', game)
+        logger.error(failureDescription(e.message))
+        clearInterval(id)
+        win.close()
+      }
     }, 100)
   })
   server.listen(3000)
