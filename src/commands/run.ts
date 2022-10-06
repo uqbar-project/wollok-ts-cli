@@ -8,7 +8,6 @@ import express from 'express'
 import http from 'http'
 import { app as client, BrowserWindow } from 'electron'
 import path from 'path'
-import { setTimeout } from 'timers/promises'
 
 const { time, timeEnd, log } = console
 
@@ -94,9 +93,8 @@ export default async function (programFQN: Name, { project, skipValidations }: O
         if(!game.get('running')) {clearInterval(id)}
       } catch(e: any){
         interp.send('stop', game)
-        logger.error(failureDescription(e.message))
+        socket.emit('errorDetected', e.message)
         clearInterval(id)
-        win.close()
       }
     }, 100)
   })

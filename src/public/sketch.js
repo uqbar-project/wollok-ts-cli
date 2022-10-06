@@ -1,20 +1,39 @@
 var backgroundImage
 var images = []
 var visuals = []
+var mensajeError
+
 function preload(){
   loadAllImages()
-  loadBackground()
 }
 function setup() {
   createCanvas(windowWidth, windowHeight);
 }
 function draw() {
-  background(backgroundImage ? backgroundImage : 'grey')
-  loadPositionsVisuals()
-  drawVisuals()
-
+  loadBackground();
+  background(backgroundImage ? backgroundImage : 'grey');
+  loadPositionsVisuals();
+  drawVisuals();
+  checkError();
+ 
 }
-
+function checkError(){
+  socket.on('errorDetected', errorM => {
+    mensajeError = errorM
+  })
+  if (mensajeError){ 
+    noLoop();
+    clear();
+    let title = createDiv('Hubo un error durante la ejecuccion:');
+    title.style('font-size', '22px');
+    title.style('color', 'red');
+    title.position(10, 0);
+    let div = createDiv(mensajeError);
+    div.style('font-size', '16px');
+    div.style('color', 'red');
+    div.position(10, 30);
+  }
+}
 function loadBackground(){
   socket.on('background', fondo =>{
     backgroundImage = images.find(img => img.name == fondo).url

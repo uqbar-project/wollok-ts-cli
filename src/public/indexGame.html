@@ -1,7 +1,6 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <!-- <title>Game</title> -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.2.0/p5.js"></script>
   <script src="http://localhost:3000/socket.io/socket.io.js"></script>
   <script language="javascript" type="text/javascript" src="./sketch.js"></script>
@@ -9,15 +8,12 @@
 
 <body>
   
-    <!-- <div id='game'></div> -->
   <script>
     const socket = io('http://localhost:3000')
     socket.on('connect', function () { console.log("conectado!") })
-    socket.on('event', function (data) { console.log(`evento! ${data}`) })
     socket.on('disconnect', function () { console.log("desconectado!") })
   </script> 
 
-  
 </body>
 
 </html>
