@@ -2,9 +2,10 @@ var backgroundImage
 var images = []
 var visuals = []
 var mensajeError
-
+var wko
 function preload(){
   loadAllImages()
+  wko = loadImage('./wko.png')
 }
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -24,7 +25,7 @@ function checkError(){
   if (mensajeError){ 
     noLoop();
     clear();
-    let title = createDiv('Hubo un error durante la ejecuccion:');
+    let title = createDiv('Uh-oh... An error occurred during the run:');
     title.style('font-size', '22px');
     title.style('color', 'red');
     title.position(10, 0);
@@ -60,6 +61,10 @@ function drawVisuals(){
     var positionX = (visuals[i].x)*50
     var positionY = visuals[i].y == 0 ? heightWin : ((heightWin) - visuals[i].y*50)
     var img = images.find(img => img.name == visuals[i].image)
-    image(img.url, positionX,positionY)
+    if (img){
+      image(img.url, positionX,positionY)
+    } else {
+      image(wko, positionX,positionY)
+    }
   }
 }
