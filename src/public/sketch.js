@@ -3,6 +3,10 @@ var images = []
 var visuals = []
 var mensajeError
 var wko
+var messages = []
+const TEXT_STYLE = 'bold'
+const TEXT_SIZE = 14
+
 function preload(){
   loadAllImages()
   wko = loadImage('./wko.png')
@@ -11,10 +15,13 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
 }
 function draw() {
+  clear();
   loadBackground();
+  loadVisuals();
+  // loadMessages();
   background(backgroundImage ? backgroundImage : 'grey');
-  loadPositionsVisuals();
   drawVisuals();
+  // drawMessages();
   checkError();
  
 }
@@ -49,11 +56,16 @@ function loadAllImages(){
   });
 }
 
-function loadPositionsVisuals(){
-  socket.on('visuals', v =>{
-    visuals = v
+function loadVisuals(){
+  socket.on('visuals', visualsList =>{
+    visuals = visualsList
   });
 }
+// function loadMessages(){
+//   socket.on('messages', messagesList =>{
+//     messages = messagesList
+//   });
+// }
 
 function drawVisuals(){
   var heightWin = windowHeight-100
@@ -61,10 +73,26 @@ function drawVisuals(){
     var positionX = (visuals[i].x)*50
     var positionY = visuals[i].y == 0 ? heightWin : ((heightWin) - visuals[i].y*50)
     var img = images.find(img => img.name == visuals[i].image)
-    if (img){
-      image(img.url, positionX,positionY)
-    } else {
-      image(wko, positionX,positionY)
-    }
+    img ? image(img.url, positionX,positionY) : image(wko, positionX,positionY)
   }
 }
+
+function keyPressed(){
+  socket.emit('keyPressed', {'key' : key, 'keyCode': keyCode});
+}
+
+// function drawMessages(){
+//   var heightWin = windowHeight-100
+//   if (messages){
+//     for (i=0; i < messages.length; i++){
+//       var positionY = messages[i].y == 0 ? heightWin : ((heightWin) - messages[i].y*50)
+//       fill('white')
+//       rect(messages[i].x*50, messages[i].y, 10, 10, 0, 15, 10, 5)
+//       textSize(TEXT_SIZE)
+//       textStyle(TEXT_STYLE)
+//       fill('black')
+//       noStroke()
+//       text(messages[i].message, messages[i].x*50, positionY)
+//     }
+//   }
+// }

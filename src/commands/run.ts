@@ -8,6 +8,7 @@ import express from 'express'
 import http from 'http'
 import { app as client, BrowserWindow } from 'electron'
 import path from 'path'
+import { buildKeyPressEvent, queueEvent, wKeyCode } from './extrasGame'
 
 const { time, timeEnd, log } = console
 
@@ -16,9 +17,9 @@ type Options = {
   skipValidations: boolean
 }
 let interp: Interpreter
-let stop = false
 let io: Server
 let folderImages: string
+let timmer = 0
 
 export default async function (programFQN: Name, { project, skipValidations }: Options): Promise<void> {
   logger.info(`Running ${valueDescription(programFQN)} on ${valueDescription(project)}`)
@@ -46,9 +47,11 @@ export default async function (programFQN: Name, { project, skipValidations }: O
           try {
             const game = interp?.object('wollok.game.game')
             const background = game.get('boardGround') ? game.get('boardGround')?.innerString : 'default'
-            const visuals = getPositions(game)
+            const visuals = getVisuals(game)
+            // const messages = getMessages(game)
             io.emit('background', background)
             io.emit('visuals', visuals)
+            // io.emit('messages', messages)
           } catch (e: any){
             if (e instanceof WollokException) logger.error(failureDescription(e.message))
             interp.send('stop', game)
@@ -82,10 +85,12 @@ export default async function (programFQN: Name, { project, skipValidations }: O
   io.on('connection', socket => {
     log('Client connected!')
     socket.on('disconnect', () => { log('Client disconnected!') })
+    socket.on('keyPressed', key => {
+      queueEvent(interp, buildKeyPressEvent(interp, wKeyCode(key.key, key.keyCode)), buildKeyPressEvent(interp, 'ANY'))
+    })
 
     socket.emit('images', getImages(project))
-
-    let timmer = 0
+    
     const id = setInterval(() => {
       try {
         interp.send('flushEvents', game, interp.reify(timmer))
@@ -133,13 +138,38 @@ function getImages(pathProject : string){
   return images
 }
 
-function getPositions(game: RuntimeObject){
+function getVisuals(game: RuntimeObject){
   const visuals: { image: any, x: any; y: any }[] = []
   game.get('visuals')?.innerCollection?.forEach(v => {
     const image = interp.send('image', v)!.innerString!
-    const x = interp.send('position', v)?.get('x')?.innerValue
-    const y = interp.send('position', v)?.get('y')?.innerValue
+    const x = getPosition( v,'x')
+    const y = getPosition( v,'y')
     visuals.push({'image':image,'x': x,'y':y})
   })
   return visuals
+}
+
+function getMessages(game: RuntimeObject){
+  const messages: DrawableMessage[] = []
+  game.get('visuals')?.innerCollection?.forEach(visual => {
+    const message = visual.get('message')?.innerString
+    const messageTime = Number(visual.get('messageTime')?.innerValue)
+    if (message != undefined && messageTime > timmer){
+      const x = Number(getPosition(visual ,'x'))
+      const y = Number(getPosition(visual ,'y'))
+      const draw: DrawableMessage = {'message' : message, 'x': x, 'y': y}
+      messages.push(draw)
+    }
+  })
+  return messages
+}
+
+function getPosition(visual: RuntimeObject, position :string){
+  return interp.send('position', visual)?.get(position)?.innerValue
+}
+
+export interface DrawableMessage {
+  message: string;
+  x: number;
+  y: number;
 }
