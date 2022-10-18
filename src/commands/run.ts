@@ -48,10 +48,10 @@ export default async function (programFQN: Name, { project, skipValidations }: O
             const game = interp?.object('wollok.game.game')
             const background = game.get('boardGround') ? game.get('boardGround')?.innerString : 'default'
             const visuals = getVisuals(game)
-            // const messages = getMessages(game)
+            const messages = getMessages(game)
             io.emit('background', background)
             io.emit('visuals', visuals)
-            // io.emit('messages', messages)
+            io.emit('messages', messages)
           } catch (e: any){
             if (e instanceof WollokException) logger.error(failureDescription(e.message))
             interp.send('stop', game)

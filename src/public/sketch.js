@@ -18,10 +18,10 @@ function draw() {
   clear();
   loadBackground();
   loadVisuals();
-  // loadMessages();
+  loadMessages();
   background(backgroundImage ? backgroundImage : 'grey');
   drawVisuals();
-  // drawMessages();
+  drawMessages();
   checkError();
  
 }
@@ -61,11 +61,11 @@ function loadVisuals(){
     visuals = visualsList
   });
 }
-// function loadMessages(){
-//   socket.on('messages', messagesList =>{
-//     messages = messagesList
-//   });
-// }
+function loadMessages(){
+  socket.on('messages', messagesList =>{
+    messages = messagesList
+  });
+}
 
 function drawVisuals(){
   var heightWin = windowHeight-100
@@ -81,18 +81,22 @@ function keyPressed(){
   socket.emit('keyPressed', {'key' : key, 'keyCode': keyCode});
 }
 
-// function drawMessages(){
-//   var heightWin = windowHeight-100
-//   if (messages){
-//     for (i=0; i < messages.length; i++){
-//       var positionY = messages[i].y == 0 ? heightWin : ((heightWin) - messages[i].y*50)
-//       fill('white')
-//       rect(messages[i].x*50, messages[i].y, 10, 10, 0, 15, 10, 5)
-//       textSize(TEXT_SIZE)
-//       textStyle(TEXT_STYLE)
-//       fill('black')
-//       noStroke()
-//       text(messages[i].message, messages[i].x*50, positionY)
-//     }
-//   }
-// }
+function drawMessages(){
+  var heightWin = windowHeight-100
+  if (messages){
+    for (i=0; i < messages.length; i++){
+      var positionY = messages[i].y == 0 ? heightWin : ((heightWin) - messages[i].y*50)-5;
+      drawMessageBackground(messages[i].x*50, positionY-15, (messages[i].message).length*8 )
+      textSize(TEXT_SIZE)
+      textStyle(TEXT_STYLE)
+      fill('black')
+      textAlign('left')
+      noStroke()
+      text(messages[i].message, messages[i].x*50, positionY)
+    }
+  }
+}
+function drawMessageBackground(positionX, positionY, sizeX) {
+  fill('white')
+  rect(positionX, positionY, sizeX, 20, 5, 5, 5, 5)
+}
