@@ -8,7 +8,7 @@ import express from 'express'
 import http from 'http'
 import { app as client, BrowserWindow } from 'electron'
 import path from 'path'
-import { buildKeyPressEvent, queueEvent, wKeyCode } from './extrasGame'
+import { buildKeyPressEvent, queueEvent, wKeyCode, CanvasResolution, canvasResolution, visualState } from './extrasGame';
 
 const { time, timeEnd, log } = console
 
@@ -20,6 +20,7 @@ let interp: Interpreter
 let io: Server
 let folderImages: string
 let timmer = 0
+let sizeCanvas: CanvasResolution
 
 export default async function (programFQN: Name, { project, skipValidations }: Options): Promise<void> {
   logger.info(`Running ${valueDescription(programFQN)} on ${valueDescription(project)}`)
@@ -49,6 +50,7 @@ export default async function (programFQN: Name, { project, skipValidations }: O
             const background = game.get('boardGround') ? game.get('boardGround')?.innerString : 'default'
             const visuals = getVisuals(game)
             const messages = getMessages(game)
+            io.emit('cellPixelSize', game.get('cellSize')!.innerNumber!)
             io.emit('background', background)
             io.emit('visuals', visuals)
             io.emit('messages', messages)
@@ -73,10 +75,8 @@ export default async function (programFQN: Name, { project, skipValidations }: O
     logger.error(failureDescription('Uh-oh... An error occurred during the run!', error))
   }
 
-  const game = interp?.object('wollok.game.game')
-  const title = interp ? interp?.send('title', game!)?.innerString : 'Wollok Game'
-  const width = interp?.send('width', game!)?.innerNumber
-  const height = interp?.send('height', game!)?.innerNumber
+  const title =  getTitle(interp)
+  sizeCanvas = canvasResolution(interp)
 
   const server = http.createServer(express())
   io = new Server(server)
@@ -90,8 +90,10 @@ export default async function (programFQN: Name, { project, skipValidations }: O
     })
 
     socket.emit('images', getImages(project))
+    socket.emit('sizeCanvasInic', [sizeCanvas.width,sizeCanvas.height])
     
     const id = setInterval(() => {
+      const game = interp?.object('wollok.game.game')
       try {
         interp.send('flushEvents', game, interp.reify(timmer))
         timmer+=100
@@ -107,8 +109,8 @@ export default async function (programFQN: Name, { project, skipValidations }: O
 
   await client.whenReady()
   const win = new BrowserWindow({
-    width: width ? width*50 : 800,
-    height: height ? height*50 : 600,
+    width: sizeCanvas.width,
+    height: sizeCanvas.height,
     icon: __dirname + 'wollok.ico',
     title: title,
     webPreferences: {
@@ -121,6 +123,10 @@ export default async function (programFQN: Name, { project, skipValidations }: O
   win.webContents.openDevTools()
   win.loadFile('./public/indexGame.html')
 
+}
+function getTitle(interp: Interpreter){
+  const game = interp?.object('wollok.game.game')
+  return interp ? interp?.send('title', game!)?.innerString : 'Wollok Game'
 }
 
 function getImages(pathProject : string){
@@ -140,12 +146,10 @@ function getImages(pathProject : string){
 
 function getVisuals(game: RuntimeObject){
   const visuals: { image: any, x: any; y: any }[] = []
-  game.get('visuals')?.innerCollection?.forEach(v => {
-    const image = interp.send('image', v)!.innerString!
-    const x = getPosition( v,'x')
-    const y = getPosition( v,'y')
-    visuals.push({'image':image,'x': x,'y':y})
-  })
+  for (const visual of game.get('visuals')?.innerCollection ?? []) {
+    const { image, position} = visualState(interp, visual)
+    visuals.push({'image':image,'x': position.x,'y':position.y})
+  }
   return visuals
 }
 

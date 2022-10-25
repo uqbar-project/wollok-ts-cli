@@ -1,6 +1,42 @@
 import { RuntimeObject } from "wollok-ts"
 import { Interpreter } from "wollok-ts/dist/interpreter/interpreter"
 
+const { round, min } = Math
+
+export interface CanvasResolution {
+  width: number;
+  height: number;
+}
+export function canvasResolution(interpreter: Interpreter): CanvasResolution {
+  const game = interpreter.object('wollok.game.game')
+  const cellPixelSize = game.get('cellSize')!.innerNumber!
+  const width = round(game.get('width')!.innerNumber!) * cellPixelSize
+  const height = round(game.get('height')!.innerNumber!) * cellPixelSize
+  return { width, height }
+}
+export interface VisualState {
+  image?: string;
+  position: Position;
+  message?: string;
+  text?: string;
+  textColor?: string;
+}
+export interface Position {
+  x: number;
+  y: number;
+}
+function invokeMethod(interpreter: Interpreter, visual: RuntimeObject, method: string) {
+  const lookedUpMethod = visual.module.lookupMethod(method, 0)
+  return lookedUpMethod && interpreter.invoke(lookedUpMethod, visual)!.innerString
+}
+export function visualState(interpreter: Interpreter, visual: RuntimeObject): VisualState {
+  const image = invokeMethod(interpreter, visual, 'image')
+  const position = interpreter.send('position', visual)!
+  const roundedPosition = interpreter.send('round', position)!
+  const x = roundedPosition.get('x')!.innerNumber!
+  const y = roundedPosition.get('y')!.innerNumber!
+  return { image, position: { x, y }}
+}
 export function queueEvent(interpreter: Interpreter, ...events: RuntimeObject[]): void {
     const io = interpreter.object('wollok.lang.io')
     events.forEach(e => interpreter.send('queueEvent', io, e))

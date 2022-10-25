@@ -1,21 +1,29 @@
 var backgroundImage
+var widthGame
+var heightGame
 var images = []
 var visuals = []
-var mensajeError
+var messageError
 var wko
 var messages = []
 const TEXT_STYLE = 'bold'
 const TEXT_SIZE = 14
+var cellPixelSize
 
 function preload(){
   loadAllImages()
   wko = loadImage('./wko.png')
+  socket.on('sizeCanvasInic', size => {
+    widthGame = size[0]
+    heightGame = size[1]
+  })
 }
 function setup() {
-  createCanvas(windowWidth, windowHeight);
+  createCanvas(windowWidth ,windowHeight);
 }
 function draw() {
   clear();
+  socket.on('cellPixelSize', size =>{ cellPixelSize = size });
   loadBackground();
   loadVisuals();
   loadMessages();
@@ -25,18 +33,23 @@ function draw() {
   checkError();
  
 }
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+
 function checkError(){
   socket.on('errorDetected', errorM => {
-    mensajeError = errorM
+    messageError = errorM
   })
-  if (mensajeError){ 
+  if (messageError){ 
     noLoop();
     clear();
     let title = createDiv('Uh-oh... An error occurred during the run:');
     title.style('font-size', '22px');
     title.style('color', 'red');
     title.position(10, 0);
-    let div = createDiv(mensajeError);
+    let div = createDiv(messageError);
     div.style('font-size', '16px');
     div.style('color', 'red');
     div.position(10, 30);
@@ -68,12 +81,13 @@ function loadMessages(){
 }
 
 function drawVisuals(){
-  var heightWin = windowHeight-100
-  for(i=0; i < visuals.length; i++){
-    var positionX = (visuals[i].x)*50
-    var positionY = visuals[i].y == 0 ? heightWin : ((heightWin) - visuals[i].y*50)
-    var img = images.find(img => img.name == visuals[i].image)
-    img ? image(img.url, positionX,positionY) : image(wko, positionX,positionY)
+  if (visuals){
+    for(i=0; i < visuals.length; i++){
+      var positionX = (visuals[i].x * cellPixelSize) * (windowWidth/widthGame)
+      var positionY = (windowHeight-100) - (visuals[i].y+1) * cellPixelSize
+      var img = images.find(img => img.name == visuals[i].image)
+      img ? image(img.url, positionX, positionY) : image(wko, positionX,positionY)
+    }
   }
 }
 
@@ -82,21 +96,23 @@ function keyPressed(){
 }
 
 function drawMessages(){
-  var heightWin = windowHeight-100
   if (messages){
     for (i=0; i < messages.length; i++){
-      var positionY = messages[i].y == 0 ? heightWin : ((heightWin) - messages[i].y*50)-5;
-      drawMessageBackground(messages[i].x*50, positionY-15, (messages[i].message).length*8 )
+      var positionX= ((messages[i].x) * cellPixelSize) * (windowWidth/widthGame)+5;
+      var positionY = (windowHeight-100) - (messages[i].y +1) * cellPixelSize;
+      var positionYText = positionY < 0 ? 15 : positionY; 
+      drawMessageBackground(positionX, positionY, (messages[i].message).length * 7,5 )
       textSize(TEXT_SIZE)
       textStyle(TEXT_STYLE)
       fill('black')
       textAlign('left')
       noStroke()
-      text(messages[i].message, messages[i].x*50, positionY)
+      text(messages[i].message, positionX, positionYText)
     }
   }
 }
 function drawMessageBackground(positionX, positionY, sizeX) {
+  var positionYRect = positionY < 0 ? 0 : positionY-15; 
   fill('white')
-  rect(positionX, positionY, sizeX, 20, 5, 5, 5, 5)
+  rect(positionX, positionYRect, sizeX, 20, 2, 2, 2, 2)
 }
