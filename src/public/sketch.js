@@ -9,18 +9,22 @@ var messages = []
 const TEXT_STYLE = 'bold'
 const TEXT_SIZE = 14
 var cellPixelSize
+var sounds = []
 
 function preload(){
   loadAllImages()
+  loadAllSounds()
   wko = loadImage('./wko.png')
   socket.on('sizeCanvasInic', size => {
     widthGame = size[0]
     heightGame = size[1]
   })
 }
+
 function setup() {
   createCanvas(windowWidth ,windowHeight);
 }
+
 function draw() {
   clear();
   socket.on('cellPixelSize', size =>{ cellPixelSize = size });
@@ -31,7 +35,6 @@ function draw() {
   drawVisuals();
   drawMessages();
   checkError();
- 
 }
 
 function windowResized() {
@@ -115,4 +118,12 @@ function drawMessageBackground(positionX, positionY, sizeX) {
   var positionYRect = positionY < 0 ? 0 : positionY-15; 
   fill('white')
   rect(positionX, positionYRect, sizeX, 20, 2, 2, 2, 2)
+}
+
+function loadAllSounds(){
+  socket.on('sounds', snds =>{
+    for(i = 0; i < snds.length ; i++){
+      sounds.push({'name': snds[i].name, 'sound': loadSound(snds[i].url)})
+    }
+  });
 }

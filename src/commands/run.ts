@@ -19,6 +19,7 @@ type Options = {
 let interp: Interpreter
 let io: Server
 let folderImages: string
+let folderSounds: string
 let timmer = 0
 let sizeCanvas: CanvasResolution
 
@@ -90,8 +91,10 @@ export default async function (programFQN: Name, { project, skipValidations }: O
     })
 
     socket.emit('images', getImages(project))
+    socket.emit('sounds', getSounds(project))
+
     socket.emit('sizeCanvasInic', [sizeCanvas.width,sizeCanvas.height])
-    
+
     const id = setInterval(() => {
       const game = interp?.object('wollok.game.game')
       try {
@@ -176,4 +179,19 @@ export interface DrawableMessage {
   message: string;
   x: number;
   y: number;
+}
+
+function getSounds(pathProject : string){
+  const sounds: { name: any, url: any }[] = []
+  const fs = require('fs');
+  const pathDirname = path.dirname(pathProject)
+
+  fs.readdirSync(pathDirname).forEach((file: any) => {
+    if (file == 'sounds'){  folderSounds = file }
+  })
+  const pathSound = path.join(pathDirname, '/', folderSounds )
+  fs.readdirSync(pathSound).filter((file: any) => {
+    sounds.push({ 'name': file, 'url': path.join(pathDirname, '/', folderSounds, '/', file ) })
+  })
+  return sounds
 }
