@@ -20,7 +20,6 @@ let interp: Interpreter
 let io: Server
 let folderImages: string
 let timmer = 0
-let sizeCanvas: CanvasResolution
 
 export default async function (programFQN: Name, { project, skipValidations }: Options): Promise<void> {
   logger.info(`Running ${valueDescription(programFQN)} on ${valueDescription(project)}`)
@@ -50,7 +49,6 @@ export default async function (programFQN: Name, { project, skipValidations }: O
             const background = game.get('boardGround') ? game.get('boardGround')?.innerString : 'default'
             const visuals = getVisuals(game)
             const messages = getMessages(game)
-            io.emit('cellPixelSize', game.get('cellSize')!.innerNumber!)
             io.emit('background', background)
             io.emit('visuals', visuals)
             io.emit('messages', messages)
@@ -75,8 +73,7 @@ export default async function (programFQN: Name, { project, skipValidations }: O
     logger.error(failureDescription('Uh-oh... An error occurred during the run!', error))
   }
 
-  const title =  getTitle(interp)
-  sizeCanvas = canvasResolution(interp)
+  const sizeCanvas = canvasResolution(interp)
 
   const server = http.createServer(express())
   io = new Server(server)
@@ -88,12 +85,12 @@ export default async function (programFQN: Name, { project, skipValidations }: O
     socket.on('keyPressed', key => {
       queueEvent(interp, buildKeyPressEvent(interp, wKeyCode(key.key, key.keyCode)), buildKeyPressEvent(interp, 'ANY'))
     })
-
     socket.emit('images', getImages(project))
     socket.emit('sizeCanvasInic', [sizeCanvas.width,sizeCanvas.height])
     
     const id = setInterval(() => {
       const game = interp?.object('wollok.game.game')
+      socket.emit('cellPixelSize', game.get('cellSize')!.innerNumber!)
       try {
         interp.send('flushEvents', game, interp.reify(timmer))
         timmer+=100
@@ -112,7 +109,7 @@ export default async function (programFQN: Name, { project, skipValidations }: O
     width: sizeCanvas.width,
     height: sizeCanvas.height,
     icon: __dirname + 'wollok.ico',
-    title: title,
+    title: getTitle(interp),
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,

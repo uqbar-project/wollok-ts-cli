@@ -1,13 +1,11 @@
 var backgroundImage
 var widthGame
-var heightGame
 var images = []
 var visuals = []
 var messageError
 var wko
 var messages = []
-const TEXT_STYLE = 'bold'
-const TEXT_SIZE = 14
+const sizeFactor = 50
 var cellPixelSize
 
 function preload(){
@@ -15,15 +13,14 @@ function preload(){
   wko = loadImage('./wko.png')
   socket.on('sizeCanvasInic', size => {
     widthGame = size[0]
-    heightGame = size[1]
   })
+  socket.on('cellPixelSize', size =>{ cellPixelSize = size });
 }
 function setup() {
   createCanvas(windowWidth ,windowHeight);
 }
 function draw() {
   clear();
-  socket.on('cellPixelSize', size =>{ cellPixelSize = size });
   loadBackground();
   loadVisuals();
   loadMessages();
@@ -35,7 +32,7 @@ function draw() {
 }
 
 function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
+  resizeCanvas(windowWidth-20, windowHeight-20);
 }
 
 function checkError(){
@@ -96,23 +93,66 @@ function keyPressed(){
 }
 
 function drawMessages(){
+  const TEXT_STYLE = 'bold'
+  const TEXT_SIZE = 14
   if (messages){
     for (i=0; i < messages.length; i++){
       var positionX= ((messages[i].x) * cellPixelSize) * (windowWidth/widthGame)+5;
       var positionY = (windowHeight-100) - (messages[i].y +1) * cellPixelSize;
-      var positionYText = positionY < 0 ? 15 : positionY; 
-      drawMessageBackground(positionX, positionY, (messages[i].message).length * 7,5 )
+      var messagePosition = {x : positionX, y : positionY}
+      drawMessageBackground(messages[i].message, messagePosition)
+      const position = messageTextPosition(messagePosition)
+      const limit = { x: sizeFactor * 3, y: sizeFactor * 3 }
       textSize(TEXT_SIZE)
       textStyle(TEXT_STYLE)
       fill('black')
       textAlign('left')
       noStroke()
-      text(messages[i].message, positionX, positionYText)
+      text(messages[i].message, position.x, position.y, limit.x, limit.y)
     }
   }
 }
-function drawMessageBackground(positionX, positionY, sizeX) {
-  var positionYRect = positionY < 0 ? 0 : positionY-15; 
+function drawMessageBackground(message, messagePosition) {
+  var size = messageSize(message)
+  const position = messageBackgroundPosition(messagePosition)
+  console.log(position)
   fill('white')
-  rect(positionX, positionYRect, sizeX, 20, 2, 2, 2, 2)
+  rect(position.x, position.y, size.x, size.y, 5, 15, 10, 0)
+}
+
+function messageSize(message) {
+  const sizeLimit = { x: sizeFactor * 3, y: sizeFactor * 3 }
+  const textWid = textWidth(message)
+  const xSize = Math.min(textWid, sizeLimit.x) + 10
+  const ySize = Math.min((sizeFactor - 15) * Math.ceil(textWid / sizeLimit.x) / 2, sizeLimit.y) + 10
+  return { x: xSize, y: ySize }
+}
+
+function messageBackgroundPosition(message) {
+  const xPosition = messageTextPosition(message).x - 5
+  const yPosition = messageTextPosition(message).y - 5
+  return { x: xPosition, y: yPosition }
+}
+function messageTextPosition(message){
+  return { x: messageXPosition(message), y: messageYPosition(message) }
+}
+function messageXPosition(message) {
+  const xPos = message.x + sizeFactor
+  const width = messageSize(message).x
+  const inverseXPos = message.x - width
+
+  return xPositionIsOutOfCanvas(xPos, width) ? inverseXPos : xPos
+}
+function xPositionIsOutOfCanvas(xPosition, width) {
+  return xPosition + width > windowWidth
+}
+function yPositionIsOutOfCanvas(yPosition) {
+  return yPosition < 0
+}
+function messageYPosition(message) {
+  const messageSizeOffset = messageSize(message).y * 1.05
+  const yPos = message.y - messageSizeOffset
+  const inverseYPos = message.y + sizeFactor
+
+  return yPositionIsOutOfCanvas(yPos) ? inverseYPos : yPos
 }
