@@ -10,11 +10,9 @@ const TEXT_STYLE = 'bold'
 const TEXT_SIZE = 14
 var cellPixelSize
 var sounds = new Map()
-//var possiblePaths
 
 function preload(){
   loadAllImages()
-  //loadAllSoundPaths()
   wko = loadImage('./wko.png')
   socket.on('sizeCanvasInic', size => {
     widthGame = size[0]
@@ -24,14 +22,14 @@ function preload(){
 
 function setup() {
   createCanvas(windowWidth ,windowHeight);
+  socket.on('updateSound', data => {
+    updateSound( data.path, data.soundInstances )
+  })
 }
 
 function draw() {
   clear();
   socket.on('cellPixelSize', size =>{ cellPixelSize = size });
-  socket.on('updateSound', data => {
-    updateSound( data.path, data.soundInstances )
-  })
   loadBackground();
   loadVisuals();
   loadMessages();
@@ -125,28 +123,12 @@ function drawMessageBackground(positionX, positionY, sizeX) {
 }
 
 //___________________________________________________________
-/*
-function loadAllSounds(){
-  socket.on('sounds', soundsPaths => possiblePaths = soundsPaths)
-}*/
-
-/*export type SoundStatus = 'played' | 'paused' | 'stopped'
-export interface SoundState {
-  id: Id;
-  file: string;
-  status: SoundStatus;
-  volume: number;
-  loop: boolean;
-}*/
 
 function updateSound(gameProject, soundInstances) {
-  //const { gameProject, soundInstances } = assets
   soundInstances = soundInstances ? soundInstances : []
 
-  console.log(soundInstances)
-
   for (const [id, sound] of sounds.entries()) {
-    if (!soundInstances.some(sound => sound.id === id)) {
+    if (!soundInstances.some(sound => sound[0] === id)) {
       sound.stopSound()
       sounds.delete(id)
     } else {
@@ -156,7 +138,7 @@ function updateSound(gameProject, soundInstances) {
 
   soundInstances.forEach(soundInstance => {
     const soundState = {
-      id: 1,//soundInstance.id,
+      id: soundInstance[0],
       file: soundInstance[1],//soundInstance.file,
       status: soundInstance[2],//soundInstance.status,
       volume: soundInstance[3],//audioMuted ? 0 : soundInstance.volume,
@@ -166,10 +148,8 @@ function updateSound(gameProject, soundInstances) {
     let sound = sounds.get(soundState.id)
     if (!sound) {
       const soundPath = gameProject + soundState.file
-      console.log(soundPath)
       sound = new GameSound(soundState, soundPath)
       sounds.set(soundState.id, sound)
-      console.log(sounds)
     }
 
     sound?.update(soundState)
@@ -219,7 +199,6 @@ class GameSound {
           this.soundFile.stop()
       }
     }
-
   }
 
   stopSound() {

@@ -43,7 +43,6 @@ export default async function (programFQN: Name, { project, skipValidations }: O
     const debug = logger.getLevel() <= logger.levels.DEBUG
     if(debug) time(successDescription('Run finalized successfully'))
 
-    let c = 0
     const nativesAndDraw = {
       ...natives,
       draw: {
@@ -57,20 +56,17 @@ export default async function (programFQN: Name, { project, skipValidations }: O
             io.emit('background', background)
             io.emit('visuals', visuals)
             io.emit('messages', messages)
+
             const gameSounds = game.get('sounds')?.innerCollection ?? []
-            console.log(gameSounds)
             const mappedSounds = gameSounds.map( sound =>
-            [
-              sound.id,
-              sound.get('file')!.innerString!,
-              sound.get('status')!.innerString!,
-              sound.get('volume')!.innerNumber!,
-              sound.get('loop')!.innerBoolean!,
-            ])
-            console.log(mappedSounds)
-            //loadedSounds = updateSound({ gameProject: project, interpreter: interp, sounds: loadedSounds, io: io })
-            if(c < 10) {io.emit('updateSound', { path: folderSound(project), soundInstances: mappedSounds })}
-            c++
+              [
+                sound.id,
+                sound.get('file')!.innerString!,
+                sound.get('status')!.innerString!,
+                sound.get('volume')!.innerNumber!,
+                sound.get('loop')!.innerBoolean!,
+              ])
+            io.emit('updateSound', { path: folderSound(project), soundInstances: mappedSounds })
           } catch (e: any){
             if (e instanceof WollokException) logger.error(failureDescription(e.message))
             interp.send('stop', game)
@@ -199,114 +195,3 @@ export interface DrawableMessage {
   x: number;
   y: number;
 }
-
-/*
-function getSounds(pathProject : string){
-  const sounds: { url: any }[] = []
-  const fs = require('fs');
-  const pathDirname = path.dirname(pathProject)
-
-  fs.readdirSync(pathDirname).forEach((file: any) => {
-    if (file == 'sounds'){  folderSounds = file }
-  })
-  const pathSound = path.join(pathDirname, '/', folderSounds )
-  fs.readdirSync(pathSound).filter((file: any) => {
-    sounds.push('url': path.join(pathDirname, '/', folderSounds, '/', file ))
-  })
-  return sounds
-}
-
-//----------------------------------------------------------------------------------
-/*
-interface SoundAssets {
-  gameProject: string
-  interpreter: Interpreter
-  sounds: Map<Id, GameSound>
-  io: Server
-}
-
-type SoundStatus = 'played' | 'paused' | 'stopped'
-interface SoundState {
-  id: Id;
-  file: string;
-  status: SoundStatus;
-  volume: number;
-  loop: boolean;
-}
-
-export class GameSound {
-  public lastSoundState: SoundState
-  public soundFile: string
-  public started: boolean
-  public toBePlayed: boolean
-
-  constructor(lastSoundState: SoundState, soundPath: string) {
-    this.lastSoundState = lastSoundState
-    this.soundFile = soundPath
-    this.started = false
-    this.toBePlayed = false
-  }
-
-  public canBePlayed(newSoundState: SoundState): boolean {
-    return this.lastSoundState.status !== newSoundState.status || !this.started //&& this.isLoaded()
-  }
-
-  public update(newSoundState: SoundState): void {
-    /*Mover a sketch
-    this.soundFile.setLoop(newSoundState.loop)
-    this.soundFile.setVolume(newSoundState.volume)*//*
-    this.toBePlayed = this.canBePlayed(newSoundState)
-    this.lastSoundState = newSoundState
-  }
-
-  public play(io: Server): void {
-    if (this.toBePlayed) {
-      //this.started = true
-
-      console.log("Llegue a play")
-      switch (this.lastSoundState.status) {
-        case 'played':
-          io.emit('playSound', this.soundFile)
-          break
-        case 'paused':
-          io.emit('pauseSound', this.soundFile)
-          break
-        case 'stopped':
-          io.emit('stopSound', this.soundFile)
-      }
-    }
-  }
-}
-
-function updateSound(assets: SoundAssets): Map<Id, GameSound> {
-  const { gameProject, interpreter, sounds } = assets
-  const soundInstances = interpreter.object('wollok.game.game').get('sounds')?.innerCollection ?? []
-
-  for (const [id, sound] of sounds.entries()) {
-    if (!soundInstances.some(sound => sound.id === id)) {
-      io.emit('stopSound', sound.soundFile)
-      sounds.delete(id)
-    } else {
-      sound.play(io)
-    }
-  }
-
-  soundInstances.forEach(soundInstance => {
-    const soundState: SoundState = {
-      id: soundInstance.id,
-      file: soundInstance.get('file')!.innerString!,
-      status: soundInstance.get('status')!.innerString! as SoundStatus,
-      volume: soundInstance.get('volume')!.innerNumber!,
-      loop: soundInstance.get('loop')!.innerBoolean!,
-    }
-
-    let sound = sounds.get(soundState.id)
-    if(!sound){
-      sound = new GameSound(soundState, path.join(path.dirname(gameProject), '/sounds/', soundState.file))
-      sounds.set(soundState.id, sound)
-    }
-
-    sound?.update(soundState)
-  })
-  return sounds
-}*/
