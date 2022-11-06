@@ -9,11 +9,12 @@ var messages = []
 const TEXT_STYLE = 'bold'
 const TEXT_SIZE = 14
 var cellPixelSize
-var sounds = []
+var sounds = new Map()
+//var possiblePaths
 
 function preload(){
   loadAllImages()
-  loadAllSounds()
+  //loadAllSoundPaths()
   wko = loadImage('./wko.png')
   socket.on('sizeCanvasInic', size => {
     widthGame = size[0]
@@ -28,6 +29,9 @@ function setup() {
 function draw() {
   clear();
   socket.on('cellPixelSize', size =>{ cellPixelSize = size });
+  socket.on('updateSound', data => {
+    updateSound( data.path, data.soundInstances )
+  })
   loadBackground();
   loadVisuals();
   loadMessages();
@@ -120,10 +124,105 @@ function drawMessageBackground(positionX, positionY, sizeX) {
   rect(positionX, positionYRect, sizeX, 20, 2, 2, 2, 2)
 }
 
+//___________________________________________________________
+/*
 function loadAllSounds(){
-  socket.on('sounds', snds =>{
-    for(i = 0; i < snds.length ; i++){
-      sounds.push({'name': snds[i].name, 'sound': loadSound(snds[i].url)})
+  socket.on('sounds', soundsPaths => possiblePaths = soundsPaths)
+}*/
+
+/*export type SoundStatus = 'played' | 'paused' | 'stopped'
+export interface SoundState {
+  id: Id;
+  file: string;
+  status: SoundStatus;
+  volume: number;
+  loop: boolean;
+}*/
+
+function updateSound(gameProject, soundInstances) {
+  //const { gameProject, soundInstances } = assets
+  soundInstances = soundInstances ? soundInstances : []
+
+  console.log(soundInstances)
+
+  for (const [id, sound] of sounds.entries()) {
+    if (!soundInstances.some(sound => sound.id === id)) {
+      sound.stopSound()
+      sounds.delete(id)
+    } else {
+      sound.playSound()
     }
-  });
+  }
+
+  soundInstances.forEach(soundInstance => {
+    const soundState = {
+      id: 1,//soundInstance.id,
+      file: soundInstance[1],//soundInstance.file,
+      status: soundInstance[2],//soundInstance.status,
+      volume: soundInstance[3],//audioMuted ? 0 : soundInstance.volume,
+      loop: soundInstance[4],//soundInstance.loop,
+    }
+
+    let sound = sounds.get(soundState.id)
+    if (!sound) {
+      const soundPath = gameProject + soundState.file
+      console.log(soundPath)
+      sound = new GameSound(soundState, soundPath)
+      sounds.set(soundState.id, sound)
+      console.log(sounds)
+    }
+
+    sound?.update(soundState)
+  })
+}
+
+class GameSound {
+  lastSoundState//: SoundState
+  soundFile//: SoundFile
+  started//: boolean
+  toBePlayed//: boolean
+
+  constructor(lastSoundState, soundPath) {
+    this.lastSoundState = lastSoundState
+    this.soundFile = loadSound(soundPath)
+    this.started = false
+    this.toBePlayed = false
+  }
+
+  isLoaded() {
+    return this.soundFile.isLoaded()
+  }
+
+  canBePlayed(newSoundState) {
+    return (this.lastSoundState.status !== newSoundState.status || !this.started) && this.isLoaded()
+  }
+
+  update(newSoundState) {
+    this.soundFile.setLoop(newSoundState.loop)
+    this.soundFile.setVolume(newSoundState.volume)
+    this.toBePlayed = this.canBePlayed(newSoundState)
+    this.lastSoundState = newSoundState
+  }
+
+  playSound() {
+    if (this.toBePlayed) {
+      this.started = true
+
+      switch (this.lastSoundState.status) {
+        case 'played':
+          this.soundFile.play()
+          break
+        case 'paused':
+          this.soundFile.pause()
+          break
+        case 'stopped':
+          this.soundFile.stop()
+      }
+    }
+
+  }
+
+  stopSound() {
+    this.soundFile.stop()
+  }
 }
