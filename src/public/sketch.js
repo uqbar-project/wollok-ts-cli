@@ -7,6 +7,7 @@ var wko
 var messages = []
 const sizeFactor = 50
 var cellPixelSize
+var sounds = new Map()
 
 function preload(){
   loadAllImages()
@@ -16,9 +17,14 @@ function preload(){
   })
   socket.on('cellPixelSize', size =>{ cellPixelSize = size });
 }
+
 function setup() {
   createCanvas(windowWidth ,windowHeight);
+  socket.on('updateSound', data => {
+    updateSound( data.path, data.soundInstances )
+  })
 }
+
 function draw() {
   clear();
   loadBackground();
@@ -28,7 +34,6 @@ function draw() {
   drawVisuals();
   drawMessages();
   checkError();
- 
 }
 
 function windowResized() {
@@ -155,4 +160,88 @@ function messageYPosition(message) {
   const inverseYPos = message.y + sizeFactor
 
   return yPositionIsOutOfCanvas(yPos) ? inverseYPos : yPos
+}
+
+//___________________________________________________________
+
+function updateSound(gameProject, soundInstances) {
+  soundInstances = soundInstances ? soundInstances : []
+
+  for (const [id, sound] of sounds.entries()) {
+    if (!soundInstances.some(sound => sound[0] === id)) {
+      sound.stopSound()
+      sounds.delete(id)
+    } else {
+      sound.playSound()
+    }
+  }
+
+  soundInstances.forEach(soundInstance => {
+    const soundState = {
+      id: soundInstance[0],
+      file: soundInstance[1],//soundInstance.file,
+      status: soundInstance[2],//soundInstance.status,
+      volume: soundInstance[3],//audioMuted ? 0 : soundInstance.volume,
+      loop: soundInstance[4],//soundInstance.loop,
+    }
+
+    let sound = sounds.get(soundState.id)
+    if (!sound) {
+      const soundPath = gameProject + soundState.file
+      sound = new GameSound(soundState, soundPath)
+      sounds.set(soundState.id, sound)
+    }
+
+    sound?.update(soundState)
+  })
+}
+
+class GameSound {
+  lastSoundState//: SoundState
+  soundFile//: SoundFile
+  started//: boolean
+  toBePlayed//: boolean
+
+  constructor(lastSoundState, soundPath) {
+    this.lastSoundState = lastSoundState
+    this.soundFile = loadSound(soundPath)
+    this.started = false
+    this.toBePlayed = false
+  }
+
+  isLoaded() {
+    return this.soundFile.isLoaded()
+  }
+
+  canBePlayed(newSoundState) {
+    return (this.lastSoundState.status !== newSoundState.status || !this.started) && this.isLoaded()
+  }
+
+  update(newSoundState) {
+    this.soundFile.setLoop(newSoundState.loop)
+    this.soundFile.setVolume(newSoundState.volume)
+    this.toBePlayed = this.canBePlayed(newSoundState)
+    this.lastSoundState = newSoundState
+  }
+
+  playSound() {
+    if (this.toBePlayed) {
+      this.started = true
+
+      switch (this.lastSoundState.status) {
+        case 'played':
+          this.soundFile.play()
+          break
+        case 'paused':
+          this.soundFile.pause()
+          break
+        case 'stopped':
+          this.soundFile.stop()
+      }
+    }
+  }
+
+  stopSound() {
+    this.soundFile.stop()
+  }
 }

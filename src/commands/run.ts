@@ -1,4 +1,4 @@
-import { link, parse, Name, RuntimeObject, validate, WollokException } from 'wollok-ts'
+import { link, parse, Name, RuntimeObject, validate, WollokException, Id } from 'wollok-ts'
 import interpret, { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { buildEnvironmentForProject, failureDescription, problemDescription, successDescription, valueDescription } from '../utils'
@@ -9,6 +9,7 @@ import http from 'http'
 import { app as client, BrowserWindow } from 'electron'
 import path from 'path'
 import { buildKeyPressEvent, queueEvent, wKeyCode, CanvasResolution, canvasResolution, visualState } from './extrasGame';
+import { StringDict } from 'p5'
 
 const { time, timeEnd, log } = console
 
@@ -52,6 +53,17 @@ export default async function (programFQN: Name, { project, skipValidations }: O
             io.emit('background', background)
             io.emit('visuals', visuals)
             io.emit('messages', messages)
+
+            const gameSounds = game.get('sounds')?.innerCollection ?? []
+            const mappedSounds = gameSounds.map( sound =>
+              [
+                sound.id,
+                sound.get('file')!.innerString!,
+                sound.get('status')!.innerString!,
+                sound.get('volume')!.innerNumber!,
+                sound.get('loop')!.innerBoolean!,
+              ])
+            io.emit('updateSound', { path: folderSound(project), soundInstances: mappedSounds })
           } catch (e: any){
             if (e instanceof WollokException) logger.error(failureDescription(e.message))
             interp.send('stop', game)
@@ -86,8 +98,9 @@ export default async function (programFQN: Name, { project, skipValidations }: O
       queueEvent(interp, buildKeyPressEvent(interp, wKeyCode(key.key, key.keyCode)), buildKeyPressEvent(interp, 'ANY'))
     })
     socket.emit('images', getImages(project))
+
     socket.emit('sizeCanvasInic', [sizeCanvas.width,sizeCanvas.height])
-    
+
     const id = setInterval(() => {
       const game = interp?.object('wollok.game.game')
       socket.emit('cellPixelSize', game.get('cellSize')!.innerNumber!)
@@ -167,6 +180,10 @@ function getMessages(game: RuntimeObject){
 
 function getPosition(visual: RuntimeObject, position :string){
   return interp.send('position', visual)?.get(position)?.innerValue
+}
+
+function folderSound(pathProject: string): string {
+  return path.join(path.dirname(pathProject), '/sounds/')
 }
 
 export interface DrawableMessage {
