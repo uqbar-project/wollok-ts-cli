@@ -3,7 +3,7 @@ import interpret, { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { buildEnvironmentForProject, failureDescription, problemDescription, successDescription, valueDescription } from '../utils'
 import  logger  from  'loglevel'
-import { Server } from 'socket.io'
+import { Namespace, Server } from 'socket.io'
 import express from 'express'
 import http from 'http'
 import { app as client, BrowserWindow } from 'electron'
@@ -21,6 +21,7 @@ let interp: Interpreter
 let io: Server
 let folderImages: string
 let timmer = 0
+const namesFolder = ['imagenes', 'assets', 'img', 'asset']
 
 export default async function (programFQN: Name, { project, skipValidations }: Options): Promise<void> {
   logger.info(`Running ${valueDescription(programFQN)} on ${valueDescription(project)}`)
@@ -89,7 +90,6 @@ export default async function (programFQN: Name, { project, skipValidations }: O
 
   const server = http.createServer(express())
   io = new Server(server)
-  const url = require('url');
 
   io.on('connection', socket => {
     log('Client connected!')
@@ -98,7 +98,6 @@ export default async function (programFQN: Name, { project, skipValidations }: O
       queueEvent(interp, buildKeyPressEvent(interp, wKeyCode(key.key, key.keyCode)), buildKeyPressEvent(interp, 'ANY'))
     })
     socket.emit('images', getImages(project))
-
     socket.emit('sizeCanvasInic', [sizeCanvas.width,sizeCanvas.height])
 
     const id = setInterval(() => {
@@ -130,7 +129,7 @@ export default async function (programFQN: Name, { project, skipValidations }: O
   })
 
   win.removeMenu()
-  win.webContents.openDevTools()
+  //win.webContents.openDevTools()
   win.loadFile('./public/indexGame.html')
 
 }
@@ -145,11 +144,11 @@ function getImages(pathProject : string){
   const pathDirname = path.dirname(pathProject)
 
   fs.readdirSync(pathDirname).forEach((file: any) => {
-    if (file == 'assets' || file == 'imagenes'){  folderImages = file }
+    if (namesFolder.includes(file)){ folderImages = file }
   })
   const pathImage = path.join(pathDirname,'/',folderImages)
   fs.readdirSync(pathImage).filter((file:any) => {
-    images.push({'name': file , 'url': path.join(pathDirname,'/',folderImages,'/', file )})
+    images.push({'name': file , 'url': path.join(pathDirname, '/', folderImages, '/', file )})
   })
   return images
 }
@@ -169,8 +168,8 @@ function getMessages(game: RuntimeObject){
     const message = visual.get('message')?.innerString
     const messageTime = Number(visual.get('messageTime')?.innerValue)
     if (message != undefined && messageTime > timmer){
-      const x = Number(getPosition(visual ,'x'))
-      const y = Number(getPosition(visual ,'y'))
+      const x = Number(getPositionVisual(visual ,'x'))
+      const y = Number(getPositionVisual(visual ,'y'))
       const draw: DrawableMessage = {'message' : message, 'x': x, 'y': y}
       messages.push(draw)
     }
@@ -178,7 +177,7 @@ function getMessages(game: RuntimeObject){
   return messages
 }
 
-function getPosition(visual: RuntimeObject, position :string){
+function getPositionVisual(visual: RuntimeObject, position :string){
   return interp.send('position', visual)?.get(position)?.innerValue
 }
 

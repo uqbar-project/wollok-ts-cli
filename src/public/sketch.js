@@ -19,18 +19,18 @@ function preload(){
 }
 
 function setup() {
-  createCanvas(windowWidth ,windowHeight);
+  createCanvas(windowWidth-20 ,windowHeight-20);
   socket.on('updateSound', data => {
     updateSound( data.path, data.soundInstances )
   })
+  loadBackground();
+  loadVisuals();
+  loadMessages();
 }
 
 function draw() {
   clear();
-  loadBackground();
-  loadVisuals();
-  loadMessages();
-  background(backgroundImage ? backgroundImage : 'grey');
+  if (backgroundImage) background(backgroundImage);
   drawVisuals();
   drawMessages();
   checkError();
@@ -59,7 +59,7 @@ function checkError(){
 }
 function loadBackground(){
   socket.on('background', fondo =>{
-    backgroundImage = images.find(img => img.name == fondo).url
+    backgroundImage = fondo != "default" ? images.find(img => img.name == fondo).url : undefined;
   });
 }
 
@@ -87,8 +87,8 @@ function drawVisuals(){
     for(i=0; i < visuals.length; i++){
       var positionX = (visuals[i].x * cellPixelSize) * (windowWidth/widthGame)
       var positionY = (windowHeight-100) - (visuals[i].y+1) * cellPixelSize
-      var img = images.find(img => img.name == visuals[i].image)
-      img ? image(img.url, positionX, positionY) : image(wko, positionX,positionY)
+      var img = images.find(img => img.name == visuals[i].image).url
+      img ? image(img, positionX, positionY) : image(wko, positionX,positionY)
     }
   }
 }
@@ -102,7 +102,7 @@ function drawMessages(){
   const TEXT_SIZE = 14
   if (messages){
     for (i=0; i < messages.length; i++){
-      var positionX= ((messages[i].x) * cellPixelSize) * (windowWidth/widthGame)+5;
+      var positionX = ((messages[i].x) * cellPixelSize) * (windowWidth/widthGame) + 5 ;
       var positionY = (windowHeight-100) - (messages[i].y +1) * cellPixelSize;
       var messagePosition = {x : positionX, y : positionY}
       drawMessageBackground(messages[i].message, messagePosition)
@@ -117,10 +117,12 @@ function drawMessages(){
     }
   }
 }
+
+//___________________________________________________________
+
 function drawMessageBackground(message, messagePosition) {
   var size = messageSize(message)
   const position = messageBackgroundPosition(messagePosition)
-  console.log(position)
   fill('white')
   rect(position.x, position.y, size.x, size.y, 5, 15, 10, 0)
 }
@@ -138,9 +140,11 @@ function messageBackgroundPosition(message) {
   const yPosition = messageTextPosition(message).y - 5
   return { x: xPosition, y: yPosition }
 }
+
 function messageTextPosition(message){
   return { x: messageXPosition(message), y: messageYPosition(message) }
 }
+
 function messageXPosition(message) {
   const xPos = message.x + sizeFactor
   const width = messageSize(message).x
@@ -148,12 +152,15 @@ function messageXPosition(message) {
 
   return xPositionIsOutOfCanvas(xPos, width) ? inverseXPos : xPos
 }
+
 function xPositionIsOutOfCanvas(xPosition, width) {
   return xPosition + width > windowWidth
 }
+
 function yPositionIsOutOfCanvas(yPosition) {
   return yPosition < 0
 }
+
 function messageYPosition(message) {
   const messageSizeOffset = messageSize(message).y * 1.05
   const yPos = message.y - messageSizeOffset
