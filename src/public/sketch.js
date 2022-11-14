@@ -87,8 +87,8 @@ function drawVisuals(){
     for(i=0; i < visuals.length; i++){
       var positionX = (visuals[i].x * cellPixelSize) * (windowWidth/widthGame)
       var positionY = (windowHeight-100) - (visuals[i].y+1) * cellPixelSize
-      var img = images.find(img => img.name == visuals[i].image).url
-      img ? image(img, positionX, positionY) : image(wko, positionX,positionY)
+      var img = images.find(img => img.name == visuals[i].image)
+      img ? image(img.url, positionX, positionY) : image(wko, positionX,positionY)
     }
   }
 }

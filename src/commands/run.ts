@@ -129,7 +129,7 @@ export default async function (programFQN: Name, { project, skipValidations }: O
   })
 
   win.removeMenu()
-  //win.webContents.openDevTools()
+  win.webContents.openDevTools()
   win.loadFile('./public/indexGame.html')
 
 }
@@ -148,7 +148,9 @@ function getImages(pathProject : string){
   })
   const pathImage = path.join(pathDirname,'/',folderImages)
   fs.readdirSync(pathImage).filter((file:any) => {
-    images.push({'name': file , 'url': path.join(pathDirname, '/', folderImages, '/', file )})
+    if(file.endsWith('png') || file.endsWith('jpg')) {
+      images.push({'name': file , 'url': path.join(pathDirname, '/', folderImages, '/', file )})
+    }
   })
   return images
 }
