@@ -1,12 +1,11 @@
-var backgroundImage
-var widthGame
-var images = []
-var visuals = []
-var messageError
 var wko
-var messages = []
+var backgroundImage
+var messageError
+var widthGame = 0
 const sizeFactor = 50
 var cellPixelSize
+var images = new Array()
+var visuals = new Array()
 var sounds = new Map()
 
 function preload(){
@@ -25,14 +24,12 @@ function setup() {
   })
   loadBackground();
   loadVisuals();
-  loadMessages();
 }
 
 function draw() {
   clear();
   if (backgroundImage) background(backgroundImage);
   drawVisuals();
-  drawMessages();
   checkError();
 }
 
@@ -76,19 +73,19 @@ function loadVisuals(){
     visuals = visualsList
   });
 }
-function loadMessages(){
-  socket.on('messages', messagesList =>{
-    messages = messagesList
-  });
-}
 
 function drawVisuals(){
   if (visuals){
     for(i=0; i < visuals.length; i++){
-      var positionX = (visuals[i].x * cellPixelSize) * (windowWidth/widthGame)
-      var positionY = (windowHeight-100) - (visuals[i].y+1) * cellPixelSize
+      var positionX = (visuals[i].position.x * cellPixelSize) * (windowWidth/widthGame)
+      var y = (windowHeight-20) - visuals[i].position.y * cellPixelSize
       var img = images.find(img => img.name == visuals[i].image)
+      var positionY = img ? y - img.url.height :  y - wko.height
       img ? image(img.url, positionX, positionY) : image(wko, positionX,positionY)
+
+      if(visuals[i].message){
+        drawMessage(visuals[i].message, positionX, positionY )
+      }
     }
   }
 }
@@ -97,25 +94,20 @@ function keyPressed(){
   socket.emit('keyPressed', {'key' : key, 'keyCode': keyCode});
 }
 
-function drawMessages(){
+function drawMessage(message, positionX, positionY){
   const TEXT_STYLE = 'bold'
   const TEXT_SIZE = 14
-  if (messages){
-    for (i=0; i < messages.length; i++){
-      var positionX = ((messages[i].x) * cellPixelSize) * (windowWidth/widthGame) + 5 ;
-      var positionY = (windowHeight-100) - (messages[i].y +1) * cellPixelSize;
-      var messagePosition = {x : positionX, y : positionY}
-      drawMessageBackground(messages[i].message, messagePosition)
-      const position = messageTextPosition(messagePosition)
-      const limit = { x: sizeFactor * 3, y: sizeFactor * 3 }
-      textSize(TEXT_SIZE)
-      textStyle(TEXT_STYLE)
-      fill('black')
-      textAlign('left')
-      noStroke()
-      text(messages[i].message, position.x, position.y, limit.x, limit.y)
-    }
-  }
+  var messagePosition = {x : positionX, y : (positionY+1) }
+  drawMessageBackground(message, messagePosition)
+  const position = messageTextPosition(messagePosition)
+  const limit = { x: sizeFactor * 3, y: sizeFactor * 3 }
+  textSize(TEXT_SIZE)
+  textStyle(TEXT_STYLE)
+  fill('black')
+  textAlign('left')
+  noStroke()
+  text(message, position.x, position.y, limit.x, limit.y)
+
 }
 
 //___________________________________________________________
@@ -164,7 +156,7 @@ function yPositionIsOutOfCanvas(yPosition) {
 function messageYPosition(message) {
   const messageSizeOffset = messageSize(message).y * 1.05
   const yPos = message.y - messageSizeOffset
-  const inverseYPos = message.y + sizeFactor
+  const inverseYPos = 1
 
   return yPositionIsOutOfCanvas(yPos) ? inverseYPos : yPos
 }

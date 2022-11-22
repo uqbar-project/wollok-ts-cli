@@ -18,12 +18,14 @@ export interface VisualState {
   image?: string;
   position: Position;
   message?: string;
-  text?: string;
-  textColor?: string;
 }
 export interface Position {
   x: number;
   y: number;
+}
+export interface Image {
+  name: string;
+  url: string;
 }
 function invokeMethod(interpreter: Interpreter, visual: RuntimeObject, method: string) {
   const lookedUpMethod = visual.module.lookupMethod(method, 0)
@@ -35,7 +37,8 @@ export function visualState(interpreter: Interpreter, visual: RuntimeObject): Vi
   const roundedPosition = interpreter.send('round', position)!
   const x = roundedPosition.get('x')!.innerNumber!
   const y = roundedPosition.get('y')!.innerNumber!
-  return { image, position: { x, y }}
+  const message = visual.get('message')?.innerString
+  return { image, position: { x, y }, message }
 }
 export function queueEvent(interpreter: Interpreter, ...events: RuntimeObject[]): void {
     const io = interpreter.object('wollok.lang.io')

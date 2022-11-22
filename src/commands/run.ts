@@ -3,15 +3,15 @@ import interpret, { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { buildEnvironmentForProject, failureDescription, problemDescription, successDescription, valueDescription } from '../utils'
 import  logger  from  'loglevel'
-import { Namespace, Server } from 'socket.io'
+import { Server } from 'socket.io'
 import express from 'express'
 import http from 'http'
 import { app as client, BrowserWindow } from 'electron'
 import path from 'path'
-import { buildKeyPressEvent, queueEvent, wKeyCode, CanvasResolution, canvasResolution, visualState } from './extrasGame';
-import { StringDict } from 'p5'
+import { buildKeyPressEvent, queueEvent, wKeyCode, canvasResolution, visualState, Image, VisualState } from './extrasGame';
 
 const { time, timeEnd, log } = console
+const fs = require('fs');
 
 type Options = {
   project: string
@@ -50,10 +50,8 @@ export default async function (programFQN: Name, { project, skipValidations }: O
             const game = interp?.object('wollok.game.game')
             const background = game.get('boardGround') ? game.get('boardGround')?.innerString : 'default'
             const visuals = getVisuals(game)
-            const messages = getMessages(game)
             io.emit('background', background)
             io.emit('visuals', visuals)
-            io.emit('messages', messages)
 
             const gameSounds = game.get('sounds')?.innerCollection ?? []
             const mappedSounds = gameSounds.map( sound =>
@@ -139,15 +137,14 @@ function getTitle(interp: Interpreter){
 }
 
 function getImages(pathProject : string){
-  const images: { name: any, url: any }[] = []
-  const fs = require('fs');
-  const pathDirname = path.dirname(pathProject)
+  const images: Image[] = []
 
+  const pathDirname = path.dirname(pathProject)
   fs.readdirSync(pathDirname).forEach((file: any) => {
     if (namesFolder.includes(file)){ folderImages = file }
   })
   const pathImage = path.join(pathDirname,'/',folderImages)
-  fs.readdirSync(pathImage).filter((file:any) => {
+  fs.readdirSync(pathImage).filter((file: any) => {
     if(file.endsWith('png') || file.endsWith('jpg')) {
       images.push({'name': file , 'url': path.join(pathDirname, '/', folderImages, '/', file )})
     }
@@ -156,39 +153,23 @@ function getImages(pathProject : string){
 }
 
 function getVisuals(game: RuntimeObject){
-  const visuals: { image: any, x: any; y: any }[] = []
+  const visuals: VisualState[] = []
   for (const visual of game.get('visuals')?.innerCollection ?? []) {
-    const { image, position} = visualState(interp, visual)
-    visuals.push({'image':image,'x': position.x,'y':position.y})
+    const { image, position, message} = visualState(interp, visual)
+    const messageTime = Number(visual.get('messageTime')?.innerValue)
+    
+    if (message != undefined && messageTime > timmer){
+      visuals.push({"image": image, "position": position, "message": message})
+    } else {
+      visuals.push({"image": image, "position": position, "message": undefined})
+    }
   }
   return visuals
 }
 
-function getMessages(game: RuntimeObject){
-  const messages: DrawableMessage[] = []
-  game.get('visuals')?.innerCollection?.forEach(visual => {
-    const message = visual.get('message')?.innerString
-    const messageTime = Number(visual.get('messageTime')?.innerValue)
-    if (message != undefined && messageTime > timmer){
-      const x = Number(getPositionVisual(visual ,'x'))
-      const y = Number(getPositionVisual(visual ,'y'))
-      const draw: DrawableMessage = {'message' : message, 'x': x, 'y': y}
-      messages.push(draw)
-    }
-  })
-  return messages
-}
+function folderSound(pathProject: string){
+  const pathDirname = path.dirname(pathProject)
+  const folder = fs.readdirSync(pathDirname).includes('sounds') ? 'sounds' : folderImages
 
-function getPositionVisual(visual: RuntimeObject, position :string){
-  return interp.send('position', visual)?.get(position)?.innerValue
-}
-
-function folderSound(pathProject: string): string {
-  return path.join(path.dirname(pathProject), '/sounds/')
-}
-
-export interface DrawableMessage {
-  message: string;
-  x: number;
-  y: number;
+  return path.join(path.dirname(pathProject), '/' + folder + '/')
 }
