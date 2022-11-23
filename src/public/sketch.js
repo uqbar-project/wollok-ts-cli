@@ -83,13 +83,26 @@ function drawVisuals(){
       var y = (windowHeight-20) - visuals[i].position.y * cellPixelSize
       var img = images.find(img => img.name == visuals[i].image)
       var positionY = img ? y - img.url.height :  y - wko.height
-      img ? image(img.url, positionX, positionY) : image(wko, positionX,positionY)
-
+      if(img) image(img.url, positionX, positionY)
+      else {
+        image(wko, positionX,positionY)
+        drawNotFound("Image\n not \nfound", positionX, positionY)
+      }
       if(visuals[i].message){
         drawMessage(visuals[i].message, positionX, positionY )
       }
     }
   }
+}
+
+function drawNotFound(message, positionX, positionY){
+  const limit = { x: sizeFactor, y: sizeFactor * 3 }
+  textSize(14)
+  textStyle('bold')
+  fill('black')
+  textAlign('center')
+  noStroke()
+  text(message, (positionX-1), (positionY+5), limit.x, limit.y)
 }
 
 function keyPressed(){
