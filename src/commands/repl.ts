@@ -128,49 +128,6 @@ function defineCommands( autoImportPath: string | undefined, options: Options, s
       setInterpreter(interpreter, imports)
     })
 
-  // Esto es código falopa de referencia deberíamos reemplazarlo por el posta
-
-  commandHandler.command(':diagram')
-    .alias(':d')
-    .description('Opens the Object Diagram')
-    .allowUnknownOption()
-    .action(async () => {
-      const server = http.createServer(express())
-      const io = new Server(server)
-
-      io.on('connection', socket => {
-        log('Client connected!')
-        socket.on('disconnect', () => { log('Client disconnected!') })
-
-        let count = 0
-
-        socket.on('pong', payload => {
-          log(`Received pong from client with value: ${payload}`)
-          count = payload
-        })
-
-        commandHandler.command(':ping')
-          .alias(':p')
-          .description('Sends ping to the client')
-          .allowUnknownOption()
-          .action(() => { socket.emit('ping', ++count) })
-      })
-
-      server.listen(3000)
-
-      await client.whenReady()
-      const win = new BrowserWindow({
-        width: 800,
-        height: 600,
-        icon: __dirname + 'wollok.ico',
-      })
-      win.removeMenu()
-      // win.webContents.openDevTools()
-      win.loadFile('./public/index.html')
-    })
-
-  // Fin del código falopa
-
   commandHandler.command(':help')
     .alias(':h')
     .description('Show Wollok REPL help')
