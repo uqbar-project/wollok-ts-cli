@@ -11,6 +11,7 @@ var sounds = new Map()
 function preload(){
   loadAllImages()
   wko = loadImage('./wko.png')
+  defaultBackground = loadImage('./background.jpg')
   socket.on('sizeCanvasInic', size => {
     widthGame = size[0]
   })
@@ -28,7 +29,7 @@ function setup() {
 
 function draw() {
   clear();
-  if (backgroundImage) background(backgroundImage);
+  if(backgroundImage) background(backgroundImage);
   drawVisuals();
   checkError();
 }
@@ -54,9 +55,10 @@ function checkError(){
     div.position(10, 30);
   }
 }
+
 function loadBackground(){
   socket.on('background', fondo =>{
-    backgroundImage = fondo != "default" ? images.find(img => img.name == fondo).url : undefined;
+    backgroundImage = fondo != "default" ? images.find(img => img.name == fondo).url : defaultBackground;
   });
 }
 

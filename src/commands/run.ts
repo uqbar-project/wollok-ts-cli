@@ -75,7 +75,7 @@ export default async function (programFQN: Name, { project, skipValidations }: O
 
     const game = interp?.object('wollok.game.game')
     const drawer = interp.object('draw.drawer')
-    interp.send('onTick', game, interp.reify(1000/60), interp.reify('renderizar'), drawer )
+    interp.send('onTick', game, interp.reify(17), interp.reify('renderizar'), drawer )
 
     interp.run(programFQN)
 
@@ -103,14 +103,14 @@ export default async function (programFQN: Name, { project, skipValidations }: O
       socket.emit('cellPixelSize', game.get('cellSize')!.innerNumber!)
       try {
         interp.send('flushEvents', game, interp.reify(timmer))
-        timmer+=100
+        timmer+=300
         if(!game.get('running')) {clearInterval(id)}
       } catch(e: any){
         interp.send('stop', game)
         socket.emit('errorDetected', e.message)
         clearInterval(id)
       }
-    }, 1000/60)
+    }, 100)
   })
   server.listen(3000)
 
