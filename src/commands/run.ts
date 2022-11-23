@@ -75,7 +75,7 @@ export default async function (programFQN: Name, { project, skipValidations }: O
 
     const game = interp?.object('wollok.game.game')
     const drawer = interp.object('draw.drawer')
-    interp.send('onTick', game, interp.reify(1000/60), interp.reify('probando'), drawer )
+    interp.send('onTick', game, interp.reify(1000/60), interp.reify('renderizar'), drawer )
 
     interp.run(programFQN)
 
@@ -127,10 +127,9 @@ export default async function (programFQN: Name, { project, skipValidations }: O
   })
 
   win.removeMenu()
-  win.webContents.openDevTools()
   win.loadFile('./public/indexGame.html')
-
 }
+
 function getTitle(interp: Interpreter){
   const game = interp?.object('wollok.game.game')
   return interp ? interp?.send('title', game!)?.innerString : 'Wollok Game'
@@ -146,7 +145,7 @@ function getImages(pathProject : string){
   const pathImage = path.join(pathDirname,'/',folderImages)
   fs.readdirSync(pathImage).filter((file: any) => {
     if(file.endsWith('png') || file.endsWith('jpg')) {
-      images.push({'name': file , 'url': path.join(pathDirname, '/', folderImages, '/', file )})
+      images.push({ 'name': file, 'url': path.join(pathDirname, '/', folderImages, '/', file )})
     }
   })
   return images
@@ -155,13 +154,13 @@ function getImages(pathProject : string){
 function getVisuals(game: RuntimeObject){
   const visuals: VisualState[] = []
   for (const visual of game.get('visuals')?.innerCollection ?? []) {
-    const { image, position, message} = visualState(interp, visual)
+    const { image, position, message } = visualState(interp, visual)
     const messageTime = Number(visual.get('messageTime')?.innerValue)
-    
+
     if (message != undefined && messageTime > timmer){
-      visuals.push({"image": image, "position": position, "message": message})
+      visuals.push({ 'image': image, 'position': position, 'message': message})
     } else {
-      visuals.push({"image": image, "position": position, "message": undefined})
+      visuals.push({ 'image': image, 'position': position, 'message': undefined})
     }
   }
   return visuals
