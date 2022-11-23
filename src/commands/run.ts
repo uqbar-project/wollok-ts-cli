@@ -75,7 +75,7 @@ export default async function (programFQN: Name, { project, skipValidations }: O
 
     const game = interp?.object('wollok.game.game')
     const drawer = interp.object('draw.drawer')
-    interp.send('onTick', game, interp.reify(1000), interp.reify('probando'), drawer )
+    interp.send('onTick', game, interp.reify(1000/60), interp.reify('probando'), drawer )
 
     interp.run(programFQN)
 
@@ -110,7 +110,7 @@ export default async function (programFQN: Name, { project, skipValidations }: O
         socket.emit('errorDetected', e.message)
         clearInterval(id)
       }
-    }, 100)
+    }, 1000/60)
   })
   server.listen(3000)
 
