@@ -2,9 +2,10 @@
   "compilerOptions": {
     "target": "es2017",
     "module": "commonjs",
-    "outDir": "dist",
+    "outDir": "build",
     "lib": [
-      "esNext"
+      "esNext",
+      "dom"
     ],
     "declaration": true,
     "strict": true,
@@ -15,8 +16,7 @@
     "experimentalDecorators": true
   },
   "include": [
-    "src/**/*.ts",
-    "test/**/*.ts"
+    "src/**/*.ts"
   ],
   "exclude": [
     "**/*.js",
