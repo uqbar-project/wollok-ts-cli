@@ -7,7 +7,7 @@ export function initializeCytoscape(container: HTMLElement): void {
     container,
 
     zoom: 1,
-    maxZoom: 1,
+    maxZoom: 2,
     minZoom: 0.5,
     elements: [],
 
@@ -36,7 +36,6 @@ export function initializeCytoscape(container: HTMLElement): void {
       {
         selector: 'node[type = "literal"]',
         style: {
-          'background-opacity': 0,
           'text-valign': 'center',
           'color': '#ff3bc3',
           'font-weight': 'bold',
@@ -46,13 +45,22 @@ export function initializeCytoscape(container: HTMLElement): void {
   })
 }
 
-export function reloadDiagram(elements: any): void {
-  cy.elements().remove()
-  cy.add(elements)
+function updateLayout(): void {
   cy.layout({
     name: 'cose',
-    animate: false,
+    animate: true,
     nodeDimensionsIncludeLabels: true,
     fit: true,
   }).run()
+}
+
+export function reloadDiagram(elements: any): void {
+  const ids: string[] = elements.map((e: any) => e.data.id)
+  cy.filter(e => !ids.includes(e.id())).remove()
+
+  const newElements = elements.filter((e: any) => !cy.hasElementWithId(e.data.id))
+  if (newElements.length) {
+    cy.add(newElements)
+    updateLayout()
+  }
 }
