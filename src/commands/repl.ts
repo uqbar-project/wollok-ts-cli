@@ -137,8 +137,6 @@ function defineCommands( autoImportPath: string | undefined, options: Options, s
       setInterpreter(interpreter, imports)
     })
 
-  // Esto es código falopa de referencia deberíamos reemplazarlo por el posta
-
   commandHandler.command(':diagram')
     .alias(':d')
     .description('Opens the Object Diagram')
@@ -147,8 +145,6 @@ function defineCommands( autoImportPath: string | undefined, options: Options, s
       const io = await initializeClient()
       setIo(io)
     })
-
-  // Fin del código falopa
 
   commandHandler.command(':help')
     .alias(':h')
