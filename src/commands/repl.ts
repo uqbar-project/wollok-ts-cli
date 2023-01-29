@@ -1,11 +1,13 @@
 import { bold } from 'chalk'
 import { Command } from 'commander'
+import { ElementDefinition } from 'cytoscape'
 import { app as client, BrowserWindow } from 'electron'
 import express from 'express'
 import http from 'http'
 import logger from 'loglevel'
 import path from 'path'
 import { CompleterResult, createInterface as REPL } from 'readline'
+import { Server } from 'socket.io'
 import { Entity, Environment, Evaluation, Import, parse, Reference, RuntimeObject, validate, WollokException } from 'wollok-ts'
 import { notEmpty } from 'wollok-ts/dist/extensions'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
@@ -13,8 +15,6 @@ import { LinkError, linkIsolated } from 'wollok-ts/dist/linker'
 import { ParseError } from 'wollok-ts/dist/parser'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { buildEnvironmentForProject, failureDescription, problemDescription, successDescription, valueDescription } from '../utils'
-import { Server } from 'socket.io'
-import { ElementDefinition } from 'cytoscape'
 
 // TODO:
 // - autocomplete piola
