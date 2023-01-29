@@ -7,7 +7,7 @@ import { Server } from 'socket.io'
 import { link, Name, parse, RuntimeObject, validate, WollokException } from 'wollok-ts'
 import interpret, { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
-import { buildEnvironmentForProject, failureDescription, problemDescription, successDescription, valueDescription } from '../utils'
+import { buildEnvironmentForProject, failureDescription, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
 import { buildKeyPressEvent, canvasResolution, Image, queueEvent, visualState, VisualState, wKeyCode } from './extrasGame'
 
 const { time, timeEnd, log } = console
@@ -90,8 +90,8 @@ export default async function (programFQN: Name, { project, skipValidations }: O
   io = new Server(server)
 
   io.on('connection', socket => {
-    log('Client connected!')
-    socket.on('disconnect', () => { log('Client disconnected!') })
+    logger.info(successDescription('Running game!'))
+    socket.on('disconnect', () => { logger.info(successDescription('Game finished')) })
     socket.on('keyPressed', key => {
       queueEvent(interp, buildKeyPressEvent(interp, wKeyCode(key.key, key.keyCode)), buildKeyPressEvent(interp, 'ANY'))
     })
@@ -127,7 +127,7 @@ export default async function (programFQN: Name, { project, skipValidations }: O
   })
 
   win.removeMenu()
-  win.loadFile('./public/indexGame.html')
+  win.loadFile(publicPath('indexGame.html'))
 }
 
 function getTitle(interp: Interpreter){

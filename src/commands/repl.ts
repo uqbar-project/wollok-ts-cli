@@ -14,7 +14,7 @@ import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import { LinkError, linkIsolated } from 'wollok-ts/dist/linker'
 import { ParseError } from 'wollok-ts/dist/parser'
 import natives from 'wollok-ts/dist/wre/wre.natives'
-import { buildEnvironmentForProject, failureDescription, problemDescription, successDescription, valueDescription } from '../utils'
+import { buildEnvironmentForProject, failureDescription, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
 
 // TODO:
 // - autocomplete piola
@@ -26,7 +26,7 @@ type Options = {
   skipValidations: boolean
 }
 
-export default async function (autoImportPath: string|undefined, options: Options): Promise<void> {
+export default async function (autoImportPath: string | undefined, options: Options): Promise<void> {
   logger.info(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
 
   let [interpreter, imports] = await initializeInterpreter(autoImportPath, options)
@@ -56,8 +56,8 @@ export default async function (autoImportPath: string|undefined, options: Option
     .on('line', line => {
       line = line.trim()
 
-      if(line.length) {
-        if(line.startsWith(':')) commandHandler.parse(line.split(' '), { from: 'user' })
+      if (line.length) {
+        if (line.startsWith(':')) commandHandler.parse(line.split(' '), { from: 'user' })
         else {
           log(interprete(interpreter, imports, line))
           io?.emit('updateDiagram', getDataDiagram(interpreter.evaluation))
@@ -69,25 +69,25 @@ export default async function (autoImportPath: string|undefined, options: Option
   repl.prompt()
 }
 
-async function initializeInterpreter(autoImportPath: string|undefined, { project, skipValidations }: Options): Promise<[Interpreter, Import[]]> {
+async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations }: Options): Promise<[Interpreter, Import[]]> {
   let environment: Environment
   const imports: Import[] = []
 
   try {
     environment = await buildEnvironmentForProject(project)
 
-    if(!skipValidations) {
+    if (!skipValidations) {
       const problems = validate(environment)
       problems.forEach(problem => logger.info(problemDescription(problem)))
-      if(!problems.length) logger.info(successDescription('No problems found building the environment!'))
-      else if(problems.some(_ => _.level === 'error')) throw problems.find(_ => _.level === 'error')
+      if (!problems.length) logger.info(successDescription('No problems found building the environment!'))
+      else if (problems.some(_ => _.level === 'error')) throw problems.find(_ => _.level === 'error')
     }
 
     let autoImport: Import | undefined
-    if(autoImportPath) {
+    if (autoImportPath) {
       const fqn = path.relative(project, autoImportPath).split('.')[0].replace('/', '.')
       const entity = environment.getNodeOrUndefinedByFQN<Entity>(fqn)
-      if(entity) {
+      if (entity) {
         autoImport = new Import({
           isGeneric: entity.is('Package'),
           entity: new Reference({ name: entity.fullyQualifiedName() }),
@@ -100,7 +100,7 @@ async function initializeInterpreter(autoImportPath: string|undefined, { project
   } catch (error: any) {
     if (error.level === 'error') {
       logger.error(failureDescription('Exiting REPL due to validation errors!'))
-    }else{
+    } else {
       logger.error(failureDescription('Uh-oh... Unexpected Error!'))
       logger.debug(failureDescription('Stack trace:', error))
     }
@@ -113,7 +113,7 @@ async function initializeInterpreter(autoImportPath: string|undefined, { project
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // COMMANDS
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-function defineCommands( autoImportPath: string | undefined, options: Options, setIo: (io: Server) => void, setInterpreter: (interpreter: Interpreter, imports: Import[]) => void ): Command {
+function defineCommands(autoImportPath: string | undefined, options: Options, setIo: (io: Server) => void, setInterpreter: (interpreter: Interpreter, imports: Import[]) => void): Command {
   const commandHandler = new Command('Write a Wollok sentence or command to evaluate')
     .usage(' ')
     .allowUnknownOption()
@@ -164,13 +164,13 @@ function interprete(interpreter: Interpreter, imports: Import[], line: string): 
     const error = [sentenceOrImport, ...sentenceOrImport.descendants()].flatMap(_ => _.problems ?? []).find(_ => _.level === 'error')
     if (error) throw error
 
-    if(sentenceOrImport.is('Sentence')) {
+    if (sentenceOrImport.is('Sentence')) {
       const linkedSentence = linkIsolated(sentenceOrImport, interpreter.evaluation.environment, imports)
       const unlinkedNode = [linkedSentence, ...linkedSentence.descendants()].find(_ => _.problems?.some(problem => problem instanceof LinkError))
 
-      if(unlinkedNode) {
-        if(unlinkedNode.is('Reference')) {
-          if(!interpreter.evaluation.currentFrame.get(unlinkedNode.name))
+      if (unlinkedNode) {
+        if (unlinkedNode.is('Reference')) {
+          if (!interpreter.evaluation.currentFrame.get(unlinkedNode.name))
             return failureDescription(`Unknown reference ${valueDescription(unlinkedNode.name)}`)
         } else return failureDescription(`Unknown reference at ${unlinkedNode.sourceInfo()}`)
       }
@@ -179,8 +179,8 @@ function interprete(interpreter: Interpreter, imports: Import[], line: string): 
       return successDescription(result ? interpreter.send('toString', result)!.innerString! : '')
     }
 
-    if(sentenceOrImport.is('Import')) {
-      if(!interpreter.evaluation.environment.getNodeOrUndefinedByFQN(sentenceOrImport.entity.name))
+    if (sentenceOrImport.is('Import')) {
+      if (!interpreter.evaluation.environment.getNodeOrUndefinedByFQN(sentenceOrImport.entity.name))
         throw new Error(
           `Unknown reference ${valueDescription(sentenceOrImport.entity.name)}`
         )
@@ -193,9 +193,9 @@ function interprete(interpreter: Interpreter, imports: Import[], line: string): 
   } catch (error: any) {
     return (
       error.type === 'ParsimmonError' ? failureDescription(`Syntax error:\n${error.message.split('\n').filter(notEmpty).slice(1).join('\n')}`) :
-      error instanceof WollokException ? failureDescription('Evaluation Error!', error) :
-      error instanceof ParseError ? failureDescription(`Syntax Error at offset ${error.sourceMap.start.offset}: ${line.slice(error.sourceMap.start.offset, error.sourceMap.end.offset)}`)  :
-      failureDescription('Uh-oh... Unexpected TypeScript Error!', error)
+        error instanceof WollokException ? failureDescription('Evaluation Error!', error) :
+          error instanceof ParseError ? failureDescription(`Syntax Error at offset ${error.sourceMap.start.offset}: ${line.slice(error.sourceMap.start.offset, error.sourceMap.end.offset)}`) :
+            failureDescription('Uh-oh... Unexpected TypeScript Error!', error)
     )
   }
 }
@@ -217,8 +217,8 @@ async function initializeClient() {
   const io = new Server(server)
 
   io.on('connection', socket => {
-    log('Client connected!')
-    socket.on('disconnect', () => { log('Client disconnected!') })
+    logger.info(successDescription('Showing objects in diagram windows!'))
+    socket.on('disconnect', () => { logger.info(failureDescription('Object diagram closed')) })
   })
 
   server.listen(3000)
@@ -234,7 +234,7 @@ async function initializeClient() {
     },
   })
   win.removeMenu()
-  win.loadFile('./public/index.html')
+  win.loadFile(publicPath('indexDiagram.html'))
   return io
 }
 
