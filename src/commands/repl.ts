@@ -85,7 +85,7 @@ async function initializeInterpreter(autoImportPath: string | undefined, { proje
 
     let autoImport: Import | undefined
     if (autoImportPath) {
-      const fqn = path.relative(project, autoImportPath).split('.')[0].replace('/', '.')
+      const fqn = path.relative(project, autoImportPath).split('.')[0].replaceAll(path.sep, '.')
       const entity = environment.getNodeOrUndefinedByFQN<Entity>(fqn)
       if (entity) {
         autoImport = new Import({
