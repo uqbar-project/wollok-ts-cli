@@ -69,7 +69,7 @@ export default async function (autoImportPath: string | undefined, options: Opti
   repl.prompt()
 }
 
-async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations }: Options): Promise<[Interpreter, Import[]]> {
+export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations }: Options): Promise<[Interpreter, Import[]]> {
   let environment: Environment
   const imports: Import[] = []
 
@@ -158,7 +158,7 @@ function defineCommands(autoImportPath: string | undefined, options: Options, se
 // EVALUATION
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-function interprete(interpreter: Interpreter, imports: Import[], line: string): string {
+export function interprete(interpreter: Interpreter, imports: Import[], line: string): string {
   try {
     const sentenceOrImport = parse.Import.or(parse.Variable).or(parse.Assignment).or(parse.Expression).tryParse(line)
     const error = [sentenceOrImport, ...sentenceOrImport.descendants()].flatMap(_ => _.problems ?? []).find(_ => _.level === 'error')
