@@ -64,7 +64,7 @@ describe('REPL', () => {
         })
 
         it('imported definitions should be accessible', () => {
-            const result = interprete(interpreter, imports, 'otros.comidas.alpiste') //TOFIX: should be able to use 'alpiste' directly
+            const result = interprete(interpreter, imports, 'alpiste')
             result.should.be.equal(successDescription('alpiste'))
         })
 

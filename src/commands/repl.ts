@@ -8,7 +8,7 @@ import logger from 'loglevel'
 import path from 'path'
 import { CompleterResult, createInterface as REPL } from 'readline'
 import { Server } from 'socket.io'
-import { Entity, Environment, Evaluation, Import, parse, Reference, RuntimeObject, validate, WollokException } from 'wollok-ts'
+import { Entity, Environment, Evaluation, Import, parse, Reference, RuntimeObject, validate, WollokException, is } from 'wollok-ts'
 import { notEmpty } from 'wollok-ts/dist/extensions'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import { LinkError, linkIsolated } from 'wollok-ts/dist/linker'
@@ -90,7 +90,7 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
       if (entity) {
         autoImport = new Import({
           isGeneric: entity.is('Package'),
-          entity: new Reference({ name: entity.fullyQualifiedName() }),
+          entity: Object.assign(new Reference({ name: entity.fullyQualifiedName() }), { target: () => entity }),
         })
         imports.push(autoImport)
       }
@@ -164,8 +164,13 @@ export function interprete(interpreter: Interpreter, imports: Import[], line: st
     const error = [sentenceOrImport, ...sentenceOrImport.descendants()].flatMap(_ => _.problems ?? []).find(_ => _.level === 'error')
     if (error) throw error
 
+    const allImports = [...imports,
+    ...imports.flatMap(i => i.entity.target()!).
+      filter(is('Package')).flatMap(p => p.imports) // Import all imports from auto-imported files
+    ]
+
     if (sentenceOrImport.is('Sentence')) {
-      const linkedSentence = linkIsolated(sentenceOrImport, interpreter.evaluation.environment, imports)
+      const linkedSentence = linkIsolated(sentenceOrImport, interpreter.evaluation.environment, allImports)
       const unlinkedNode = [linkedSentence, ...linkedSentence.descendants()].find(_ => _.problems?.some(problem => problem instanceof LinkError))
 
       if (unlinkedNode) {

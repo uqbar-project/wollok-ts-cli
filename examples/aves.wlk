@@ -3,11 +3,11 @@ import otros.comidas.*
 object pepita {
 	var energia = 100
 	
-	method comer(comida) {
+	method come(comida) {
 		energia = energia + comida.energiaQueAporta()
 	}
 	
-	method volar(distancia) {
+	method vola(distancia) {
 		energia = energia - 10 - distancia
 	}
 	
