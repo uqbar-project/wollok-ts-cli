@@ -1,0 +1,11 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"command": "npm run test",
+			"name": "Run Wollok CLI tests",
+			"request": "launch",
+			"type": "node-terminal"
+		  },
+	]
+}

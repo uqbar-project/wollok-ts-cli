@@ -8,7 +8,7 @@ import logger from 'loglevel'
 import path from 'path'
 import { CompleterResult, createInterface as REPL } from 'readline'
 import { Server } from 'socket.io'
-import { Entity, Environment, Evaluation, Import, parse, Reference, RuntimeObject, validate, WollokException } from 'wollok-ts'
+import { Entity, Environment, Evaluation, Import, parse, Reference, RuntimeObject, validate, WollokException, is } from 'wollok-ts'
 import { notEmpty } from 'wollok-ts/dist/extensions'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import { LinkError, linkIsolated } from 'wollok-ts/dist/linker'
@@ -69,7 +69,7 @@ export default async function (autoImportPath: string | undefined, options: Opti
   repl.prompt()
 }
 
-async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations }: Options): Promise<[Interpreter, Import[]]> {
+export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations }: Options): Promise<[Interpreter, Import[]]> {
   let environment: Environment
   const imports: Import[] = []
 
@@ -85,7 +85,7 @@ async function initializeInterpreter(autoImportPath: string | undefined, { proje
 
     let autoImport: Import | undefined
     if (autoImportPath) {
-      const fqn = path.relative(project, autoImportPath).split('.')[0].replace('/', '.')
+      const fqn = path.relative(project, autoImportPath).split('.')[0].replaceAll(path.sep, '.')
       const entity = environment.getNodeOrUndefinedByFQN<Entity>(fqn)
       if (entity) {
         autoImport = new Import({
@@ -93,6 +93,9 @@ async function initializeInterpreter(autoImportPath: string | undefined, { proje
           entity: new Reference({ name: entity.fullyQualifiedName() }),
         })
         imports.push(autoImport)
+        // Import all imports from auto-imported files
+        if (entity.is('Package'))
+          entity.imports.forEach(i => imports.push(i))
       }
       else log(failureDescription(`File ${valueDescription(autoImportPath)} doesn't exist or is outside of project!`))
     }
@@ -158,7 +161,7 @@ function defineCommands(autoImportPath: string | undefined, options: Options, se
 // EVALUATION
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-function interprete(interpreter: Interpreter, imports: Import[], line: string): string {
+export function interprete(interpreter: Interpreter, imports: Import[], line: string): string {
   try {
     const sentenceOrImport = parse.Import.or(parse.Variable).or(parse.Assignment).or(parse.Expression).tryParse(line)
     const error = [sentenceOrImport, ...sentenceOrImport.descendants()].flatMap(_ => _.problems ?? []).find(_ => _.level === 'error')
@@ -176,7 +179,12 @@ function interprete(interpreter: Interpreter, imports: Import[], line: string): 
       }
 
       const result = interpreter.exec(linkedSentence)
-      return successDescription(result ? interpreter.send('toString', result)!.innerString! : '')
+      const stringResult = result
+        ? typeof result.innerValue === 'string'
+          ? `"${result.innerValue}"`
+          : interpreter.send('toString', result)!.innerString!
+        : ''
+      return successDescription(stringResult)
     }
 
     if (sentenceOrImport.is('Import')) {
