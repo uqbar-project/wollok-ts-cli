@@ -106,9 +106,10 @@ describe('REPL', () => {
             [interpreter, imports] = await initializeInterpreter(fileName, options)
         })
 
-        it('should auto import the file', () => {
-            imports.should.be.have.lengthOf(1)
+        it('should auto import the file and imported entities', () => {
+            imports.should.be.have.lengthOf(2)
             imports[0].entity.name.should.be.equal('aves')
+            imports[1].entity.name.should.be.equal('otros.comidas')
         })
 
         it('file definitions should be accessible', () => {

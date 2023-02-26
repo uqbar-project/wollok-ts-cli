@@ -93,6 +93,9 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
           entity: Object.assign(new Reference({ name: entity.fullyQualifiedName() }), { target: () => entity }),
         })
         imports.push(autoImport)
+        // Import all imports from auto-imported files
+        if (entity.is('Package'))
+          entity.imports.forEach(i => imports.push(i))
       }
       else log(failureDescription(`File ${valueDescription(autoImportPath)} doesn't exist or is outside of project!`))
     }
@@ -164,13 +167,8 @@ export function interprete(interpreter: Interpreter, imports: Import[], line: st
     const error = [sentenceOrImport, ...sentenceOrImport.descendants()].flatMap(_ => _.problems ?? []).find(_ => _.level === 'error')
     if (error) throw error
 
-    const allImports = [...imports,
-    ...imports.flatMap(i => i.entity.target()!).
-      filter(is('Package')).flatMap(p => p.imports) // Import all imports from auto-imported files
-    ]
-
     if (sentenceOrImport.is('Sentence')) {
-      const linkedSentence = linkIsolated(sentenceOrImport, interpreter.evaluation.environment, allImports)
+      const linkedSentence = linkIsolated(sentenceOrImport, interpreter.evaluation.environment, imports)
       const unlinkedNode = [linkedSentence, ...linkedSentence.descendants()].find(_ => _.problems?.some(problem => problem instanceof LinkError))
 
       if (unlinkedNode) {
