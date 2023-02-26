@@ -90,7 +90,7 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
       if (entity) {
         autoImport = new Import({
           isGeneric: entity.is('Package'),
-          entity: Object.assign(new Reference({ name: entity.fullyQualifiedName() }), { target: () => entity }),
+          entity: new Reference({ name: entity.fullyQualifiedName() }),
         })
         imports.push(autoImport)
         // Import all imports from auto-imported files
