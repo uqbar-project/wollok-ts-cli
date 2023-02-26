@@ -181,7 +181,12 @@ export function interprete(interpreter: Interpreter, imports: Import[], line: st
       }
 
       const result = interpreter.exec(linkedSentence)
-      return successDescription(result ? interpreter.send('toString', result)!.innerString! : '')
+      const stringResult = result
+        ? typeof result.innerValue === 'string'
+          ? `"${result.innerValue}"`
+          : interpreter.send('toString', result)!.innerString!
+        : ''
+      return successDescription(stringResult)
     }
 
     if (sentenceOrImport.is('Import')) {

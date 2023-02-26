@@ -34,6 +34,11 @@ describe('REPL', () => {
             result.should.be.equal(successDescription(''))
         })
 
+        it('import sentences', () => {
+            const result = interprete(interpreter, imports, 'import wollok.game.*')
+            result.should.be.equal(successDescription(''))
+        })
+
         it('not parsing strings', () => {
             const result = interprete(interpreter, imports, '3kd3id9')
             result.should.includes('Syntax error')
@@ -42,6 +47,54 @@ describe('REPL', () => {
         it('failure expressions', () => {
             const result = interprete(interpreter, imports, 'fakeReference')
             result.should.be.equal(failureDescription(`Unknown reference ${valueDescription('fakeReference')}`))
+        })
+    })
+
+    describe('should print result', () => {
+
+        it('for reference to wko', () => {
+            const result = interprete(interpreter, imports, 'assert')
+            result.should.be.equal(successDescription('assert'))
+        })
+
+        it('for reference to an instance', () => {
+            const result = interprete(interpreter, imports, 'new Object()')
+            result.should.be.equal(successDescription('an Object'))
+        })
+
+        it('for reference to a literal object', () => {
+            const result = interprete(interpreter, imports, 'object { }')
+            result.should.be.equal(successDescription(''))
+        })
+
+        it('for number', () => {
+            const result = interprete(interpreter, imports, '3')
+            result.should.be.equal(successDescription('3'))
+        })
+
+        it('for string', () => {
+            const result = interprete(interpreter, imports, '"hola"')
+            result.should.be.equal(successDescription('"hola"'))
+        })
+
+        it('for boolean', () => {
+            const result = interprete(interpreter, imports, 'true')
+            result.should.be.equal(successDescription('true'))
+        })
+
+        it('for list', () => {
+            const result = interprete(interpreter, imports, '[1, 2, 3]')
+            result.should.be.equal(successDescription('[1, 2, 3]'))
+        })
+
+        it('for set', () => {
+            const result = interprete(interpreter, imports, '#{1, 2, 3}')
+            result.should.be.equal(successDescription('#{1, 2, 3}'))
+        })
+        
+        it('for closure', () => {
+            const result = interprete(interpreter, imports, '{1 + 2}')
+            result.should.be.equal(successDescription(''))
         })
     })
 
