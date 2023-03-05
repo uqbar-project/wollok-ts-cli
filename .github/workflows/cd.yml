@@ -4,15 +4,21 @@
 name: Wollok-ts-cli CI
 
 on:
-  push:
-    tags:
-      - v*
+  push
+    
 
 jobs:
   release:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+
     permissions:
       contents: write
-    runs-on: ubuntu-22.04
+
+    runs-on: ${{ matrix.os }}
+
     steps:
     - uses: actions/checkout@v2
     - name: Use Node.js
@@ -25,5 +31,5 @@ jobs:
       run: npm run build
     - name: Create artifacts
       run: npm run pack
-      with:
+      env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
