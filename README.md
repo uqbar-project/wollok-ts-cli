@@ -103,3 +103,12 @@ npm run pack
 ```
 
 And checking the `/dist` folder.
+
+### Releasing
+To create a release follow this steps
+1. Create a drafted release. 
+2. Tag the commit you wish to release.
+
+This will trigger a pipeline which will upload the binaries to the drafted release.
+
+The _package.json_ version and _tag_ **must match**, otherwise the upload will be skipped. Taken from the [electron-build docs](https://www.electron.build/configuration/publish.html#recommended-github-releases-workflow)
