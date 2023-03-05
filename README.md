@@ -103,3 +103,6 @@ npm run pack
 ```
 
 And checking the `/dist` folder.
+
+### Releasing
+To create a release you must simply create a tag on the repo,this will trigger a pipeline which will create a drafted release with the corresponding binaries **unless another release already exists**.

@@ -4,7 +4,9 @@
 name: Wollok-ts-cli CI
 
 on:
-  push
+  push:
+    tags:
+      - 'v*'
     
 
 jobs:
