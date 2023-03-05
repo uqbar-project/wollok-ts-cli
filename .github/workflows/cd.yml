@@ -25,9 +25,5 @@ jobs:
       run: npm run build
     - name: Create artifacts
       run: npm run pack
-    - name: Publish release
-      uses: softprops/action-gh-release@v1
       with:
-        files: "dist/wollok-ts-cli_*"
-        draft: true
-        fail_on_unmatched_files: true
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

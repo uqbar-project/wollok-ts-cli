@@ -14,7 +14,7 @@
     "watch": "npm run build -- -w",
     "start": "electron ./build/index.js",
     "test": "mocha --parallel -r ts-node/register/transpile-only test/**/*.test.ts",
-    "pack": "electron-builder"
+    "pack": "electron-builder -p onTagOrDraft"
   },
   "dependencies": {
     "chalk": "^4.1.2",
