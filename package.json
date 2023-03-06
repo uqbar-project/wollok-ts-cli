@@ -27,7 +27,7 @@
     "loglevel": "^1.8.0",
     "p5": "^1.4.2",
     "socket.io": "^4.5.1",
-    "wollok-ts": "file:../wollok-ts/wollok-ts-4.0.1.tgz"
+    "wollok-ts": "4.0.1"
   },
   "devDependencies": {
     "@types/chai": "^4.3.4",
