@@ -7,6 +7,7 @@
       "esNext",
       "dom"
     ],
+    "skipLibCheck": true,
     "declaration": true,
     "strict": true,
     "removeComments": true,
