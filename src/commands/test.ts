@@ -1,10 +1,11 @@
 import { time, timeEnd } from 'console'
-import { is, Test, validate } from 'wollok-ts'
+import { Entity, Node, Test, validate } from 'wollok-ts'
 import interpret from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { buildEnvironmentForProject, failureDescription, problemDescription, successDescription, valueDescription } from '../utils'
 import { bold } from 'chalk'
 import  logger  from  'loglevel'
+import { is, match, when } from 'wollok-ts/dist/extensions'
 
 const { log } = console
 
@@ -25,9 +26,9 @@ export default async function (filter: string | undefined, { project, skipValida
     else if(problems.some(_ => _.level === 'error')) return logger.error(failureDescription('Aborting run due to validation errors!'))
   }
 
-  const targets = environment.descendants().filter(is('Test')).filter(test =>
-    (!filter || test.fullyQualifiedName().includes(filter)) &&
-    !test.siblings().some(sibling => sibling.is('Test') && sibling.isOnly)
+  const targets = environment.descendants.filter(is(Test)).filter(test =>
+    (!filter || test.fullyQualifiedName.includes(filter)) &&
+    !test.siblings().some(sibling => sibling.is(Test) && sibling.isOnly)
   )
 
   logger.info(`Running ${targets.length} tests...`)
@@ -38,10 +39,10 @@ export default async function (filter: string | undefined, { project, skipValida
   const failures: [Test, Error][] = []
   let successes = 0
 
-  environment.forEach(node => node.match({
-    Test: node => {
+  environment.forEach(node => match(node)(
+    when(Test)(node => {
       if (targets.includes(node)) {
-        const tabulation = '  '.repeat(node.fullyQualifiedName().split('.').length - 1)
+        const tabulation = '  '.repeat(node.fullyQualifiedName.split('.').length - 1)
         try {
           interpreter.fork().exec(node)
           logger.info(tabulation, successDescription(node.name))
@@ -51,22 +52,24 @@ export default async function (filter: string | undefined, { project, skipValida
           failures.push([node, error])
         }
       }
-    },
-    Entity: node => {
-      const tabulation = '  '.repeat(node.fullyQualifiedName().split('.').length - 1)
-      if(targets.some(target => node.descendants().includes(target))){
+    }),
+
+    when(Entity)(node => {
+      const tabulation = '  '.repeat(node.fullyQualifiedName.split('.').length - 1)
+      if(targets.some(target => node.descendants.includes(target))){
         logger.info(tabulation, node.name)
       }
-    },
-    Node: _ => { },
-  }))
+    }),
+
+    when(Node)( _ => { }),
+  ))
 
   log()
   if (debug) timeEnd('Run finished')
 
   failures.forEach(([test, error]) => {
     log()
-    logger.error(failureDescription(bold(test.fullyQualifiedName()), error))
+    logger.error(failureDescription(bold(test.fullyQualifiedName), error))
   })
 
   logger.info(

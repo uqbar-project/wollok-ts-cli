@@ -8,7 +8,7 @@ import logger from 'loglevel'
 import path from 'path'
 import { CompleterResult, createInterface as REPL } from 'readline'
 import { Server } from 'socket.io'
-import { Entity, Environment, Evaluation, Import, parse, Reference, RuntimeObject, validate, WollokException, is } from 'wollok-ts'
+import { Entity, Environment, Evaluation, Import, Package, parse, Reference, RuntimeObject, Sentence, Singleton, validate, WollokException } from 'wollok-ts'
 import { notEmpty } from 'wollok-ts/dist/extensions'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import { LinkError, linkIsolated } from 'wollok-ts/dist/linker'
@@ -89,12 +89,12 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
       const entity = environment.getNodeOrUndefinedByFQN<Entity>(fqn)
       if (entity) {
         autoImport = new Import({
-          isGeneric: entity.is('Package'),
-          entity: new Reference({ name: entity.fullyQualifiedName() }),
+          isGeneric: entity.is(Package),
+          entity: new Reference({ name: entity.fullyQualifiedName }),
         })
         imports.push(autoImport)
         // Import all imports from auto-imported files
-        if (entity.is('Package'))
+        if (entity.is(Package))
           entity.imports.forEach(i => imports.push(i))
       }
       else log(failureDescription(`File ${valueDescription(autoImportPath)} doesn't exist or is outside of project!`))
@@ -164,18 +164,18 @@ function defineCommands(autoImportPath: string | undefined, options: Options, se
 export function interprete(interpreter: Interpreter, imports: Import[], line: string): string {
   try {
     const sentenceOrImport = parse.Import.or(parse.Variable).or(parse.Assignment).or(parse.Expression).tryParse(line)
-    const error = [sentenceOrImport, ...sentenceOrImport.descendants()].flatMap(_ => _.problems ?? []).find(_ => _.level === 'error')
+    const error = [sentenceOrImport, ...sentenceOrImport.descendants].flatMap(_ => _.problems ?? []).find(_ => _.level === 'error')
     if (error) throw error
 
-    if (sentenceOrImport.is('Sentence')) {
+    if (sentenceOrImport.is(Sentence)) {
       const linkedSentence = linkIsolated(sentenceOrImport, interpreter.evaluation.environment, imports)
-      const unlinkedNode = [linkedSentence, ...linkedSentence.descendants()].find(_ => _.problems?.some(problem => problem instanceof LinkError))
+      const unlinkedNode = [linkedSentence, ...linkedSentence.descendants].find(_ => _.problems?.some(problem => problem instanceof LinkError))
 
       if (unlinkedNode) {
-        if (unlinkedNode.is('Reference')) {
+        if (unlinkedNode.is(Reference)) {
           if (!interpreter.evaluation.currentFrame.get(unlinkedNode.name))
             return failureDescription(`Unknown reference ${valueDescription(unlinkedNode.name)}`)
-        } else return failureDescription(`Unknown reference at ${unlinkedNode.sourceInfo()}`)
+        } else return failureDescription(`Unknown reference at ${unlinkedNode.sourceInfo}`)
       }
 
       const result = interpreter.exec(linkedSentence)
@@ -187,7 +187,7 @@ export function interprete(interpreter: Interpreter, imports: Import[], line: st
       return successDescription(stringResult)
     }
 
-    if (sentenceOrImport.is('Import')) {
+    if (sentenceOrImport.is(Import)) {
       if (!interpreter.evaluation.environment.getNodeOrUndefinedByFQN(sentenceOrImport.entity.name))
         throw new Error(
           `Unknown reference ${valueDescription(sentenceOrImport.entity.name)}`
@@ -201,9 +201,9 @@ export function interprete(interpreter: Interpreter, imports: Import[], line: st
   } catch (error: any) {
     return (
       error.type === 'ParsimmonError' ? failureDescription(`Syntax error:\n${error.message.split('\n').filter(notEmpty).slice(1).join('\n')}`) :
-        error instanceof WollokException ? failureDescription('Evaluation Error!', error) :
-          error instanceof ParseError ? failureDescription(`Syntax Error at offset ${error.sourceMap.start.offset}: ${line.slice(error.sourceMap.start.offset, error.sourceMap.end.offset)}`) :
-            failureDescription('Uh-oh... Unexpected TypeScript Error!', error)
+      error instanceof WollokException ? failureDescription('Evaluation Error!', error) :
+      error instanceof ParseError ? failureDescription(`Syntax Error at offset ${error.sourceMap.start.offset}: ${line.slice(error.sourceMap.start.offset, error.sourceMap.end.offset)}`) :
+      failureDescription('Uh-oh... Unexpected TypeScript Error!', error)
     )
   }
 }
@@ -249,7 +249,7 @@ async function initializeClient() {
 // De acá se obtiene la lista de objetos a dibujar
 function decoration(obj: RuntimeObject) {
   const { id, innerValue, module } = obj
-  const moduleName: string = module.fullyQualifiedName()
+  const moduleName: string = module.fullyQualifiedName
 
   if (obj.innerValue === null || moduleName === 'wollok.lang.Number') return {
     type: 'literal',
@@ -261,7 +261,7 @@ function decoration(obj: RuntimeObject) {
     label: `"${innerValue}"`,
   }
 
-  if (module.is('Singleton') && module.name) return {
+  if (module.is(Singleton) && module.name) return {
     type: 'object',
     label: module.name,
   }
@@ -284,7 +284,7 @@ function elementFromObject(obj: RuntimeObject, alreadyVisited: string[] = []): E
 function getDataDiagram(evaluation: Evaluation): ElementDefinition[] {
   return [...evaluation.allInstances()]
     .filter((obj) => {
-      const name = obj.module.fullyQualifiedName()
+      const name = obj.module.fullyQualifiedName
       return name && name !== 'worksheet.main.repl' && !name.startsWith('wollok')
     })
     .flatMap(obj => elementFromObject(obj))

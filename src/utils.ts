@@ -51,7 +51,7 @@ export const failureDescription = (description: string, e?: Error): string => {
 export const problemDescription = (problem: Problem): string => {
   const color = problem.level === 'warning' ? yellowBright : red
   const header = bold(`[${problem.level.toUpperCase()}]`)
-  return color(`${header}: ${problem.code} at ${problem.node?.sourceInfo() ?? 'unknown'}`)
+  return color(`${header}: ${problem.code} at ${problem.node?.sourceInfo ?? 'unknown'}`)
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════

@@ -9,9 +9,9 @@ import interpret, { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { buildEnvironmentForProject, failureDescription, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
 import { buildKeyPressEvent, canvasResolution, Image, queueEvent, visualState, VisualState, wKeyCode } from './extrasGame'
+import fs from 'fs'
 
-const { time, timeEnd, log } = console
-const fs = require('fs');
+const { time, timeEnd } = console
 
 type Options = {
   project: string
@@ -68,7 +68,7 @@ export default async function (programFQN: Name, { project, skipValidations }: O
               if (e instanceof WollokException) logger.error(failureDescription(e.message))
               interp.send('stop', game)
             }
-          }
+          },
         },
       },
     }
