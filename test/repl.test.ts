@@ -63,8 +63,8 @@ describe('REPL', () => {
     })
 
     it('for reference to a literal object', () => {
-      const result = interprete(interpreter, imports, 'object { }')
-      result.should.be.equal(successDescription('an Object'))
+      const result = interprete(interpreter, imports, 'object { } ')
+      result.should.include('an Object#')
     })
 
     it('for number', () => {
