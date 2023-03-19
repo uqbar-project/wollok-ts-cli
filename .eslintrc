@@ -1,20 +1,11 @@
 {
-  "extends": [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended"
-  ],
-  "ignorePatterns": [
-    "**/*.js",
-    "dist/**",
-    "build/**"
-  ],
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+  "ignorePatterns": ["**/*.js", "dist/**", "build/**"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "project": "./tsconfig.json"
   },
-  "plugins": [
-    "@typescript-eslint"
-  ],
+  "plugins": ["@typescript-eslint"],
   "root": true,
   "rules": {
     "@typescript-eslint/ban-types": [
@@ -48,22 +39,10 @@
         "vars": "all"
       }
     ],
-    "@typescript-eslint/quotes": [
-      "warn",
-      "single"
-    ],
-    "@typescript-eslint/semi": [
-      "warn",
-      "never"
-    ],
-    "array-bracket-spacing": [
-      "warn",
-      "never"
-    ],
-    "array-element-newline": [
-      "warn",
-      "consistent"
-    ],
+    "@typescript-eslint/quotes": ["warn", "single"],
+    "@typescript-eslint/semi": ["warn", "never"],
+    "array-bracket-spacing": ["warn", "never"],
+    "array-element-newline": ["warn", "consistent"],
     "arrow-spacing": "warn",
     "comma-dangle": [
       "warn",
@@ -84,15 +63,9 @@
         "before": false
       }
     ],
-    "eol-last": [
-      "warn",
-      "never"
-    ],
+    "eol-last": ["warn", "never"],
     "for-direction": "off",
-    "function-call-argument-newline": [
-      "warn",
-      "consistent"
-    ],
+    "function-call-argument-newline": ["warn", "consistent"],
     "indent": [
       "warn",
       2,
@@ -117,9 +90,7 @@
         ]
       }
     ],
-    "no-constant-condition": [
-      "warn"
-    ],
+    "no-constant-condition": ["warn"],
     "no-inner-declarations": "off",
     "no-multiple-empty-lines": [
       "warn",
@@ -145,10 +116,7 @@
         }
       }
     ],
-    "object-curly-spacing": [
-      "warn",
-      "always"
-    ],
+    "object-curly-spacing": ["warn", "always"],
     "padding-line-between-statements": [
       "warn",
       {
@@ -165,8 +133,6 @@
         "named": "never"
       }
     ],
-    "@typescript-eslint/type-annotation-spacing": [
-      "warn"
-    ]
+    "@typescript-eslint/type-annotation-spacing": ["warn"]
   }
 }

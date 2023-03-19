@@ -14,7 +14,7 @@
     "test": "npm run test:lint && npm run test:unit",
     "test:lint": "eslint",
     "test:unit": "mocha --parallel -r ts-node/register/transpile-only test/**/*.test.ts",
-    "build": "shx rm -rf build && shx mkdir ./build && shx cp -r ./src/public ./build/public && tsc",
+    "build": "shx rm -rf build && shx mkdir ./build && shx cp -r ./src/public ./build/public && tsc -p ./tsconfig.build.json",
     "watch": "npm run build -- -w",
     "pack": "electron-builder --dir",
     "release": "electron-builder -p onTagOrDraft"

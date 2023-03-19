@@ -3,10 +3,7 @@
     "target": "es2017",
     "module": "commonjs",
     "outDir": "build",
-    "lib": [
-      "esNext",
-      "dom"
-    ],
+    "lib": ["esNext", "dom"],
     "skipLibCheck": true,
     "declaration": true,
     "strict": true,
@@ -16,11 +13,6 @@
     "esModuleInterop": true,
     "experimentalDecorators": true
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "**/*.js",
-    "node_modules",
-  ]
+  "include": ["test/**/*.ts", "src/**/*.ts"],
+  "exclude": ["**/*.js", "node_modules"]
 }
