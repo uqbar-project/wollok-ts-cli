@@ -1,4 +1,3 @@
-import { app as client, BrowserWindow } from 'electron'
 import express from 'express'
 import http from 'http'
 import logger from 'loglevel'
@@ -115,21 +114,6 @@ export default async function (programFQN: Name, { project, skipValidations }: O
     }, 100)
   })
   server.listen(3000)
-
-  await client.whenReady()
-  const win = new BrowserWindow({
-    width: sizeCanvas.width,
-    height: sizeCanvas.height,
-    icon: __dirname + 'wollok.ico',
-    title: getTitle(interp),
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-    },
-  })
-
-  win.removeMenu()
-  win.loadFile(publicPath('indexGame.html'))
 }
 
 function getTitle(interp: Interpreter) {

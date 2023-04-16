@@ -1,7 +1,6 @@
 import { bold } from 'chalk'
 import { Command } from 'commander'
 import { ElementDefinition } from 'cytoscape'
-import { app as client, BrowserWindow } from 'electron'
 import express from 'express'
 import http from 'http'
 import logger from 'loglevel'
@@ -15,7 +14,7 @@ import { LinkError, linkIsolated } from 'wollok-ts/dist/linker'
 import { ParseError } from 'wollok-ts/dist/parser'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { buildEnvironmentForProject, failureDescription, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
-
+import cors from 'cors'
 // TODO:
 // - autocomplete piola
 
@@ -221,7 +220,8 @@ async function autocomplete(input: string): Promise<CompleterResult> {
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
 async function initializeClient() {
-  const server = http.createServer(express())
+  const app = express()
+  const server = http.createServer(app)
   const io = new Server(server)
 
   io.on('connection', socket => {
@@ -229,20 +229,10 @@ async function initializeClient() {
     socket.on('disconnect', () => { logger.info(failureDescription('Object diagram closed')) })
   })
 
-  server.listen(3000)
+  app.options('*', cors())
+  app.use(cors({ allowedHeaders: '*' }), express.static('/home/ivo/Documents/repos/wollok-ts-cli/build/public/diagram/', { maxAge: '1d' }))
+  server.listen(3000, 'localhost')
 
-  await client.whenReady()
-  const win = new BrowserWindow({
-    width: 800,
-    height: 600,
-    icon: __dirname + 'wollok.ico',
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-    },
-  })
-  win.removeMenu()
-  win.loadFile(publicPath('indexDiagram.html'))
   return io
 }
 

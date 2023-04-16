@@ -1,5 +1,4 @@
 import { blue, bold, green, italic, red, yellowBright } from 'chalk'
-import { app } from 'electron'
 import { readFile } from 'fs/promises'
 import globby from 'globby'
 import logger from 'loglevel'
@@ -59,7 +58,7 @@ export const problemDescription = (problem: Problem): string => {
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
 export const publicPath = (...paths: string[]): string => {
-  const prefix = app.getAppPath().endsWith('build') ? '' : '/build'
+  const prefix = '/build'
   const path = join('./', prefix, 'public', ...paths)
   return path
 }
