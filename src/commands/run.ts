@@ -10,6 +10,7 @@ import { buildEnvironmentForProject, failureDescription, problemDescription, pub
 import { buildKeyPressEvent, canvasResolution, Image, queueEvent, visualState, VisualState, wKeyCode } from './extrasGame'
 import fs from 'fs'
 import cors from 'cors'
+import { bold } from 'chalk'
 
 const { time, timeEnd } = console
 
@@ -99,6 +100,7 @@ export default async function (programFQN: Name, { project, skipValidations, por
     express.static(`${project}/../assets`, { maxAge: '1d' }))
   server.listen(parseInt(port), 'localhost')
 
+  logger.info(successDescription('Game available at: ' + bold(`http://localhost:${port}`)))
 
   io.on('connection', socket => {
     logger.info(successDescription('Running game!'))
