@@ -3,7 +3,6 @@
   <head>
     <meta charset="UTF-8" />
     <title>Object Diagram</title>
-    <script src="http://localhost:3000/socket.io/socket.io.js"></script>
 
     <style>
       #cy {
@@ -15,7 +14,14 @@
   </head>
 
   <body>
-    <script>
+    <script type="module">
+      import { io } from "https://cdn.socket.io/4.4.1/socket.io.esm.min.js";
+
+      import {
+        initializeCytoscape,
+        reloadDiagram,
+      } from "http://localhost:3000/diagram.js";
+
       const socket = io("http://localhost:3000");
       socket.on("connect", function () {
         console.log("conectado!");
@@ -26,15 +32,6 @@
       socket.on("disconnect", function () {
         console.log("desconectado!");
       });
-    </script>
-
-    <div id="cy"></div>
-
-    <script type="module">
-      import {
-        initializeCytoscape,
-        reloadDiagram,
-      } from "http://localhost:3000/diagram.js";
 
       initializeCytoscape(document.getElementById("cy"));
 
@@ -42,5 +39,9 @@
         reloadDiagram(elements);
       });
     </script>
+
+    <div id="cy"></div>
+
+    <script type="module"></script>
   </body>
 </html>

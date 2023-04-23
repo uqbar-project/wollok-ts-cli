@@ -24,11 +24,13 @@
   },
   "pkg": {
     "scripts": "build/**/*.js",
-    "assets": "src/public/*",
-    "target": [
+    "targets": [
       "node16-linux-x64",
       "node16-macos-x64",
       "node16-win-x64"
+    ],
+    "assets": [
+      "public/**/*"
     ],
     "outputPath": "dist"
   },

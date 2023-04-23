@@ -22,7 +22,8 @@ const { log } = console
 
 type Options = {
   project: string
-  skipValidations: boolean
+  skipValidations: boolean,
+  port: string
 }
 
 export default async function (autoImportPath: string | undefined, options: Options): Promise<void> {
@@ -30,6 +31,7 @@ export default async function (autoImportPath: string | undefined, options: Opti
 
   let [interpreter, imports] = await initializeInterpreter(autoImportPath, options)
   let io: Server
+
   const commandHandler = defineCommands(autoImportPath, options, (newIo) => {
     io = newIo
     io.on('connection', socket => {
@@ -64,6 +66,11 @@ export default async function (autoImportPath: string | undefined, options: Opti
       }
       repl.prompt()
     })
+
+  io = await initializeClient(options)
+  io.on('connection', socket => {
+    socket.emit('updateDiagram', getDataDiagram(interpreter.evaluation))
+  })
 
   repl.prompt()
 }
@@ -109,6 +116,7 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
     process.exit()
   }
 
+
   return [new Interpreter(Evaluation.build(environment, natives)), imports]
 }
 
@@ -144,8 +152,7 @@ function defineCommands(autoImportPath: string | undefined, options: Options, se
     .description('Opens the Object Diagram')
     .allowUnknownOption()
     .action(async () => {
-      const io = await initializeClient()
-      setIo(io)
+      logger.info(successDescription('Object diagram running on http://localhost:3000'))
     })
 
   commandHandler.command(':help')
@@ -219,20 +226,22 @@ async function autocomplete(input: string): Promise<CompleterResult> {
 // SERVER/CLIENT
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-async function initializeClient() {
+async function initializeClient(options: Options) {
   const app = express()
   const server = http.createServer(app)
   const io = new Server(server)
 
   io.on('connection', socket => {
-    logger.info(successDescription('Showing objects in diagram windows!'))
+    logger.info(successDescription('Connected to object diagram'))
     socket.on('disconnect', () => { logger.info(failureDescription('Object diagram closed')) })
   })
+  app.use(
+    cors({ allowedHeaders: '*' }),
+    express.static(publicPath('diagram'), { maxAge: '1d' }),
+  )
+  server.listen(parseInt(options.port), 'localhost')
 
-  app.options('*', cors())
-  app.use(cors({ allowedHeaders: '*' }), express.static('/home/ivo/Documents/repos/wollok-ts-cli/build/public/diagram/', { maxAge: '1d' }))
-  server.listen(3000, 'localhost')
-
+  logger.info(successDescription('Object diagram available at: ' + bold(`http://localhost:${options.port}`)))
   return io
 }
 

@@ -2,7 +2,7 @@ import { blue, bold, green, italic, red, yellowBright } from 'chalk'
 import { readFile } from 'fs/promises'
 import globby from 'globby'
 import logger from 'loglevel'
-import { join } from 'path'
+import path, { join } from 'path'
 import { buildEnvironment, Environment, Problem } from 'wollok-ts'
 
 const { time, timeEnd } = console
@@ -58,7 +58,5 @@ export const problemDescription = (problem: Problem): string => {
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
 export const publicPath = (...paths: string[]): string => {
-  const prefix = '/build'
-  const path = join('./', prefix, 'public', ...paths)
-  return path
+  return path.join(__dirname, '..', 'public', ...paths)
 }

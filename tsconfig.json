@@ -13,6 +13,6 @@
     "esModuleInterop": true,
     "experimentalDecorators": true
   },
-  "include": ["test/**/*.ts", "src/**/*.ts", "src/public/diagram/diagram.js"],
+  "include": ["test/**/*.ts", "src/**/*.ts", "public/**/*"],
   "exclude": ["**/*.js", "node_modules"]
 }

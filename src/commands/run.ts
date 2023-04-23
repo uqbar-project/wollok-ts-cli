@@ -9,12 +9,14 @@ import natives from 'wollok-ts/dist/wre/wre.natives'
 import { buildEnvironmentForProject, failureDescription, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
 import { buildKeyPressEvent, canvasResolution, Image, queueEvent, visualState, VisualState, wKeyCode } from './extrasGame'
 import fs from 'fs'
+import cors from 'cors'
 
 const { time, timeEnd } = console
 
 type Options = {
   project: string
-  skipValidations: boolean
+  skipValidations: boolean,
+  port: string
 }
 let interp: Interpreter
 let io: Server
@@ -22,7 +24,7 @@ let folderImages: string
 let timmer = 0
 const namesFolder = ['imagenes', 'assets', 'img', 'asset']
 
-export default async function (programFQN: Name, { project, skipValidations }: Options): Promise<void> {
+export default async function (programFQN: Name, { project, skipValidations, port }: Options): Promise<void> {
   logger.info(`Running ${valueDescription(programFQN)} on ${valueDescription(project)}`)
 
   let environment = await buildEnvironmentForProject(project)
@@ -87,8 +89,16 @@ export default async function (programFQN: Name, { project, skipValidations }: O
 
   const sizeCanvas = canvasResolution(interp)
 
-  const server = http.createServer(express())
+  const app = express()
+  const server = http.createServer(app)
   io = new Server(server)
+
+  app.use(
+    cors({ allowedHeaders: '*' }),
+    express.static(publicPath('game'), { maxAge: '1d' }),
+    express.static(`${project}/../assets`, { maxAge: '1d' }))
+  server.listen(parseInt(port), 'localhost')
+
 
   io.on('connection', socket => {
     logger.info(successDescription('Running game!'))
@@ -116,11 +126,6 @@ export default async function (programFQN: Name, { project, skipValidations }: O
   server.listen(3000)
 }
 
-function getTitle(interp: Interpreter) {
-  const game = interp?.object('wollok.game.game')
-  return interp ? interp?.send('title', game!)?.innerString : 'Wollok Game'
-}
-
 function getImages(pathProject: string) {
   const images: Image[] = []
 
@@ -131,7 +136,7 @@ function getImages(pathProject: string) {
   const pathImage = path.join(pathDirname, folderImages)
   fs.readdirSync(pathImage).filter((file: any) => {
     if (file.endsWith('png') || file.endsWith('jpg')) {
-      images.push({ 'name': file, 'url': path.join(pathDirname, folderImages, file) })
+      images.push({ 'name': file, 'url': file })
     }
   })
   return images
