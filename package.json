@@ -10,23 +10,40 @@
   },
   "main": "./build/index.js",
   "scripts": {
-    "start": "electron ./build/index.js",
+    "start": "node ./build/index.js",
     "test": "npm run test:lint && npm run test:unit",
     "test:lint": "eslint",
     "test:unit": "mocha --parallel -r ts-node/register/transpile-only test/**/*.test.ts",
-    "build": "shx rm -rf build && shx mkdir ./build && shx cp -r ./src/public ./build/public && tsc -p ./tsconfig.build.json",
+    "build": "shx rm -rf build && shx mkdir ./build && shx cp -r ./public ./build/public && tsc -p ./tsconfig.build.json",
     "watch": "npm run build -- -w",
-    "pack": "electron-builder --dir",
+    "pack": "pkg .",
     "release": "electron-builder -p onTagOrDraft"
+  },
+  "bin": {
+    "wollok": "./build/index.js"
+  },
+  "pkg": {
+    "scripts": "build/**/*.js",
+    "targets": [
+      "node16-linux-x64",
+      "node16-macos-x64",
+      "node16-win-x64"
+    ],
+    "assets": [
+      "public/**/*"
+    ],
+    "outputPath": "dist"
   },
   "dependencies": {
     "chalk": "^4.1.2",
     "commander": "^9.2.0",
+    "cors": "^2.8.5",
     "cytoscape": "^3.15.2",
     "express": "^4.18.1",
     "globby": "^11.0.4",
     "loglevel": "^1.8.0",
     "p5": "^1.4.2",
+    "pkg": "^5.8.1",
     "socket.io": "^4.5.1",
     "wollok-ts": "4.0.1"
   },
@@ -40,8 +57,6 @@
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",
     "chai": "^4.3.7",
-    "electron": "^19.0.8",
-    "electron-builder": "^23.1.0",
     "eslint": "^8.3.0",
     "mocha": "^10.2.0",
     "shx": "^0.3.4",

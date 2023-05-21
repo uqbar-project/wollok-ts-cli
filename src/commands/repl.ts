@@ -1,7 +1,6 @@
 import { bold } from 'chalk'
 import { Command } from 'commander'
 import { ElementDefinition } from 'cytoscape'
-import { app as client, BrowserWindow } from 'electron'
 import express from 'express'
 import http from 'http'
 import logger from 'loglevel'
@@ -15,7 +14,7 @@ import { LinkError, linkIsolated } from 'wollok-ts/dist/linker'
 import { ParseError } from 'wollok-ts/dist/parser'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { buildEnvironmentForProject, failureDescription, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
-
+import cors from 'cors'
 // TODO:
 // - autocomplete piola
 
@@ -23,7 +22,8 @@ const { log } = console
 
 type Options = {
   project: string
-  skipValidations: boolean
+  skipValidations: boolean,
+  port: string
 }
 
 export default async function (autoImportPath: string | undefined, options: Options): Promise<void> {
@@ -31,6 +31,7 @@ export default async function (autoImportPath: string | undefined, options: Opti
 
   let [interpreter, imports] = await initializeInterpreter(autoImportPath, options)
   let io: Server
+
   const commandHandler = defineCommands(autoImportPath, options, (newIo) => {
     io = newIo
     io.on('connection', socket => {
@@ -65,6 +66,11 @@ export default async function (autoImportPath: string | undefined, options: Opti
       }
       repl.prompt()
     })
+
+  io = await initializeClient(options)
+  io.on('connection', socket => {
+    socket.emit('updateDiagram', getDataDiagram(interpreter.evaluation))
+  })
 
   repl.prompt()
 }
@@ -110,6 +116,7 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
     process.exit()
   }
 
+
   return [new Interpreter(Evaluation.build(environment, natives)), imports]
 }
 
@@ -145,8 +152,7 @@ function defineCommands(autoImportPath: string | undefined, options: Options, se
     .description('Opens the Object Diagram')
     .allowUnknownOption()
     .action(async () => {
-      const io = await initializeClient()
-      setIo(io)
+      logger.info(successDescription('Object diagram available at: ' + bold(`http://localhost:${options.port}`)))
     })
 
   commandHandler.command(':help')
@@ -220,29 +226,22 @@ async function autocomplete(input: string): Promise<CompleterResult> {
 // SERVER/CLIENT
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-async function initializeClient() {
-  const server = http.createServer(express())
+async function initializeClient(options: Options) {
+  const app = express()
+  const server = http.createServer(app)
   const io = new Server(server)
 
   io.on('connection', socket => {
-    logger.info(successDescription('Showing objects in diagram windows!'))
+    logger.info(successDescription('Connected to object diagram'))
     socket.on('disconnect', () => { logger.info(failureDescription('Object diagram closed')) })
   })
+  app.use(
+    cors({ allowedHeaders: '*' }),
+    express.static(publicPath('diagram'), { maxAge: '1d' }),
+  )
+  server.listen(parseInt(options.port), 'localhost')
 
-  server.listen(3000)
-
-  await client.whenReady()
-  const win = new BrowserWindow({
-    width: 800,
-    height: 600,
-    icon: __dirname + 'wollok.ico',
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-    },
-  })
-  win.removeMenu()
-  win.loadFile(publicPath('indexDiagram.html'))
+  logger.info(successDescription('Object diagram available at: ' + bold(`http://localhost:${options.port}`)))
   return io
 }
 

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Object Diagram</title>
+
+    <style>
+      #cy {
+        width: 790px;
+        height: 590px;
+        display: block;
+      }
+    </style>
+  </head>
+
+  <body>
+    <script type="module">
+      import { io } from "https://cdn.socket.io/4.4.1/socket.io.esm.min.js";
+
+      import {
+        initializeCytoscape,
+        reloadDiagram,
+      } from "http://localhost:3000/diagram.js";
+
+      const socket = io("http://localhost:3000");
+      socket.on("connect", function () {
+        console.log("conectado!");
+      });
+      socket.on("event", function (data) {
+        console.log(`evento! ${data}`);
+      });
+      socket.on("disconnect", function () {
+        console.log("desconectado!");
+      });
+
+      initializeCytoscape(document.getElementById("cy"));
+
+      socket.on("updateDiagram", (elements) => {
+        reloadDiagram(elements);
+      });
+    </script>
+
+    <div id="cy"></div>
+
+    <script type="module"></script>
+  </body>
+</html>
