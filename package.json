@@ -1,6 +1,6 @@
 {
   "name": "wollok-ts-cli",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Wollok Command Line Interface",
   "repository": "https://github.com/uqbar-project/wollok-ts-cli",
   "license": "MIT",
@@ -16,8 +16,7 @@
     "test:unit": "mocha --parallel -r ts-node/register/transpile-only test/**/*.test.ts",
     "build": "shx rm -rf build && shx mkdir ./build && shx cp -r ./public ./build/public && tsc -p ./tsconfig.build.json",
     "watch": "npm run build -- -w",
-    "pack": "pkg .",
-    "release": "electron-builder -p onTagOrDraft"
+    "pack": "pkg ."
   },
   "bin": {
     "wollok": "./build/index.js"
@@ -45,7 +44,7 @@
     "p5": "^1.4.2",
     "pkg": "^5.8.1",
     "socket.io": "^4.5.1",
-    "wollok-ts": "4.0.1"
+    "wollok-ts": "4.0.2"
   },
   "devDependencies": {
     "@types/chai": "^4.3.4",
