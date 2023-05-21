@@ -152,7 +152,7 @@ function defineCommands(autoImportPath: string | undefined, options: Options, se
     .description('Opens the Object Diagram')
     .allowUnknownOption()
     .action(async () => {
-      logger.info(successDescription('Object diagram running on http://localhost:3000'))
+      logger.info(successDescription('Object diagram available at: ' + bold(`http://localhost:${options.port}`)))
     })
 
   commandHandler.command(':help')
