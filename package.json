@@ -33,7 +33,7 @@
     ],
     "outputPath": "dist"
   },
-  "dependencies": {
+  "dependencies": { 
     "chalk": "^4.1.2",
     "commander": "^9.2.0",
     "cors": "^2.8.5",
@@ -46,7 +46,7 @@
     "socket.io": "^4.5.1",
     "wollok-ts": "4.0.2"
   },
-  "devDependencies": {
+  "devDependencies": { 
     "@types/chai": "^4.3.4",
     "@types/cytoscape": "^3.19.7",
     "@types/express": "^4.17.13",

@@ -2,6 +2,8 @@ import { Command } from 'commander'
 import repl from './commands/repl'
 import run from './commands/run'
 import test from './commands/test'
+import init from './commands/init'
+
 import  logger  from  'loglevel'
 
 const program = new Command()
@@ -38,5 +40,10 @@ program.command('repl')
   .option('-v, --verbose', 'print debugging information', false)
   .action(repl)
 
+
+program.command('init')
+  .description('Create a new Wollok project')
+  .option('-p, --project [filter]', 'path to project', process.cwd())
+  .action(init)
 
 program.parseAsync()
