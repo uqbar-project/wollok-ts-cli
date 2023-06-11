@@ -7,7 +7,7 @@ import logger from 'loglevel'
 import path from 'path'
 import { CompleterResult, createInterface as REPL } from 'readline'
 import { Server } from 'socket.io'
-import { Entity, Environment, Evaluation, Import, Package, parse, Reference, RuntimeObject, Sentence, Singleton, validate, WollokException } from 'wollok-ts'
+import { BasicRuntimeObject, Entity, Environment, Evaluation, Import, Package, parse, Reference, RuntimeObject, Sentence, Singleton, validate, WollokException } from 'wollok-ts'
 import { notEmpty } from 'wollok-ts/dist/extensions'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import { LinkError, linkIsolated } from 'wollok-ts/dist/linker'
@@ -250,7 +250,7 @@ function decoration(obj: RuntimeObject) {
   const { id, innerValue, module } = obj
   const moduleName: string = module.fullyQualifiedName
 
-  if (obj.innerValue === null || moduleName === 'wollok.lang.Number') return {
+  if (obj.innerValue === null || ['wollok.lang.Number', 'wollok.lang.Boolean'].includes(moduleName)) return {
     type: 'literal',
     label: `${innerValue}`,
   }
@@ -277,8 +277,17 @@ function elementFromObject(obj: RuntimeObject, alreadyVisited: string[] = []): E
       { data: { id: `${id}_${obj.get(name)?.id}`, label: name, source: id, target: obj.get(name)?.id } },
       ...elementFromObject(obj.get(name)!, [...alreadyVisited, id]),
     ]),
+    ...obj.innerCollection ?
+      obj.innerCollection.flatMap(item =>
+        [
+          { data: { id: `${id}_${item.id}`, source: id, target: item.id } },
+          ...elementFromObject(item, [...alreadyVisited, id] )
+        ]
+      )
+      : [],
   ]
 }
+
 
 function getDataDiagram(evaluation: Evaluation): ElementDefinition[] {
   return [...evaluation.allInstances()]
