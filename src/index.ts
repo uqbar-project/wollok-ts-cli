@@ -3,8 +3,7 @@ import repl from './commands/repl'
 import run from './commands/run'
 import test from './commands/test'
 import init from './commands/init'
-
-import  logger  from  'loglevel'
+import logger from 'loglevel'
 
 const program = new Command()
   .name('wollok')

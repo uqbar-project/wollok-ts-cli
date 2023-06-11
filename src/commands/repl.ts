@@ -7,7 +7,7 @@ import logger from 'loglevel'
 import path from 'path'
 import { CompleterResult, createInterface as REPL } from 'readline'
 import { Server } from 'socket.io'
-import { BasicRuntimeObject, Entity, Environment, Evaluation, Import, Package, parse, Reference, RuntimeObject, Sentence, Singleton, validate, WollokException } from 'wollok-ts'
+import { Entity, Environment, Evaluation, Import, Package, parse, Reference, RuntimeObject, Sentence, Singleton, validate, WollokException } from 'wollok-ts'
 import { notEmpty } from 'wollok-ts/dist/extensions'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import { LinkError, linkIsolated } from 'wollok-ts/dist/linker'
@@ -281,7 +281,7 @@ function elementFromObject(obj: RuntimeObject, alreadyVisited: string[] = []): E
       obj.innerCollection.flatMap(item =>
         [
           { data: { id: `${id}_${item.id}`, source: id, target: item.id } },
-          ...elementFromObject(item, [...alreadyVisited, id] )
+          ...elementFromObject(item, [...alreadyVisited, id] ),
         ]
       )
       : [],

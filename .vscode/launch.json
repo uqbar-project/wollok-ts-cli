@@ -2,12 +2,6 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "command": "npm start -- repl /Users/ivanjawerbaum/Documents/pruebas/wollok-lsp-prueba/prueba.wlk -p /Users/ivanjawerbaum/Documents/pruebas",
-      "name": "Run npm start",
-      "request": "launch",
-      "type": "node-terminal"
-    },
-    {
       "command": "npm run test",
       "name": "Run Wollok CLI tests",
       "request": "launch",
