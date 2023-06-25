@@ -13,7 +13,7 @@ import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import { LinkError, linkIsolated } from 'wollok-ts/dist/linker'
 import { ParseError } from 'wollok-ts/dist/parser'
 import natives from 'wollok-ts/dist/wre/wre.natives'
-import { buildEnvironmentForProject, failureDescription, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
+import { buildEnvironmentForProject, failureDescription, isConstant, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
 import cors from 'cors'
 // TODO:
 // - autocomplete piola
@@ -301,10 +301,6 @@ function concatRepeatedReferences(elementDefinitions: ElementDefinition[]): Elem
     }
   })
   return cleanDefinitions
-}
-
-function isConstant(obj: RuntimeObject, localName: string) {
-  return obj.module.allFields.find(f => f.name === localName)?.isConstant
 }
 
 function getDataDiagram(evaluation: Evaluation): ElementDefinition[] {

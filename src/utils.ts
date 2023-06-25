@@ -3,7 +3,7 @@ import { readFile } from 'fs/promises'
 import globby from 'globby'
 import logger from 'loglevel'
 import path, { join } from 'path'
-import { buildEnvironment, Environment, Problem } from 'wollok-ts'
+import { buildEnvironment, Environment, Problem, RuntimeObject } from 'wollok-ts'
 
 const { time, timeEnd } = console
 
@@ -59,4 +59,13 @@ export const problemDescription = (problem: Problem): string => {
 
 export const publicPath = (...paths: string[]): string => {
   return path.join(__dirname, '..', 'public', ...paths)
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// WOLLOK AST
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+
+export function isConstant(obj: RuntimeObject, localName: string): boolean {
+  return !!obj.module.allFields.find(f => f.name === localName)?.isConstant
 }
