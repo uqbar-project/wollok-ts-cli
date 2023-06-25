@@ -60,8 +60,14 @@ function reloadDiagram(elements) {
 
   const newElements = elements.filter((e) => !cy.hasElementWithId(e.data.id));
   if (newElements.length) {
+    let shouldUpdateLayout = false;
+    if (cy.elements().length === 0) {
+      shouldUpdateLayout = true;
+    }
     cy.add(newElements);
-    updateLayout();
+    if (shouldUpdateLayout) {
+      updateLayout();
+    }
   }
 }
 
