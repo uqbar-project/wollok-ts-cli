@@ -30,13 +30,10 @@ export default async function (autoImportPath: string | undefined, options: Opti
   logger.info(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
 
   let [interpreter, imports] = await initializeInterpreter(autoImportPath, options)
-  let io: Server
+  const io: Server = await initializeClient(options)
 
-  const commandHandler = defineCommands(autoImportPath, options, (newIo) => {
-    io = newIo
-    io.on('connection', socket => {
-      socket.emit('updateDiagram', getDataDiagram(interpreter.evaluation))
-    })
+  const commandHandler = defineCommands(autoImportPath, options, () => {
+    io.emit('updateDiagram', getDataDiagram(interpreter.evaluation))
   }, (newInterpreter: Interpreter, newImport: Import[]) => {
     interpreter = newInterpreter
     imports = newImport
@@ -67,7 +64,6 @@ export default async function (autoImportPath: string | undefined, options: Opti
       repl.prompt()
     })
 
-  io = await initializeClient(options)
   io.on('connection', socket => {
     socket.emit('updateDiagram', getDataDiagram(interpreter.evaluation))
   })
@@ -123,7 +119,7 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // COMMANDS
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-function defineCommands(autoImportPath: string | undefined, options: Options, setIo: (io: Server) => void, setInterpreter: (interpreter: Interpreter, imports: Import[]) => void): Command {
+function defineCommands(autoImportPath: string | undefined, options: Options, reloadIo: () => void, setInterpreter: (interpreter: Interpreter, imports: Import[]) => void): Command {
   const commandHandler = new Command('Write a Wollok sentence or command to evaluate')
     .usage(' ')
     .allowUnknownOption()
@@ -145,6 +141,7 @@ function defineCommands(autoImportPath: string | undefined, options: Options, se
     .action(async () => {
       const [interpreter, imports] = await initializeInterpreter(autoImportPath, options)
       setInterpreter(interpreter, imports)
+      reloadIo()
     })
 
   commandHandler.command(':diagram')
