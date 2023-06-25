@@ -274,7 +274,7 @@ function elementFromObject(obj: RuntimeObject, alreadyVisited: string[] = []): E
   return [
     { data: { id, ...decoration(obj) } },
     ...[...obj.locals.keys()].filter(key => key !== 'self').flatMap(name => [
-      { data: { id: `${id}_${obj.get(name)?.id}`, label: name, source: id, target: obj.get(name)?.id } },
+      { data: { id: `${id}_${obj.get(name)?.id}`, label: `${name}${isConstant(obj, name) ? '🔒' : ''}`, source: id, target: obj.get(name)?.id } },
       ...elementFromObject(obj.get(name)!, [...alreadyVisited, id]),
     ]),
     ...obj.innerCollection ?
@@ -288,6 +288,9 @@ function elementFromObject(obj: RuntimeObject, alreadyVisited: string[] = []): E
   ]
 }
 
+function isConstant(obj: RuntimeObject, localName: string) {
+  return obj.module.allFields.find(f => f.name === localName)?.isConstant
+}
 
 function getDataDiagram(evaluation: Evaluation): ElementDefinition[] {
   return [...evaluation.allInstances()]
