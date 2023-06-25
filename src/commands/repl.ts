@@ -8,7 +8,7 @@ import logger from 'loglevel'
 import path from 'path'
 import { CompleterResult, createInterface as REPL } from 'readline'
 import { Server } from 'socket.io'
-import { Body, Entity, Environment, Evaluation, Import, Package, parse, Program, Reference, RuntimeObject, Sentence, Singleton, validate, WollokException } from 'wollok-ts'
+import { Entity, Environment, Evaluation, Import, Package, parse, Reference, RuntimeObject, Sentence, Singleton, validate, WollokException } from 'wollok-ts'
 import { notEmpty } from 'wollok-ts/dist/extensions'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import link, { LocalScope } from 'wollok-ts/dist/linker'
@@ -30,18 +30,17 @@ type Options = {
 export default async function (autoImportPath: string | undefined, options: Options): Promise<void> {
   logger.info(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
 
-  let [interpreter, replProgram] = await initializeInterpreter(autoImportPath, options)
+  let interpreter = await initializeInterpreter(autoImportPath, options)
   const io: Server = await initializeClient(options)
 
   const commandHandler = defineCommands(autoImportPath, options, () => {
     io.emit('updateDiagram', getDataDiagram(interpreter.evaluation))
-  }, (newInterpreter: Interpreter, newProgram: Program) => {
+  }, (newInterpreter: Interpreter) => {
     interpreter = newInterpreter
-    replProgram = newProgram
     repl.prompt()
   })
 
-  const autoImportName = autoImportPath && replProgram.parent.imports[0].entity.name
+  const autoImportName = autoImportPath && replNode(interpreter.evaluation.environment).imports[0].entity.name
   const repl = REPL({
     input: process.stdin,
     output: process.stdout,
@@ -58,7 +57,7 @@ export default async function (autoImportPath: string | undefined, options: Opti
       if (line.length) {
         if (line.startsWith(':')) commandHandler.parse(line.split(' '), { from: 'user' })
         else {
-          log(interprete(interpreter, replProgram, line))
+          log(interprete(interpreter, line))
           io?.emit('updateDiagram', getDataDiagram(interpreter.evaluation))
         }
       }
@@ -72,7 +71,7 @@ export default async function (autoImportPath: string | undefined, options: Opti
   repl.prompt()
 }
 
-export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations }: Options): Promise<[Interpreter, Program]> {
+export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations }: Options): Promise<Interpreter> {
   let environment: Environment
   const imports: Import[] = []
 
@@ -113,18 +112,16 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
     process.exit()
   }
 
-  const replProgram = new Program({ name: '_REPL', body: new Body({ sentences: [] }) })
-  const replPackage = new Package({ name: 'REPL', imports, members: [replProgram] })
-  replProgram.parent = replPackage
+  const replPackage = new Package({ name: 'REPL', imports })
   environment = link([replPackage], environment)
 
-  return [new Interpreter(Evaluation.build(environment, natives)), replProgram]
+  return new Interpreter(Evaluation.build(environment, natives))
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // COMMANDS
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-function defineCommands(autoImportPath: string | undefined, options: Options, reloadIo: () => void, setInterpreter: (interpreter: Interpreter, replProgram: Program) => void): Command {
+function defineCommands(autoImportPath: string | undefined, options: Options, reloadIo: () => void, setInterpreter: (interpreter: Interpreter) => void): Command {
   const commandHandler = new Command('Write a Wollok sentence or command to evaluate')
     .usage(' ')
     .allowUnknownOption()
@@ -144,8 +141,8 @@ function defineCommands(autoImportPath: string | undefined, options: Options, re
     .description('Reloads all currently imported packages and resets evaluation state')
     .allowUnknownOption()
     .action(async () => {
-      const [interpreter, program] = await initializeInterpreter(autoImportPath, options)
-      setInterpreter(interpreter, program)
+      const interpreter = await initializeInterpreter(autoImportPath, options)
+      setInterpreter(interpreter)
       reloadIo()
     })
 
@@ -169,7 +166,7 @@ function defineCommands(autoImportPath: string | undefined, options: Options, re
 // EVALUATION
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-export function interprete(interpreter: Interpreter, replProgram: Program, line: string): string {
+export function interprete(interpreter: Interpreter, line: string): string {
   try {
     const sentenceOrImport = parse.Import.or(parse.Variable).or(parse.Assignment).or(parse.Expression).tryParse(line)
     const error = [sentenceOrImport, ...sentenceOrImport.descendants].flatMap(_ => _.problems ?? []).find(_ => _.level === 'error')
@@ -201,7 +198,7 @@ export function interprete(interpreter: Interpreter, replProgram: Program, line:
           `Unknown reference ${valueDescription(sentenceOrImport.entity.name)}`
         )
 
-      newImport(sentenceOrImport, interpreter.evaluation.environment, replProgram.parent)
+      newImport(sentenceOrImport, interpreter.evaluation.environment)
 
       return successDescription('')
     }
@@ -332,7 +329,7 @@ function newSentence<S extends Sentence>(sentence: S, environment: Environment):
   return sentence
 }
 
-function newImport(importNode: Import, environment: Environment, packageNode: Package) {
+function newImport(importNode: Import, environment: Environment) {
   const node = replNode(environment)
   const imported = node.scope.resolve<Package | Entity>(importNode.entity.name)!
   if (imported.is(Package)) {
@@ -341,4 +338,4 @@ function newImport(importNode: Import, environment: Environment, packageNode: Pa
   return node.scope.register([imported.name!, imported])
 }
 
-const replNode = (environment: Environment) => environment.getNodeByFQN<Program>('REPL._REPL')
+export const replNode = (environment: Environment) => environment.getNodeByFQN<Package>('REPL')

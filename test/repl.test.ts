@@ -2,7 +2,7 @@ import { should } from 'chai'
 import { join } from 'path'
 import { Import, Program } from 'wollok-ts'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
-import { initializeInterpreter, interprete } from '../src/commands/repl'
+import { initializeInterpreter, interprete, replNode } from '../src/commands/repl'
 import { failureDescription, successDescription, valueDescription } from '../src/utils'
 
 const projectPath = join('examples')
@@ -17,38 +17,37 @@ describe('REPL', () => {
     port: '8080',
   }
   let interpreter: Interpreter
-  let replProgram: Program
   let imports: Import[]
 
   beforeEach(async () => {
-    [interpreter, replProgram] = await initializeInterpreter(undefined, options)
-    imports = [...replProgram.parent.imports]
+    interpreter = await initializeInterpreter(undefined, options)
+    imports = [...replNode(interpreter.evaluation.environment).imports]
   })
 
   describe('should accept', () => {
 
     it('value expressions', () => {
-      const result = interprete(interpreter, replProgram, '1 + 2')
+      const result = interprete(interpreter, '1 + 2')
       result.should.be.equal(successDescription('3'))
     })
 
     it('void expressions', () => {
-      const result = interprete(interpreter, replProgram, '[].add(1)')
+      const result = interprete(interpreter, '[].add(1)')
       result.should.be.equal(successDescription(''))
     })
 
     it('import sentences', () => {
-      const result = interprete(interpreter, replProgram, 'import wollok.game.*')
+      const result = interprete(interpreter, 'import wollok.game.*')
       result.should.be.equal(successDescription(''))
     })
 
     it('not parsing strings', () => {
-      const result = interprete(interpreter, replProgram, '3kd3id9')
+      const result = interprete(interpreter, '3kd3id9')
       result.should.includes('Syntax error')
     })
 
     it('failure expressions', () => {
-      const result = interprete(interpreter, replProgram, 'fakeReference')
+      const result = interprete(interpreter, 'fakeReference')
       result.should.be.equal(failureDescription(`Unknown reference ${valueDescription('fakeReference')}`))
     })
   })
@@ -56,47 +55,47 @@ describe('REPL', () => {
   describe('should print result', () => {
 
     it('for reference to wko', () => {
-      const result = interprete(interpreter, replProgram, 'assert')
+      const result = interprete(interpreter, 'assert')
       result.should.be.equal(successDescription('assert'))
     })
 
     it('for reference to an instance', () => {
-      const result = interprete(interpreter, replProgram, 'new Object()')
+      const result = interprete(interpreter, 'new Object()')
       result.should.be.equal(successDescription('an Object'))
     })
 
     it('for reference to a literal object', () => {
-      const result = interprete(interpreter, replProgram, 'object { } ')
+      const result = interprete(interpreter, 'object { } ')
       result.should.include('an Object#')
     })
 
     it('for number', () => {
-      const result = interprete(interpreter, replProgram, '3')
+      const result = interprete(interpreter, '3')
       result.should.be.equal(successDescription('3'))
     })
 
     it('for string', () => {
-      const result = interprete(interpreter, replProgram, '"hola"')
+      const result = interprete(interpreter, '"hola"')
       result.should.be.equal(successDescription('"hola"'))
     })
 
     it('for boolean', () => {
-      const result = interprete(interpreter, replProgram, 'true')
+      const result = interprete(interpreter, 'true')
       result.should.be.equal(successDescription('true'))
     })
 
     it('for list', () => {
-      const result = interprete(interpreter, replProgram, '[1, 2, 3]')
+      const result = interprete(interpreter, '[1, 2, 3]')
       result.should.be.equal(successDescription('[1, 2, 3]'))
     })
 
     it('for set', () => {
-      const result = interprete(interpreter, replProgram, '#{1, 2, 3}')
+      const result = interprete(interpreter, '#{1, 2, 3}')
       result.should.be.equal(successDescription('#{1, 2, 3}'))
     })
 
     it('for closure', () => {
-      const result = interprete(interpreter, replProgram, '{1 + 2}')
+      const result = interprete(interpreter, '{1 + 2}')
       result.should.be.equal(successDescription('{1 + 2}'))
     })
   })
@@ -106,8 +105,8 @@ describe('REPL', () => {
     const fileName = join(projectPath, 'aves.wlk')
 
     beforeEach(async () => {
-      [interpreter, replProgram] = await initializeInterpreter(fileName, options)
-      imports = [...replProgram.parent.imports]
+      interpreter = await initializeInterpreter(fileName, options)
+      imports = [...replNode(interpreter.evaluation.environment).imports]
     })
 
     it('should auto import the file and imported entities', () => {
@@ -117,38 +116,39 @@ describe('REPL', () => {
     })
 
     it('file definitions should be accessible', () => {
-      const result = interprete(interpreter, replProgram, 'pepita')
+      const result = interprete(interpreter, 'pepita')
       result.should.be.equal(successDescription('pepita'))
     })
 
     it('imported definitions should be accessible', () => {
-      const result = interprete(interpreter, replProgram, 'alpiste')
+      const result = interprete(interpreter, 'alpiste')
       result.should.be.equal(successDescription('alpiste'))
     })
 
     it('not imported definitions should not be accessible', () => {
-      const result = interprete(interpreter, replProgram, 'ash')
+      const result = interprete(interpreter, 'ash')
       result.should.be.equal(failureDescription(`Unknown reference ${valueDescription('ash')}`))
     })
 
     it('after generic import, definitions should be accessible', () => {
-      const result = interprete(interpreter, replProgram, 'import otros.personas.entrenadores.*')
+      const result = interprete(interpreter, 'import otros.personas.entrenadores.*')
       result.should.be.equal(successDescription(''))
-      const result2 = interprete(interpreter, replProgram, 'ash')
+      const result2 = interprete(interpreter, 'ash')
       result2.should.be.equal(successDescription('ash'))
     })
 
     it('after entity import, it should be accessible', () => {
-      const result = interprete(interpreter, replProgram, 'import otros.personas.entrenadores.ash')
+      const result = interprete(interpreter, 'import otros.personas.entrenadores.ash')
       result.should.be.equal(successDescription(''))
-      const result2 = interprete(interpreter, replProgram, 'ash')
+      const result2 = interprete(interpreter, 'ash')
       result2.should.be.equal(successDescription('ash'))
     })
 
     it('can be initialized with sub-folders file', async () => {
-      [interpreter, replProgram] = await initializeInterpreter(join(projectPath, 'otros', 'personas', 'entrenadores'), options)
-      replProgram.parent.imports.should.be.have.lengthOf(1)
-      const result = interprete(interpreter, replProgram, 'ash')
+      interpreter = await initializeInterpreter(join(projectPath, 'otros', 'personas', 'entrenadores'), options)
+      imports = [...replNode(interpreter.evaluation.environment).imports]
+      imports.should.be.have.lengthOf(1)
+      const result = interprete(interpreter, 'ash')
       result.should.be.equal(successDescription('ash'))
 
     })
@@ -161,7 +161,7 @@ describe('REPL', () => {
     })
 
     it('global definitions should be accessible', () => {
-      const result = interprete(interpreter, replProgram, 'assert')
+      const result = interprete(interpreter, 'assert')
       result.should.be.equal(successDescription('assert'))
     })
   })
