@@ -271,7 +271,7 @@ function decoration(obj: RuntimeObject) {
 function elementFromObject(obj: RuntimeObject, alreadyVisited: string[] = []): ElementDefinition[] {
   const { id } = obj
   if (alreadyVisited.includes(id)) return []
-  return [
+  return concatRepeatedReferences([
     { data: { id, ...decoration(obj) } },
     ...[...obj.locals.keys()].filter(key => key !== 'self').flatMap(name => [
       { data: { id: `${id}_${obj.get(name)?.id}`, label: `${name}${isConstant(obj, name) ? '🔒' : ''}`, source: id, target: obj.get(name)?.id } },
@@ -285,7 +285,25 @@ function elementFromObject(obj: RuntimeObject, alreadyVisited: string[] = []): E
         ]
       )
       : [],
-  ]
+  ])
+}
+
+function concatRepeatedReferences(elementDefinitions: ElementDefinition[]): ElementDefinition[] {
+  const cleanDefinitions: ElementDefinition[] = []
+  elementDefinitions.forEach(elem => {
+    if(elem.data.source && elem.data.target){
+      const repeated = cleanDefinitions.find(def => def.data.source === elem.data.source && def.data.target === elem.data.target)
+      if(repeated){
+        repeated.data.id = `${repeated.data.id}_${elem.data.id}`
+        repeated.data.label = `${repeated.data.label}, ${elem.data.label}`
+      } else {
+        cleanDefinitions.push(elem)
+      }
+    } else {
+      cleanDefinitions.push(elem)
+    }
+  })
+  return cleanDefinitions
 }
 
 function isConstant(obj: RuntimeObject, localName: string) {
