@@ -1,5 +1,6 @@
 import { bold } from 'chalk'
 import { Command } from 'commander'
+import cors from 'cors'
 import { ElementDefinition } from 'cytoscape'
 import express from 'express'
 import http from 'http'
@@ -7,14 +8,13 @@ import logger from 'loglevel'
 import path from 'path'
 import { CompleterResult, createInterface as REPL } from 'readline'
 import { Server } from 'socket.io'
-import { Entity, Environment, Evaluation, Import, Package, parse, Reference, RuntimeObject, Sentence, Singleton, validate, WollokException } from 'wollok-ts'
+import { Body, Entity, Environment, Evaluation, Import, Package, parse, Program, Reference, RuntimeObject, Sentence, Singleton, validate, WollokException } from 'wollok-ts'
 import { notEmpty } from 'wollok-ts/dist/extensions'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
-import { LinkError, linkIsolated } from 'wollok-ts/dist/linker'
+import link, { LocalScope } from 'wollok-ts/dist/linker'
 import { ParseError } from 'wollok-ts/dist/parser'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { buildEnvironmentForProject, failureDescription, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
-import cors from 'cors'
 // TODO:
 // - autocomplete piola
 
@@ -29,7 +29,7 @@ type Options = {
 export default async function (autoImportPath: string | undefined, options: Options): Promise<void> {
   logger.info(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
 
-  let [interpreter, imports] = await initializeInterpreter(autoImportPath, options)
+  let [interpreter, replProgram] = await initializeInterpreter(autoImportPath, options)
   let io: Server
 
   const commandHandler = defineCommands(autoImportPath, options, (newIo) => {
@@ -37,13 +37,13 @@ export default async function (autoImportPath: string | undefined, options: Opti
     io.on('connection', socket => {
       socket.emit('updateDiagram', getDataDiagram(interpreter.evaluation))
     })
-  }, (newInterpreter: Interpreter, newImport: Import[]) => {
+  }, (newInterpreter: Interpreter, newProgram: Program) => {
     interpreter = newInterpreter
-    imports = newImport
+    replProgram = newProgram
     repl.prompt()
   })
 
-  const autoImportName = imports?.length && imports[0].entity.name
+  const autoImportName = autoImportPath && replProgram.parent.imports[0].entity.name
   const repl = REPL({
     input: process.stdin,
     output: process.stdout,
@@ -60,7 +60,7 @@ export default async function (autoImportPath: string | undefined, options: Opti
       if (line.length) {
         if (line.startsWith(':')) commandHandler.parse(line.split(' '), { from: 'user' })
         else {
-          log(interprete(interpreter, imports, line))
+          log(interprete(interpreter, replProgram, line))
           io?.emit('updateDiagram', getDataDiagram(interpreter.evaluation))
         }
       }
@@ -75,7 +75,7 @@ export default async function (autoImportPath: string | undefined, options: Opti
   repl.prompt()
 }
 
-export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations }: Options): Promise<[Interpreter, Import[]]> {
+export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations }: Options): Promise<[Interpreter, Program]> {
   let environment: Environment
   const imports: Import[] = []
 
@@ -116,14 +116,18 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
     process.exit()
   }
 
+  const replProgram = new Program({ name: '_REPL', body: new Body({ sentences: [] }) })
+  const replPackage = new Package({ name: 'REPL', imports, members: [replProgram] })
+  replProgram.parent = replPackage
+  environment = link([replPackage], environment)
 
-  return [new Interpreter(Evaluation.build(environment, natives)), imports]
+  return [new Interpreter(Evaluation.build(environment, natives)), replProgram]
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // COMMANDS
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-function defineCommands(autoImportPath: string | undefined, options: Options, setIo: (io: Server) => void, setInterpreter: (interpreter: Interpreter, imports: Import[]) => void): Command {
+function defineCommands(autoImportPath: string | undefined, options: Options, setIo: (io: Server) => void, setInterpreter: (interpreter: Interpreter, replProgram: Program) => void): Command {
   const commandHandler = new Command('Write a Wollok sentence or command to evaluate')
     .usage(' ')
     .allowUnknownOption()
@@ -143,8 +147,8 @@ function defineCommands(autoImportPath: string | undefined, options: Options, se
     .description('Reloads all currently imported packages and resets evaluation state')
     .allowUnknownOption()
     .action(async () => {
-      const [interpreter, imports] = await initializeInterpreter(autoImportPath, options)
-      setInterpreter(interpreter, imports)
+      const [interpreter, program] = await initializeInterpreter(autoImportPath, options)
+      setInterpreter(interpreter, program)
     })
 
   commandHandler.command(':diagram')
@@ -167,15 +171,15 @@ function defineCommands(autoImportPath: string | undefined, options: Options, se
 // EVALUATION
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-export function interprete(interpreter: Interpreter, imports: Import[], line: string): string {
+export function interprete(interpreter: Interpreter, replProgram: Program, line: string): string {
   try {
     const sentenceOrImport = parse.Import.or(parse.Variable).or(parse.Assignment).or(parse.Expression).tryParse(line)
     const error = [sentenceOrImport, ...sentenceOrImport.descendants].flatMap(_ => _.problems ?? []).find(_ => _.level === 'error')
     if (error) throw error
 
     if (sentenceOrImport.is(Sentence)) {
-      const linkedSentence = linkIsolated(sentenceOrImport, interpreter.evaluation.environment, imports)
-      const unlinkedNode = [linkedSentence, ...linkedSentence.descendants].find(_ => _.problems?.some(problem => problem instanceof LinkError))
+      const linkedSentence = newSentence(sentenceOrImport, interpreter.evaluation.environment)
+      const unlinkedNode = [linkedSentence, ...linkedSentence.descendants].find(_ => _.is(Reference) && !_.target)
 
       if (unlinkedNode) {
         if (unlinkedNode.is(Reference)) {
@@ -199,7 +203,8 @@ export function interprete(interpreter: Interpreter, imports: Import[], line: st
           `Unknown reference ${valueDescription(sentenceOrImport.entity.name)}`
         )
 
-      imports.push(sentenceOrImport)
+      newImport(sentenceOrImport, interpreter.evaluation.environment, replProgram.parent)
+
       return successDescription('')
     }
 
@@ -207,9 +212,9 @@ export function interprete(interpreter: Interpreter, imports: Import[], line: st
   } catch (error: any) {
     return (
       error.type === 'ParsimmonError' ? failureDescription(`Syntax error:\n${error.message.split('\n').filter(notEmpty).slice(1).join('\n')}`) :
-      error instanceof WollokException ? failureDescription('Evaluation Error!', error) :
-      error instanceof ParseError ? failureDescription(`Syntax Error at offset ${error.sourceMap.start.offset}: ${line.slice(error.sourceMap.start.offset, error.sourceMap.end.offset)}`) :
-      failureDescription('Uh-oh... Unexpected TypeScript Error!', error)
+        error instanceof WollokException ? failureDescription('Evaluation Error!', error) :
+          error instanceof ParseError ? failureDescription(`Syntax Error at offset ${error.sourceMap.start.offset}: ${line.slice(error.sourceMap.start.offset, error.sourceMap.end.offset)}`) :
+            failureDescription('Uh-oh... Unexpected TypeScript Error!', error)
     )
   }
 }
@@ -281,7 +286,7 @@ function elementFromObject(obj: RuntimeObject, alreadyVisited: string[] = []): E
       obj.innerCollection.flatMap(item =>
         [
           { data: { id: `${id}_${item.id}`, source: id, target: item.id } },
-          ...elementFromObject(item, [...alreadyVisited, id] ),
+          ...elementFromObject(item, [...alreadyVisited, id]),
         ]
       )
       : [],
@@ -297,3 +302,28 @@ function getDataDiagram(evaluation: Evaluation): ElementDefinition[] {
     })
     .flatMap(obj => elementFromObject(obj))
 }
+
+
+function newSentence<S extends Sentence>(sentence: S, environment: Environment): S {
+  const replScope = replNode(environment).scope
+
+  sentence.forEach(node => {
+    Object.assign(node, {
+      scope: new LocalScope(replScope),
+      environment,
+    })
+  })
+
+  return sentence
+}
+
+function newImport(importNode: Import, environment: Environment, packageNode: Package) {
+  const node = replNode(environment)
+  const imported = node.scope.resolve<Package | Entity>(importNode.entity.name)!
+  if (imported.is(Package)) {
+    return node.scope.include(imported.scope)
+  }
+  return node.scope.register([imported.name!, imported])
+}
+
+const replNode = (environment: Environment) => environment.getNodeByFQN<Program>('REPL._REPL')
