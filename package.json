@@ -44,7 +44,7 @@
     "p5": "^1.4.2",
     "pkg": "^5.8.1",
     "socket.io": "^4.5.1",
-    "wollok-ts": "4.0.3"
+    "wollok-ts": "4.0.4"
   },
   "devDependencies": {
     "@types/chai": "^4.3.4",
