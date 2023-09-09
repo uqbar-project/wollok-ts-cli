@@ -1,20 +1,20 @@
 import { bold } from 'chalk'
 import { Command } from 'commander'
 import cors from 'cors'
-import { ElementDefinition } from 'cytoscape'
 import express from 'express'
 import http from 'http'
 import logger from 'loglevel'
 import path from 'path'
 import { CompleterResult, createInterface as REPL } from 'readline'
 import { Server } from 'socket.io'
-import { Entity, Environment, Evaluation, Import, Package, parse, Reference, RuntimeObject, Sentence, Singleton, validate, WollokException } from 'wollok-ts'
+import { Entity, Environment, Evaluation, Import, Package, parse, Reference, Sentence, validate, WollokException } from 'wollok-ts'
 import { notEmpty } from 'wollok-ts/dist/extensions'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import link, { LocalScope } from 'wollok-ts/dist/linker'
 import { ParseError } from 'wollok-ts/dist/parser'
 import natives from 'wollok-ts/dist/wre/wre.natives'
-import { buildEnvironmentForProject, failureDescription, isConstant, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
+import { buildEnvironmentForProject, failureDescription, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
+import { getDataDiagram } from '../services/diagram-generator'
 
 // TODO:
 // - autocomplete piola
@@ -207,9 +207,9 @@ export function interprete(interpreter: Interpreter, line: string): string {
   } catch (error: any) {
     return (
       error.type === 'ParsimmonError' ? failureDescription(`Syntax error:\n${error.message.split('\n').filter(notEmpty).slice(1).join('\n')}`) :
-        error instanceof WollokException ? failureDescription('Evaluation Error!', error) :
-          error instanceof ParseError ? failureDescription(`Syntax Error at offset ${error.sourceMap.start.offset}: ${line.slice(error.sourceMap.start.offset, error.sourceMap.end.offset)}`) :
-            failureDescription('Uh-oh... Unexpected TypeScript Error!', error)
+      error instanceof WollokException ? failureDescription('Evaluation Error!', error) :
+      error instanceof ParseError ? failureDescription(`Syntax Error at offset ${error.sourceMap.start.offset}: ${line.slice(error.sourceMap.start.offset, error.sourceMap.end.offset)}`) :
+      failureDescription('Uh-oh... Unexpected TypeScript Error!', error)
     )
   }
 }
@@ -243,76 +243,6 @@ async function initializeClient(options: Options) {
 
   logger.info(successDescription('Object diagram available at: ' + bold(`http://localhost:${options.port}`)))
   return io
-}
-
-// De acá se obtiene la lista de objetos a dibujar
-function decoration(obj: RuntimeObject) {
-  const { id, innerValue, module } = obj
-  const moduleName: string = module.fullyQualifiedName
-
-  if (obj.innerValue === null || ['wollok.lang.Number', 'wollok.lang.Boolean'].includes(moduleName)) return {
-    type: 'literal',
-    label: `${innerValue}`,
-  }
-
-  if (moduleName === 'wollok.lang.String') return {
-    type: 'literal',
-    label: `"${innerValue}"`,
-  }
-
-  if (module.is(Singleton) && module.name) return {
-    type: 'object',
-    label: module.name,
-  }
-
-  return { label: `${module.name}#${id.slice(31)}` }
-}
-
-function elementFromObject(obj: RuntimeObject, alreadyVisited: string[] = []): ElementDefinition[] {
-  const { id } = obj
-  if (alreadyVisited.includes(id)) return []
-  return concatRepeatedReferences([
-    { data: { id, ...decoration(obj) } },
-    ...[...obj.locals.keys()].filter(key => key !== 'self').flatMap(name => [
-      { data: { id: `${id}_${obj.get(name)?.id}`, label: `${name}${isConstant(obj, name) ? '🔒' : ''}`, source: id, target: obj.get(name)?.id } },
-      ...elementFromObject(obj.get(name)!, [...alreadyVisited, id]),
-    ]),
-    ...obj.innerCollection ?
-      obj.innerCollection.flatMap(item =>
-        [
-          { data: { id: `${id}_${item.id}`, source: id, target: item.id } },
-          ...elementFromObject(item, [...alreadyVisited, id]),
-        ]
-      )
-      : [],
-  ])
-}
-
-function concatRepeatedReferences(elementDefinitions: ElementDefinition[]): ElementDefinition[] {
-  const cleanDefinitions: ElementDefinition[] = []
-  elementDefinitions.forEach(elem => {
-    if (elem.data.source && elem.data.target) {
-      const repeated = cleanDefinitions.find(def => def.data.source === elem.data.source && def.data.target === elem.data.target)
-      if (repeated) {
-        repeated.data.id = `${repeated.data.id}_${elem.data.id}`
-        repeated.data.label = `${repeated.data.label}, ${elem.data.label}`
-      } else {
-        cleanDefinitions.push(elem)
-      }
-    } else {
-      cleanDefinitions.push(elem)
-    }
-  })
-  return cleanDefinitions
-}
-
-function getDataDiagram(evaluation: Evaluation): ElementDefinition[] {
-  return [...evaluation.allInstances()]
-    .filter((obj) => {
-      const name = obj.module.fullyQualifiedName
-      return name && name !== 'worksheet.main.repl' && !name.startsWith('wollok')
-    })
-    .flatMap(obj => elementFromObject(obj))
 }
 
 

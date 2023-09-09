@@ -3,7 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <title>Object Diagram</title>
-
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"
+      integrity="sha512-rOsRHy2O7kykGotH99Bi0+LyynL6rfQpaMiKOwYa1K1jYAFksJUwXE1gE6Relgo88g6lQ/uf8NaWeyzi1T53Zg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script type="text/javascript" src="./diagram.js"></script>
     <link rel="stylesheet" href="./diagram.css" />
     <style>
       #cy {
@@ -15,13 +21,11 @@
   </head>
 
   <body>
+    <div style="display: flex; flex-direction: row-reverse">
+      <button class="button" onclick="updateLayout()">ORGANIZE</button>
+    </div>
     <script type="module">
       import { io } from "https://cdn.socket.io/4.4.1/socket.io.esm.min.js";
-
-      import {
-        initializeCytoscape,
-        reloadDiagram,
-      } from "http://localhost:3000/diagram.js";
 
       const socket = io("http://localhost:3000");
       socket.on("connect", function () {
@@ -42,7 +46,5 @@
     </script>
 
     <div id="cy"></div>
-
-    <script type="module"></script>
   </body>
 </html>

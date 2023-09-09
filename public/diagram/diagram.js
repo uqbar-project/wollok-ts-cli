@@ -1,5 +1,3 @@
-import cytoscape from "https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.esm.min.js";
-
 let cy;
 
 function initializeCytoscape(container) {
@@ -21,7 +19,6 @@ function initializeCytoscape(container) {
           color: "#000",
         },
       },
-
       {
         selector: "edge",
         style: {
@@ -46,12 +43,18 @@ function initializeCytoscape(container) {
 }
 
 function updateLayout() {
-  cy.layout({
+  updateNodes(cy.elements());
+}
+
+function updateNodes(elements) {
+  const layout = elements.layout({
     name: "cose",
-    animate: true,
+    animate: false,
     nodeDimensionsIncludeLabels: true,
     fit: true,
-  }).run();
+  });
+
+  layout.run();
 }
 
 function reloadDiagram(elements) {
@@ -64,11 +67,24 @@ function reloadDiagram(elements) {
     if (cy.elements().length === 0) {
       shouldUpdateLayout = true;
     }
-    cy.add(newElements);
+    const addedNodes = cy.add(newElements);
     if (shouldUpdateLayout) {
       updateLayout();
+    } else {
+      updateNodes(readyForLayoutElems(addedNodes));
     }
   }
 }
 
-export { reloadDiagram, initializeCytoscape };
+/**
+ * edges cant references nodes that going to be arranged
+ */
+function readyForLayoutElems(elems) {
+  const isInElems = (elem) => elems.some((e) => e.id() === elem.id());
+
+  return elems.filter(
+    (e) =>
+      e.isNode() ||
+      (e.isEdge() && isInElems(e.target()) && isInElems(e.source()))
+  );
+}
