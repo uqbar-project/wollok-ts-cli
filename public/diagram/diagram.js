@@ -38,6 +38,12 @@ function initializeCytoscape(container) {
           "font-weight": "bold",
         },
       },
+      {
+        selector: 'node[type = "REPL"]',
+        style: {
+          opacity: 0,
+        },
+      },
     ],
   });
 }
@@ -49,6 +55,11 @@ function updateLayout() {
 function updateNodes(elements) {
   const layout = elements.layout({
     name: "cose",
+    stop: () => {
+      const repl = cy.$("#REPL");
+      repl.renderedPosition({ x: -100, y: -100 });
+      repl.lock();
+    },
     animate: false,
     nodeDimensionsIncludeLabels: true,
     fit: true,

@@ -1,6 +1,6 @@
 import { should } from 'chai'
 import { join } from 'path'
-import { Import, Program } from 'wollok-ts'
+import { Import } from 'wollok-ts'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import { initializeInterpreter, interprete, replNode } from '../src/commands/repl'
 import { failureDescription, successDescription, valueDescription } from '../src/utils'

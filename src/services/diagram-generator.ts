@@ -1,24 +1,26 @@
 import { ElementDefinition } from 'cytoscape'
-import { Evaluation, RuntimeObject, Singleton } from 'wollok-ts'
+import {  RuntimeObject } from 'wollok-ts'
 import { isConstant } from '../utils'
+import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 
 
 const REPL = 'REPL'
-const replElement: ElementDefinition = { data: { id: REPL, label: REPL, type: 'object' }, renderedPosition: { x: -30, y: 30 } }
+const replElement: ElementDefinition = { data: { id: REPL, label: REPL, type: 'REPL' }, renderedPosition: { x: -30, y: 30 } }
 
-export function getDataDiagram(evaluation: Evaluation): ElementDefinition[] {
-  return Array.from(evaluation.currentFrame.locals.keys())
-    .filter((name) =>  !name.startsWith('wollok'))
-    .flatMap((name) => fromLocal(name, evaluation.currentFrame.get(name)!))
-    .concat(replElement)
+export function getDataDiagram(interpreter: Interpreter): ElementDefinition[] {
+  const diagram = Array.from(interpreter.evaluation.currentFrame.locals.keys())
+    .filter((name) =>  !name.startsWith('wollok') && !['true', 'false', 'null'].includes(name))
+    .flatMap((name) => fromLocal(name, interpreter.evaluation.currentFrame.get(name)!, interpreter))
     .reduce<ElementDefinition[]>((uniques, elem) => {
       if (!uniques.find(e => e.data.id === elem.data.id))
         uniques.push(elem)
       return uniques
     }, [])
+
+  return diagram.some(elem => elem.data.source === REPL) ? diagram.concat(replElement)    : diagram
 }
 
-function fromLocal(name: string, obj: RuntimeObject): ElementDefinition[] {
+function fromLocal(name: string, obj: RuntimeObject, interpreter: Interpreter): ElementDefinition[] {
   return [
     ...isConsoleLocal(name)
       ? [
@@ -32,24 +34,24 @@ function fromLocal(name: string, obj: RuntimeObject): ElementDefinition[] {
         },
       ]
       : [],
-    ...elementFromObject(obj),
+    ...elementFromObject(obj, interpreter),
   ]
 }
 
-function elementFromObject(obj: RuntimeObject, alreadyVisited: string[] = []): ElementDefinition[] {
+function elementFromObject(obj: RuntimeObject, interpreter: Interpreter, alreadyVisited: string[] = []): ElementDefinition[] {
   const { id } = obj
   if (alreadyVisited.includes(id)) return []
   return concatRepeatedReferences([
-    { data: { id, ...decoration(obj) } },
+    { data: { id, ...decoration(obj, interpreter) } },
     ...[...obj.locals.keys()].filter(key => key !== 'self').flatMap(name => [
       { data: { id: `${id}_${obj.get(name)?.id}`, label: `${name}${isConstant(obj, name) ? '🔒' : ''}`, source: id, target: obj.get(name)?.id } },
-      ...elementFromObject(obj.get(name)!, [...alreadyVisited, id]),
+      ...elementFromObject(obj.get(name)!, interpreter, [...alreadyVisited, id]),
     ]),
     ...obj.innerCollection ?
-      obj.innerCollection.flatMap(item =>
+      obj.innerCollection.flatMap((item, i) =>
         [
-          { data: { id: `${id}_${item.id}`, source: id, target: item.id, label: '' } },
-          ...elementFromObject(item, [...alreadyVisited, id]),
+          { data: { id: `${id}_${item.id}`, source: id, target: item.id, label: obj.module.name === 'List' ? i.toString() : ''   } },
+          ...elementFromObject(item, interpreter, [...alreadyVisited, id]),
         ]
       )
       : [],
@@ -77,8 +79,8 @@ function concatRepeatedReferences(elementDefinitions: ElementDefinition[]): Elem
 
 
 // De acá se obtiene la lista de objetos a dibujar
-function decoration(obj: RuntimeObject) {
-  const { id, innerValue, module } = obj
+function decoration(obj: RuntimeObject, interpreter: Interpreter) {
+  const { innerValue, module } = obj
   const moduleName: string = module.fullyQualifiedName
 
   if (obj.innerValue === null || ['wollok.lang.Number', 'wollok.lang.Boolean'].includes(moduleName)) return {
@@ -91,14 +93,12 @@ function decoration(obj: RuntimeObject) {
     label: `"${innerValue}"`,
   }
 
-  if (module.is(Singleton) && module.name) return {
+  return {
     type: 'object',
-    label: module.name,
+    label: interpreter.send('kindName', obj)?.innerValue,
   }
-
-  return { label: `${module.name}#${id.slice(31)}` }
 }
 
 function isConsoleLocal(name: string): boolean {
-  return !name.startsWith('src.') && !['true', 'false'].includes(name)
+  return !name.includes('.')
 }

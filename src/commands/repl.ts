@@ -34,7 +34,7 @@ export default async function (autoImportPath: string | undefined, options: Opti
   const io: Server = await initializeClient(options)
 
   const commandHandler = defineCommands(autoImportPath, options, () => {
-    io.emit('updateDiagram', getDataDiagram(interpreter.evaluation))
+    io.emit('updateDiagram', getDataDiagram(interpreter))
   }, (newInterpreter: Interpreter) => {
     interpreter = newInterpreter
     repl.prompt()
@@ -58,14 +58,14 @@ export default async function (autoImportPath: string | undefined, options: Opti
         if (line.startsWith(':')) commandHandler.parse(line.split(' '), { from: 'user' })
         else {
           log(interprete(interpreter, line))
-          io?.emit('updateDiagram', getDataDiagram(interpreter.evaluation))
+          io?.emit('updateDiagram', getDataDiagram(interpreter))
         }
       }
       repl.prompt()
     })
 
   io.on('connection', socket => {
-    socket.emit('updateDiagram', getDataDiagram(interpreter.evaluation))
+    socket.emit('updateDiagram', getDataDiagram(interpreter))
   })
 
   repl.prompt()
@@ -268,4 +268,4 @@ function newImport(importNode: Import, environment: Environment) {
   return node.scope.register([imported.name!, imported])
 }
 
-export const replNode = (environment: Environment) => environment.getNodeByFQN<Package>('REPL')
+export const replNode = (environment: Environment): Package => environment.getNodeByFQN<Package>('REPL')
