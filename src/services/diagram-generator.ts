@@ -41,7 +41,7 @@ function fromLocal(name: string, obj: RuntimeObject, interpreter: Interpreter): 
 function elementFromObject(obj: RuntimeObject, interpreter: Interpreter, alreadyVisited: string[] = []): ElementDefinition[] {
   const { id } = obj
   if (alreadyVisited.includes(id)) return []
-  return concatRepeatedReferences([
+  return concatOverlappedReferences([
     { data: { id, ...decoration(obj, interpreter) } },
     ...[...obj.locals.keys()].filter(key => key !== 'self').flatMap(name => [
       { data: { id: `${id}_${obj.get(name)?.id}`, label: `${name}${isConstant(obj, name) ? '🔒' : ''}`, source: id, target: obj.get(name)?.id } },
@@ -59,7 +59,7 @@ function elementFromObject(obj: RuntimeObject, interpreter: Interpreter, already
 }
 
 
-function concatRepeatedReferences(elementDefinitions: ElementDefinition[]): ElementDefinition[] {
+function concatOverlappedReferences(elementDefinitions: ElementDefinition[]): ElementDefinition[] {
   const cleanDefinitions: ElementDefinition[] = []
   elementDefinitions.forEach(elem => {
     if (elem.data.source && elem.data.target) {
