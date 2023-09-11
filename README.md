@@ -24,7 +24,7 @@ If you plan to contribute with code, here are some hints to help you start:
 
 Before anything else, you will need a *TypeScript* editor. We recomend [Visual Studio Code](https://code.visualstudio.com/) along with the following plugins:
 
-- [TSLint](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-typescript-tslint-plugin)
+- [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
 - [TypeScript Importer](https://marketplace.visualstudio.com/items?itemName=pmneo.tsimporter)
 - [Move TS](https://marketplace.visualstudio.com/items?itemName=stringham.move-ts)
 - [Wollok Highlight](https://marketplace.visualstudio.com/items?itemName=uqbar.wollok-highlight)
@@ -49,7 +49,7 @@ Found '/home/you/wollok-ts-cli/.nvmrc' with version <lts/gallium>
 Now using node v16.15.0 (npm v8.5.5)
 ```
 
-#### For Windows:
+#### For Windows
 
 You need to install the [NVM- for Windows](https://github.com/coreybutler/nvm-windows).
 
@@ -63,7 +63,7 @@ nvm use <<version number>>
 # The version number is in the .nvmrc file (do not use codename version e.g. lts/gallium, in Windows you have to use the equivalent version number e.g. 16.15.0)
 ```
   
-#### For all:
+#### For all
  
 In the previous step, `nvm use` also installs [NPM](https://www.npmjs.com/). If you are not familiar with *dependency manager tools*, you can think of this program as the entry point for all the important tasks development-related tasks, like installing dependencies and running tests. 
   
@@ -105,6 +105,7 @@ npm run pack
 And checking the `/dist` folder.
 
 ### Releasing
+
 To create a release follow this steps
 1. Create a drafted release. 
 2. Tag the commit you wish to release.
