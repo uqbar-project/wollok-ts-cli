@@ -28,7 +28,7 @@ Before anything else, you will need a *TypeScript* editor. We recomend [Visual S
 - [TypeScript Importer](https://marketplace.visualstudio.com/items?itemName=pmneo.tsimporter)
 - [Move TS](https://marketplace.visualstudio.com/items?itemName=stringham.move-ts)
 - [Wollok Highlight](https://marketplace.visualstudio.com/items?itemName=uqbar.wollok-highlight)
-
+- [Git Lens](https://marketplace.visualstudio.com/items?itemName=eamodio.gitlens)
 
 ### Node, npm, and dependencies
 
