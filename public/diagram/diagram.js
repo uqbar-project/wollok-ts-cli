@@ -30,6 +30,9 @@ function initializeCytoscape(container) {
           "text-valign": "center",
           "text-wrap": "ellipsis",
           "text-max-width": "100px",
+          "border-style": "solid",
+          "border-color": "#248ac8",
+          "border-width": "1px",
         },
       },
       {
@@ -54,6 +57,7 @@ function initializeCytoscape(container) {
           "background-color": "#6fdc4b",
           "font-size": "10px",
           "font-weight": "bold",
+          "border-color": "#26a324",
         },
       },
       {
