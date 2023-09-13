@@ -118,7 +118,7 @@ The _package.json_ version and _tag_ **must match**, otherwise the upload will b
 
 Dynamic diagram uses
 
-- [cytoscape](https://manual.cytoscape.org/en/latest/), 
+- [cytoscape](https://js.cytoscape.org/), 
 - and [socket.io](https://github.com/socketio/socket.io) 
 
 but in order to work offline, `preinstall` script downloads it inside this folder
