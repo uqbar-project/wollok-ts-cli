@@ -8,7 +8,7 @@ import interpret, { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { buildEnvironmentForProject, failureDescription, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
 import { buildKeyPressEvent, canvasResolution, Image, queueEvent, visualState, VisualState, wKeyCode } from './extrasGame'
-import fs from 'fs'
+import fs, { Dirent } from 'fs'
 import cors from 'cors'
 import { bold } from 'chalk'
 
@@ -16,7 +16,7 @@ const { time, timeEnd } = console
 
 type Options = {
   project: string
-  assets: string
+  assets: string | undefined
   skipValidations: boolean
   port: string
 }
@@ -27,7 +27,9 @@ let timmer = 0
 
 export default async function (programFQN: Name, { project, assets, skipValidations, port }: Options): Promise<void> {
   logger.info(`Running ${valueDescription(programFQN)} on ${valueDescription(project)}`)
-  folderImages = path.join(project, assets)
+  const packageProperties = readPackageProperties(project)
+
+  folderImages = path.join(project, assets ?? packageProperties.assets)
 
   let environment = await buildEnvironmentForProject(project)
   environment = link([parse.File('draw').tryParse('object drawer{ method apply() native }')], environment)
@@ -98,7 +100,7 @@ export default async function (programFQN: Name, { project, assets, skipValidati
   app.use(
     cors({ allowedHeaders: '*' }),
     express.static(publicPath('game'), { maxAge: '1d' }),
-    express.static(`${project}/assets`, { maxAge: '1d' }))
+    express.static(folderImages, { maxAge: '1d' }))
   server.listen(parseInt(port), 'localhost')
 
   logger.info(successDescription('Game available at: ' + bold(`http://localhost:${port}`)))
@@ -131,11 +133,17 @@ export default async function (programFQN: Name, { project, assets, skipValidati
 
 function getImages() {
   const images: Image[] = []
-  fs.readdirSync(folderImages).filter((file: any) => {
-    if (file.endsWith('png') || file.endsWith('jpg')) {
-      images.push({ 'name': file, 'url': file })
-    }
-  })
+  const loadImagesIn = (basePath: string) => fs.readdirSync(basePath, { withFileTypes: true })
+    .forEach((file: Dirent) => {
+      if (file.isDirectory()) loadImagesIn(path.join(basePath, file.name))
+      else {
+        if (file.name.endsWith('png') || file.name.endsWith('jpg')) {
+          const fileName = path.relative(folderImages, path.join(basePath, file.name)) 
+          images.push({ 'name': fileName, 'url': fileName })
+        }
+      }
+    })
+  loadImagesIn(folderImages)
   return images
 }
 
@@ -159,4 +167,9 @@ function folderSound(pathProject: string) {
   const folder = fs.readdirSync(pathDirname).includes('sounds') ? 'sounds' : folderImages
 
   return path.join(path.dirname(pathProject), '/' + folder + '/')
+}
+
+function readPackageProperties(pathProject: string): any {
+  const packagePath = path.join(pathProject, 'package.json')
+  return JSON.parse(fs.readFileSync(packagePath, { encoding: 'utf-8' }))
 }
