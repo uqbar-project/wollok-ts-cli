@@ -1,4 +1,7 @@
+import { bold } from 'chalk'
+import cors from 'cors'
 import express from 'express'
+import fs, { Dirent } from 'fs'
 import http from 'http'
 import logger from 'loglevel'
 import path from 'path'
@@ -6,11 +9,8 @@ import { Server } from 'socket.io'
 import { link, Name, parse, RuntimeObject, validate, WollokException } from 'wollok-ts'
 import interpret, { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
-import { buildEnvironmentForProject, failureDescription, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
+import { buildEnvironmentForProject, failureDescription, isImageFile, problemDescription, publicPath, readPackageProperties, successDescription, valueDescription } from '../utils'
 import { buildKeyPressEvent, canvasResolution, Image, queueEvent, visualState, VisualState, wKeyCode } from './extrasGame'
-import fs, { Dirent } from 'fs'
-import cors from 'cors'
-import { bold } from 'chalk'
 
 const { time, timeEnd } = console
 
@@ -136,11 +136,9 @@ function getImages() {
   const loadImagesIn = (basePath: string) => fs.readdirSync(basePath, { withFileTypes: true })
     .forEach((file: Dirent) => {
       if (file.isDirectory()) loadImagesIn(path.join(basePath, file.name))
-      else {
-        if (file.name.endsWith('png') || file.name.endsWith('jpg')) {
-          const fileName = path.relative(folderImages, path.join(basePath, file.name)) 
-          images.push({ 'name': fileName, 'url': fileName })
-        }
+      else if (isImageFile(file)) {
+        const fileName = path.relative(folderImages, path.join(basePath, file.name))
+        images.push({ name: fileName, url: fileName })
       }
     })
   loadImagesIn(folderImages)
@@ -167,9 +165,4 @@ function folderSound(pathProject: string) {
   const folder = fs.readdirSync(pathDirname).includes('sounds') ? 'sounds' : folderImages
 
   return path.join(path.dirname(pathProject), '/' + folder + '/')
-}
-
-function readPackageProperties(pathProject: string): any {
-  const packagePath = path.join(pathProject, 'package.json')
-  return JSON.parse(fs.readFileSync(packagePath, { encoding: 'utf-8' }))
 }
