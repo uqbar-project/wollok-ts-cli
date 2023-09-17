@@ -1,11 +1,14 @@
 import { ElementDefinition } from 'cytoscape'
-import {  RuntimeObject } from 'wollok-ts'
+import { InnerValue, RuntimeObject } from 'wollok-ts'
 import { isConstant } from '../utils'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 
+type objectType = 'literal' | 'object' | 'null'
 
+const WOLLOK_BASE_MODULES = 'wollok.'
+const SELF = 'self'
 const REPL = 'REPL'
-const replElement: ElementDefinition = { data: { id: REPL, label: REPL, type: 'REPL' }, renderedPosition: { x: -30, y: 30 } }
+const replElement: ElementDefinition = { data: { id: REPL, label: REPL, type: REPL } }
 
 export function getDataDiagram(interpreter: Interpreter): ElementDefinition[] {
   const diagram = Array.from(interpreter.evaluation.currentFrame.locals.keys())
@@ -17,7 +20,8 @@ export function getDataDiagram(interpreter: Interpreter): ElementDefinition[] {
       return uniques
     }, [])
 
-  return diagram.some(elem => elem.data.source === REPL) ? diagram.concat(replElement)    : diagram
+  // TODO: ver cómo generar n replElements
+  return diagram.some(elem => elem.data.source === REPL) ? diagram.concat(replElement) : diagram
 }
 
 function fromLocal(name: string, obj: RuntimeObject, interpreter: Interpreter): ElementDefinition[] {
@@ -43,10 +47,11 @@ function elementFromObject(obj: RuntimeObject, interpreter: Interpreter, already
   if (alreadyVisited.includes(id)) return []
   return concatOverlappedReferences([
     { data: { id, ...decoration(obj, interpreter) } },
-    ...[...obj.locals.keys()].filter(key => key !== 'self').flatMap(name => [
-      { data: { id: `${id}_${obj.get(name)?.id}`, label: `${name}${isConstant(obj, name) ? '🔒' : ''}`, source: id, target: obj.get(name)?.id } },
+    ...getInstanceVariableKeys(obj).flatMap(name => [
+      buildReference(obj, id, name),
       ...elementFromObject(obj.get(name)!, interpreter, [...alreadyVisited, id]),
     ]),
+    // TODO: extraer en otra función
     ...obj.innerCollection ?
       obj.innerCollection.flatMap((item, i) =>
         [
@@ -80,25 +85,74 @@ function concatOverlappedReferences(elementDefinitions: ElementDefinition[]): El
 
 // De acá se obtiene la lista de objetos a dibujar
 function decoration(obj: RuntimeObject, interpreter: Interpreter) {
-  const { innerValue, module } = obj
-  const moduleName: string = module.fullyQualifiedName
-
-  if (obj.innerValue === null || ['wollok.lang.Number', 'wollok.lang.Boolean'].includes(moduleName)) return {
-    type: 'literal',
-    label: `${innerValue}`,
-  }
-
-  if (moduleName === 'wollok.lang.String') return {
-    type: 'literal',
-    label: `"${innerValue}"`,
-  }
+  const moduleName: string = obj.module.fullyQualifiedName
+  const label = getLabel(obj, interpreter)
 
   return {
-    type: 'object',
-    label: interpreter.send('kindName', obj)?.innerValue,
+    type: getType(obj, moduleName),
+    label,
+    fontsize: getFontSize(label),
   }
 }
 
 function isConsoleLocal(name: string): boolean {
   return !name.includes('.')
+}
+
+function getType(obj: RuntimeObject, moduleName: string): objectType {
+  if (obj.innerValue === null) return 'null'
+  return moduleName.startsWith(WOLLOK_BASE_MODULES) ? 'literal' : 'object'
+}
+
+function getLabel(obj: RuntimeObject, interpreter: Interpreter): string {
+  const { innerValue, module } = obj
+  if (innerValue === null) return 'null'
+  const moduleName: string = module.fullyQualifiedName
+  if (shouldShortenRepresentation(moduleName)) return showInnerValue(interpreter.send('toString', obj)?.innerValue)
+  // Otra opción es enviar el mensaje "printString" pero por cuestiones de performance preferí aprovechar el innerValue
+  if (moduleName === 'wollok.lang.String') return `"${showInnerValue(innerValue)}"`
+  if (shouldShowInnerValue(moduleName)) return showInnerValue(innerValue)
+  return showInnerValue(interpreter.send('kindName', obj)?.innerValue)
+}
+
+function getFontSize(text: string) {
+  const textWidth = text.length
+  if (textWidth > 12) return '6px'
+  if (textWidth > 5) return '8px'
+  return '9px'
+}
+
+function shouldShortenRepresentation(moduleName: string) {
+  return ['wollok.lang.Date', 'wollok.lang.Pair', 'wollok.lang.Range', 'wollok.lang.Closure'].includes(moduleName)
+}
+
+function shouldShowInnerValue(moduleName: string) {
+  return ['wollok.lang.String', 'wollok.lang.Number', 'wollok.lang.Boolean'].includes(moduleName)
+}
+
+function shouldIterateChildren(moduleName: string): boolean {
+  return !shouldShortenRepresentation(moduleName) && !shouldShowInnerValue(moduleName)
+}
+
+function showInnerValue(innerValue: InnerValue | undefined): string {
+  return innerValue?.toString() ?? ''
+}
+
+function getInstanceVariableKeys(obj: RuntimeObject) {
+  const { innerValue, module } = obj
+  if (innerValue === null) return []
+  const moduleName: string = module.fullyQualifiedName
+  return shouldIterateChildren(moduleName) ? [...obj.locals.keys()].filter(key => key !== SELF) : []
+}
+
+function buildReference(obj: RuntimeObject, id: string, name: string) {
+  const runtimeValue = obj.get(name)
+  return {
+    data: {
+      id: `${id}_${runtimeValue?.id}`,
+      label: `${name}${isConstant(obj, name) ? '🔒' : ''}`,
+      source: id,
+      target: runtimeValue?.id,
+    },
+  }
 }

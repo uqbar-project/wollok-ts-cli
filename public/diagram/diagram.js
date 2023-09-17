@@ -4,6 +4,7 @@ function initializeCytoscape(container) {
   const fontFace = {
     "font-family": "Inter",
     "font-weight": "normal",
+    "font-size": "data(fontsize)",
   }
 
   cy = cytoscape({
@@ -23,10 +24,7 @@ function initializeCytoscape(container) {
           "background-color": "#7cc0d8",
           "line-color": "#000",
           label: "data(label)",
-          // width: "120px",
-          // TODO: se puede agrandar el width y el height en base al texto
           color: "#000",
-          "font-size": "9px",
           "text-valign": "center",
           "text-wrap": "ellipsis",
           "text-max-width": "100px",
@@ -47,7 +45,7 @@ function initializeCytoscape(container) {
           "curve-style": "bezier",
           "text-valign": "top",
           "text-margin-y": "10px",
-          "font-size": "9px",
+          "font-size": "8px",
         },
       },
       {
@@ -55,9 +53,17 @@ function initializeCytoscape(container) {
         style: {
           ...fontFace,
           "background-color": "#6fdc4b",
+          "border-color": "#26a324",
+        },
+      },
+      {
+        selector: 'node[type = "null"]',
+        style: {
+          ...fontFace,
+          "background-color": "#FFFFFF",
           "font-size": "10px",
           "font-weight": "bold",
-          "border-color": "#26a324",
+          "border-color": "#000000",
         },
       },
       {
