@@ -62,8 +62,9 @@ export const publicPath = (...paths: string[]): string => {
   return path.join(__dirname, '..', 'public', ...paths)
 }
 
-export const readPackageProperties = (pathProject: string): any => {
+export const readPackageProperties = (pathProject: string): any | undefined => {
   const packagePath = path.join(pathProject, 'package.json')
+  if (!fs.existsSync(packagePath)) return undefined
   return JSON.parse(fs.readFileSync(packagePath, { encoding: 'utf-8' }))
 }
 

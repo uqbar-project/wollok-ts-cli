@@ -22,14 +22,15 @@ type Options = {
 }
 let interp: Interpreter
 let io: Server
-let folderImages: string
+let folderImages: string | undefined
 let timmer = 0
 
 export default async function (programFQN: Name, { project, assets, skipValidations, port }: Options): Promise<void> {
   logger.info(`Running ${valueDescription(programFQN)} on ${valueDescription(project)}`)
-  const packageProperties = readPackageProperties(project)
 
-  folderImages = path.join(project, assets ?? packageProperties.assets)
+  const packageProperties = readPackageProperties(project)
+  const assetsFolder = assets ?? packageProperties?.assets
+  folderImages = assetsFolder ? path.join(project, assetsFolder) : undefined
 
   let environment = await buildEnvironmentForProject(project)
   environment = link([parse.File('draw').tryParse('object drawer{ method apply() native }')], environment)
@@ -100,7 +101,7 @@ export default async function (programFQN: Name, { project, assets, skipValidati
   app.use(
     cors({ allowedHeaders: '*' }),
     express.static(publicPath('game'), { maxAge: '1d' }),
-    express.static(folderImages, { maxAge: '1d' }))
+    express.static(folderImages ?? project, { maxAge: '1d' }))
   server.listen(parseInt(port), 'localhost')
 
   logger.info(successDescription('Game available at: ' + bold(`http://localhost:${port}`)))
@@ -111,7 +112,9 @@ export default async function (programFQN: Name, { project, assets, skipValidati
     socket.on('keyPressed', key => {
       queueEvent(interp, buildKeyPressEvent(interp, wKeyCode(key.key, key.keyCode)), buildKeyPressEvent(interp, 'ANY'))
     })
-    socket.emit('images', getImages())
+
+    if (!folderImages) logger.warn(failureDescription('Folder for assets not found!'))
+    socket.emit('images', getImages(project))
     socket.emit('sizeCanvasInic', [sizeCanvas.width, sizeCanvas.height])
 
     const id = setInterval(() => {
@@ -131,17 +134,18 @@ export default async function (programFQN: Name, { project, assets, skipValidati
   server.listen(3000)
 }
 
-function getImages() {
+function getImages(pathProject: string) {
   const images: Image[] = []
+  const baseFolder = folderImages ?? pathProject
   const loadImagesIn = (basePath: string) => fs.readdirSync(basePath, { withFileTypes: true })
     .forEach((file: Dirent) => {
       if (file.isDirectory()) loadImagesIn(path.join(basePath, file.name))
       else if (isImageFile(file)) {
-        const fileName = path.relative(folderImages, path.join(basePath, file.name))
+        const fileName = path.relative(baseFolder, path.join(basePath, file.name))
         images.push({ name: fileName, url: fileName })
       }
     })
-  loadImagesIn(folderImages)
+  loadImagesIn(baseFolder)
   return images
 }
 
