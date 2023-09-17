@@ -16,17 +16,18 @@ const { time, timeEnd } = console
 
 type Options = {
   project: string
-  skipValidations: boolean,
+  assets: string
+  skipValidations: boolean
   port: string
 }
 let interp: Interpreter
 let io: Server
 let folderImages: string
 let timmer = 0
-const namesFolder = ['imagenes', 'assets', 'img', 'asset']
 
-export default async function (programFQN: Name, { project, skipValidations, port }: Options): Promise<void> {
+export default async function (programFQN: Name, { project, assets, skipValidations, port }: Options): Promise<void> {
   logger.info(`Running ${valueDescription(programFQN)} on ${valueDescription(project)}`)
+  folderImages = path.join(project, assets)
 
   let environment = await buildEnvironmentForProject(project)
   environment = link([parse.File('draw').tryParse('object drawer{ method apply() native }')], environment)
@@ -97,7 +98,7 @@ export default async function (programFQN: Name, { project, skipValidations, por
   app.use(
     cors({ allowedHeaders: '*' }),
     express.static(publicPath('game'), { maxAge: '1d' }),
-    express.static(`${project}/../assets`, { maxAge: '1d' }))
+    express.static(`${project}/assets`, { maxAge: '1d' }))
   server.listen(parseInt(port), 'localhost')
 
   logger.info(successDescription('Game available at: ' + bold(`http://localhost:${port}`)))
@@ -108,7 +109,7 @@ export default async function (programFQN: Name, { project, skipValidations, por
     socket.on('keyPressed', key => {
       queueEvent(interp, buildKeyPressEvent(interp, wKeyCode(key.key, key.keyCode)), buildKeyPressEvent(interp, 'ANY'))
     })
-    socket.emit('images', getImages(project))
+    socket.emit('images', getImages())
     socket.emit('sizeCanvasInic', [sizeCanvas.width, sizeCanvas.height])
 
     const id = setInterval(() => {
@@ -128,15 +129,9 @@ export default async function (programFQN: Name, { project, skipValidations, por
   server.listen(3000)
 }
 
-function getImages(pathProject: string) {
+function getImages() {
   const images: Image[] = []
-
-  const pathDirname = path.dirname(pathProject)
-  fs.readdirSync(pathDirname).forEach((file: any) => {
-    if (namesFolder.includes(file)) { folderImages = file }
-  })
-  const pathImage = path.join(pathDirname, folderImages)
-  fs.readdirSync(pathImage).filter((file: any) => {
+  fs.readdirSync(folderImages).filter((file: any) => {
     if (file.endsWith('png') || file.endsWith('jpg')) {
       images.push({ 'name': file, 'url': file })
     }
