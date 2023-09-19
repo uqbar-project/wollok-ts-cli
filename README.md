@@ -113,3 +113,21 @@ To create a release follow this steps
 This will trigger a pipeline which will upload the binaries to the drafted release.
 
 The _package.json_ version and _tag_ **must match**, otherwise the upload will be skipped. Taken from the [electron-build docs](https://www.electron.build/configuration/publish.html#recommended-github-releases-workflow)
+
+### Dependencies
+
+Dynamic diagram uses
+
+- [cytoscape](https://js.cytoscape.org/), 
+- and [socket.io](https://github.com/socketio/socket.io) 
+
+but in order to work offline, `preinstall` script downloads it inside this folder
+
+```bash
+- public
+  - diagram
+    - lib
+```
+
+So, if you do a `npm install` or `npm i` this process will occur automatically. For further explanation **or if you need to upgrade the current version of these libraries**, please see [download-libs.sh](./scripts/download-libs.sh).
+

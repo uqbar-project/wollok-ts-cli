@@ -11,3 +11,4 @@ src/wre/wre.json
 .nyc_output
 coverage
 .DS_Store
+/public/diagram/lib/*

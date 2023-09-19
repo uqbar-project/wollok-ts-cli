@@ -1,6 +1,12 @@
 let cy;
 
 function initializeCytoscape(container) {
+  const fontFace = {
+    "font-family": "Inter",
+    "font-weight": "normal",
+    "font-size": "data(fontsize)",
+  }
+
   cy = cytoscape({
     container,
     zoom: 1,
@@ -8,34 +14,56 @@ function initializeCytoscape(container) {
     minZoom: 0.5,
     elements: [],
 
+    // TODO: Usar classes
     style: [
       // the stylesheet for the graph
       {
         selector: "node",
         style: {
-          "background-color": "#02e",
+          ...fontFace,
+          "background-color": "#7cc0d8",
+          "line-color": "#000",
           label: "data(label)",
-          "font-weight": "bold",
           color: "#000",
+          "text-valign": "center",
+          "text-wrap": "ellipsis",
+          "text-max-width": "100px",
+          "border-style": "solid",
+          "border-color": "#248ac8",
+          "border-width": "1px",
         },
       },
       {
         selector: "edge",
         style: {
+          ...fontFace,
           label: "data(label)",
           width: 1,
-          "line-color": "#ccc",
-          "target-arrow-color": "#ccc",
-          "target-arrow-shape": "triangle",
+          "line-color": "#000000",
+          "target-arrow-color": "#000000",
+          "target-arrow-shape": "vee",
           "curve-style": "bezier",
+          "text-valign": "top",
+          "text-margin-y": "10px",
+          "font-size": "8px",
         },
       },
       {
         selector: 'node[type = "literal"]',
         style: {
-          "text-valign": "center",
-          color: "#ff3bc3",
+          ...fontFace,
+          "background-color": "#6fdc4b",
+          "border-color": "#26a324",
+        },
+      },
+      {
+        selector: 'node[type = "null"]',
+        style: {
+          ...fontFace,
+          "background-color": "#FFFFFF",
+          "font-size": "10px",
           "font-weight": "bold",
+          "border-color": "#000000",
         },
       },
       {

@@ -67,5 +67,5 @@ export const publicPath = (...paths: string[]): string => {
 
 
 export function isConstant(obj: RuntimeObject, localName: string): boolean {
-  return !!obj.module.allFields.find(f => f.name === localName)?.isConstant
+  return !!obj.module.allFields.find((field: { name: string }) => field.name === localName)?.isConstant
 }
