@@ -50,9 +50,12 @@ function buildReplElement(obj: RuntimeObject, name: string) {
     },
     {
       data: {
-        id: `${REPL}_${obj.id}`,
+        // Hacemos que cada referencia sea distinta, incluso si apuntan al mismo objeto
+        id: `${REPL}_${Math.random() * 100000000}`,
         source: replId,
         target: obj.id,
+        // No funciona sacar la constante
+        // label: `${name}${isConstant(obj, name) ? '🔒' : ''}`,
         label: name,
       },
     },
@@ -73,14 +76,10 @@ function elementFromObject(obj: RuntimeObject, interpreter: Interpreter, already
 function concatOverlappedReferences(elementDefinitions: ElementDefinition[]): ElementDefinition[] {
   const cleanDefinitions: ElementDefinition[] = []
   elementDefinitions.forEach(elem => {
-    if (elem.data.source && elem.data.target) {
-      const repeated = cleanDefinitions.find(def => def.data.source === elem.data.source && def.data.target === elem.data.target)
-      if (repeated) {
-        repeated.data.id = `${repeated.data.id}_${elem.data.id}`
-        repeated.data.label = `${repeated.data.label}, ${elem.data.label}`
-      } else {
-        cleanDefinitions.push(elem)
-      }
+    const repeated = elem.data.source && elem.data.target && cleanDefinitions.find(def => def.data.source === elem.data.source && def.data.target === elem.data.target)
+    if (repeated) {
+      repeated.data.id = `${repeated.data.id}_${elem.data.id}`
+      repeated.data.label = `${repeated.data.label}, ${elem.data.label}`
     } else {
       cleanDefinitions.push(elem)
     }
