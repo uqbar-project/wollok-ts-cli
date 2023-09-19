@@ -14,7 +14,7 @@ const REPL = 'REPL'
 
 export function getDataDiagram(interpreter: Interpreter): ElementDefinition[] {
   return Array.from(interpreter.evaluation.currentFrame.locals.keys())
-    .filter((name) =>  !name.startsWith(WOLLOK_BASE_MODULES) && !['true', 'false', 'null'].includes(name))
+    .filter((name) =>  !isLanguageLocal(name))
     .flatMap((name) => fromLocal(name, interpreter.evaluation.currentFrame.get(name)!, interpreter))
     // TODO: convertirlo a un mapa para mejorar performance, pero dado que no tendremos más de ¿100 objetos?
     // no vale la pena optimizar por el momento
@@ -23,6 +23,10 @@ export function getDataDiagram(interpreter: Interpreter): ElementDefinition[] {
         uniques.push(elem)
       return uniques
     }, [])
+}
+
+function isLanguageLocal(name: string) {
+  return name.startsWith(WOLLOK_BASE_MODULES) || ['true', 'false', 'null'].includes(name)
 }
 
 function fromLocal(name: string, obj: RuntimeObject, interpreter: Interpreter): ElementDefinition[] {
