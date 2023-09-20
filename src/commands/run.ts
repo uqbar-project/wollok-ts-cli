@@ -1,4 +1,7 @@
+import { bold } from 'chalk'
+import cors from 'cors'
 import express from 'express'
+import fs, { Dirent } from 'fs'
 import http from 'http'
 import logger from 'loglevel'
 import path from 'path'
@@ -6,27 +9,30 @@ import { Server } from 'socket.io'
 import { link, Name, parse, RuntimeObject, validate, WollokException } from 'wollok-ts'
 import interpret, { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
-import { buildEnvironmentForProject, failureDescription, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
+import { buildEnvironmentForProject, failureDescription, isImageFile, problemDescription, publicPath, readPackageProperties, successDescription, valueDescription } from '../utils'
 import { buildKeyPressEvent, canvasResolution, Image, queueEvent, visualState, VisualState, wKeyCode } from './extrasGame'
-import fs from 'fs'
-import cors from 'cors'
-import { bold } from 'chalk'
 
 const { time, timeEnd } = console
 
 type Options = {
   project: string
-  skipValidations: boolean,
+  assets: string | undefined
+  skipValidations: boolean
   port: string
 }
 let interp: Interpreter
 let io: Server
-let folderImages: string
+let projectPath: string
+let assetsPath: string | undefined
 let timmer = 0
-const namesFolder = ['imagenes', 'assets', 'img', 'asset']
 
-export default async function (programFQN: Name, { project, skipValidations, port }: Options): Promise<void> {
+export default async function (programFQN: Name, { project, assets, skipValidations, port }: Options): Promise<void> {
   logger.info(`Running ${valueDescription(programFQN)} on ${valueDescription(project)}`)
+  
+  projectPath = project
+  const packageProperties = readPackageProperties(project)
+  const assetsFolder = assets ?? packageProperties?.assets
+  assetsPath = assetsFolder ? path.join(project, assetsFolder) : undefined
 
   let environment = await buildEnvironmentForProject(project)
   environment = link([parse.File('draw').tryParse('object drawer{ method apply() native }')], environment)
@@ -65,7 +71,7 @@ export default async function (programFQN: Name, { project, skipValidations, por
                   sound.get('volume')!.innerNumber!,
                   sound.get('loop')!.innerBoolean!,
                 ])
-              io.emit('updateSound', { path: folderSound(project), soundInstances: mappedSounds })
+              io.emit('updateSound', { path: folderSound(), soundInstances: mappedSounds })
             } catch (e: any) {
               if (e instanceof WollokException) logger.error(failureDescription(e.message))
               interp.send('stop', game)
@@ -97,7 +103,7 @@ export default async function (programFQN: Name, { project, skipValidations, por
   app.use(
     cors({ allowedHeaders: '*' }),
     express.static(publicPath('game'), { maxAge: '1d' }),
-    express.static(`${project}/../assets`, { maxAge: '1d' }))
+    express.static(assetsPath ?? project, { maxAge: '1d' }))
   server.listen(parseInt(port), 'localhost')
 
   logger.info(successDescription('Game available at: ' + bold(`http://localhost:${port}`)))
@@ -108,7 +114,9 @@ export default async function (programFQN: Name, { project, skipValidations, por
     socket.on('keyPressed', key => {
       queueEvent(interp, buildKeyPressEvent(interp, wKeyCode(key.key, key.keyCode)), buildKeyPressEvent(interp, 'ANY'))
     })
-    socket.emit('images', getImages(project))
+
+    if (!assetsPath) logger.warn(failureDescription('Folder for assets not found!'))
+    socket.emit('images', getImages())
     socket.emit('sizeCanvasInic', [sizeCanvas.width, sizeCanvas.height])
 
     const id = setInterval(() => {
@@ -128,19 +136,18 @@ export default async function (programFQN: Name, { project, skipValidations, por
   server.listen(3000)
 }
 
-function getImages(pathProject: string) {
+function getImages() {
   const images: Image[] = []
-
-  const pathDirname = path.dirname(pathProject)
-  fs.readdirSync(pathDirname).forEach((file: any) => {
-    if (namesFolder.includes(file)) { folderImages = file }
-  })
-  const pathImage = path.join(pathDirname, folderImages)
-  fs.readdirSync(pathImage).filter((file: any) => {
-    if (file.endsWith('png') || file.endsWith('jpg')) {
-      images.push({ 'name': file, 'url': file })
-    }
-  })
+  const baseFolder = assetsPath ?? projectPath
+  const loadImagesIn = (basePath: string) => fs.readdirSync(basePath, { withFileTypes: true })
+    .forEach((file: Dirent) => {
+      if (file.isDirectory()) loadImagesIn(path.join(basePath, file.name))
+      else if (isImageFile(file)) {
+        const fileName = path.relative(baseFolder, path.join(basePath, file.name))
+        images.push({ name: fileName, url: fileName })
+      }
+    })
+  loadImagesIn(baseFolder)
   return images
 }
 
@@ -159,9 +166,9 @@ function getVisuals(game: RuntimeObject) {
   return visuals
 }
 
-function folderSound(pathProject: string) {
-  const pathDirname = path.dirname(pathProject)
-  const folder = fs.readdirSync(pathDirname).includes('sounds') ? 'sounds' : folderImages
+function folderSound() {
+  const pathDirname = path.dirname(projectPath)
+  const folder = fs.readdirSync(pathDirname).includes('sounds') ? 'sounds' : assetsPath
 
-  return path.join(path.dirname(pathProject), '/' + folder + '/')
+  return path.join(path.dirname(projectPath), '/' + folder + '/')
 }
