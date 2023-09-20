@@ -10,38 +10,40 @@
     <link rel="stylesheet" href="./diagram.css" />
     <style>
       #cy {
+        display: block;
         width: 100vw;
         height: 100vh;
-        display: block;
       }
     </style>
   </head>
 
   <body>
-    <div style="display: flex; flex-direction: row-reverse">
-      <button class="button" onclick="updateLayout()">ORGANIZE</button>
+    <div class="main">
+      <div style="display: flex; flex-direction: row-reverse">
+        <button class="button" onclick="updateLayout()">ORGANIZE</button>
+      </div>
+      <script type="module">
+        import { io } from "./lib/socket.io.esm.min.js";
+  
+        const socket = io("http://localhost:3000");
+        socket.on("connect", function () {
+          console.log("conectado!");
+        });
+        socket.on("event", function (data) {
+          console.log(`evento! ${data}`);
+        });
+        socket.on("disconnect", function () {
+          console.log("desconectado!");
+        });
+  
+        initializeCytoscape(document.getElementById("cy"));
+  
+        socket.on("updateDiagram", (elements) => {
+          reloadDiagram(elements);
+        });
+      </script>
+  
+      <div id="cy"></div>
     </div>
-    <script type="module">
-      import { io } from "./lib/socket.io.esm.min.js";
-
-      const socket = io("http://localhost:3000");
-      socket.on("connect", function () {
-        console.log("conectado!");
-      });
-      socket.on("event", function (data) {
-        console.log(`evento! ${data}`);
-      });
-      socket.on("disconnect", function () {
-        console.log("desconectado!");
-      });
-
-      initializeCytoscape(document.getElementById("cy"));
-
-      socket.on("updateDiagram", (elements) => {
-        reloadDiagram(elements);
-      });
-    </script>
-
-    <div id="cy"></div>
   </body>
 </html>
