@@ -94,6 +94,7 @@ function initializeCytoscape(container) {
           "background-color": "#FFFFFF",
           "font-size": "10px",
           "font-weight": "bold",
+          color: "#000000",
           "border-color": "#000000",
         },
       },
@@ -108,12 +109,10 @@ function initializeCytoscape(container) {
 }
 
 function updateLayout() {
-  console.info('update layout')
   updateNodes(cy.elements())
 }
 
 function updateNodes(elements) {
-  console.info('update nodes', elements)
   const layout = elements.layout({
     name: "cose",
     animate: false,
@@ -171,5 +170,4 @@ function isDarkMode() {
 
 function changeElementsMode() {
   currentElements.forEach(element => { element.data.mode = isDarkMode() ? 'dark' : 'light' })
-  console.info('changed elements', currentElements)
 }
