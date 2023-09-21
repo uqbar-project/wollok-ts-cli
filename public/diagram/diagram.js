@@ -1,6 +1,7 @@
 let cy
+let currentElements = []
 
-const initializeCytoscape = (container) => {
+function initializeCytoscape(container) {
   const fontFace = {
     "font-family": "Inter",
     "font-weight": "normal",
@@ -46,29 +47,31 @@ const initializeCytoscape = (container) => {
         selector: "node",
         style: nodeStyle,
       },
-      // {
-      //   selector: "nodeDark",
-      //   style: {
-      //     ...nodeStyle,
-      //     "line-color": "#000000",
-      //     "background-color": "#00DFA2",
-      //   },
-      // },
+      {
+        selector: `node[mode = "dark"]`,
+        style: {
+          ...nodeStyle,
+          "line-color": "#000000",
+          "background-color": "#4F709C",
+          "border-color": "#4F709C",
+          color: "#FFFFFF",
+        },
+      },
       {
         selector: "edge",
         style: edgeStyle,
       },
-      // {
-      //   selector: "edgeDark",
-      //   style: {
-      //     ...edgeStyle,
-      //     "line-color": "#FFFFFF",
-      //     "target-arrow-color": "#FFFFFF",
-      //   }
-      // },
       {
-        // selector: 'node[type = "literal"], nodeDark[type = "literal"]',
-        selector: 'node[type = "literal"]',
+        selector: `edge[mode = "dark"]`,
+        style: {
+          ...edgeStyle,
+          "line-color": "#FFFFFF",
+          "target-arrow-color": "#FFFFFF",
+          color: "#FFFFFF",
+        }
+      },
+      {
+        selector: `node[type = "literal"]`,
         style: {
           ...fontFace,
           "background-color": "#6fdc4b",
@@ -76,8 +79,16 @@ const initializeCytoscape = (container) => {
         },
       },
       {
-        // selector: 'node[type = "null"], nodeDark[type = "null"]',
-        selector: 'node[type = "null"]',
+        selector: `node[type = "literal"][mode = "dark"]`,
+        style: {
+          ...fontFace,
+          "background-color": "#BB2525",
+          "border-color": "#BB2525",
+          color: "#FFFFFF",
+        },
+      },
+      {
+        selector: `node[type = "null"]`,
         style: {
           ...fontFace,
           "background-color": "#FFFFFF",
@@ -96,20 +107,15 @@ const initializeCytoscape = (container) => {
   })
 }
 
-const updateLayout = () => {
+function updateLayout() {
   console.info('update layout')
   updateNodes(cy.elements())
 }
 
-const updateNodes = (elements) => {
+function updateNodes(elements) {
   console.info('update nodes', elements)
   const layout = elements.layout({
     name: "cose",
-    stop: () => {
-      const repl = cy.$("#REPL")
-      repl.renderedPosition({ x: -100, y: -100 })
-      repl.lock()
-    },
     animate: false,
     nodeDimensionsIncludeLabels: true,
     fit: true,
@@ -118,8 +124,9 @@ const updateNodes = (elements) => {
   layout.run()
 }
 
-const reloadDiagram = (elements) => {
-  console.info('reload diagram', elements)
+function reloadDiagram(elements) {
+  currentElements = [...elements]
+  changeElementsMode()
   const ids = elements.map((e) => e.data.id)
   cy.filter((e) => !ids.includes(e.id())).remove()
 
@@ -138,7 +145,7 @@ const reloadDiagram = (elements) => {
 /**
  * edges cant references nodes that going to be arranged
  */
-const readyForLayoutElems = (elems) => {
+function readyForLayoutElems(elems) {
   const isInElems = (elem) => elems.some((e) => e.id() === elem.id())
 
   return elems.filter(
@@ -148,10 +155,21 @@ const readyForLayoutElems = (elems) => {
   )
 }
 
-const modeChanged = () => {
+function modeChanged() {
   document.getElementById('main').style = `background-color: ${backgroundColor()}`
+  cy.elements().remove()
+  reloadDiagram(currentElements)
 }
 
-const backgroundColor = () => isDarkMode() ? 'black' : 'white'
+function backgroundColor() {
+  return isDarkMode() ? 'black' : 'white'
+}
 
-const isDarkMode = () => document.getElementById('toggle').checked
+function isDarkMode() {
+  return document.getElementById('toggle').checked
+}
+
+function changeElementsMode() {
+  currentElements.forEach(element => { element.data.mode = isDarkMode() ? 'dark' : 'light' })
+  console.info('changed elements', currentElements)
+}
