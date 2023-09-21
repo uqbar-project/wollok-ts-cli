@@ -19,6 +19,11 @@
 
   <body>
     <div id="main" class="main">
+      <div class="botonera">
+        <button class="button" onclick="updateLayout()">ORGANIZE</button>
+        <!-- Modo Oscuro/Claro -->
+        <input type="checkbox" id="toggle" onchange="modeChanged()" title="Dark/Light mode">
+      </div>
       <script type="module">
         import { io } from "./lib/socket.io.esm.min.js";
   
@@ -39,11 +44,6 @@
           reloadDiagram(elements);
         });
       </script>
-      <div class="botonera">
-        <button class="button" onclick="updateLayout()">ORGANIZE</button>
-        <!-- Modo Oscuro/Claro -->
-        <input type="checkbox" id="toggle" onchange="modeChanged()" alt="Dark/Light mode">
-      </div>
       <div id="cy"></div>
     </div>
   </body>
