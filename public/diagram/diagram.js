@@ -1,10 +1,36 @@
-let cy;
+let cy
 
-function initializeCytoscape(container) {
+const initializeCytoscape = (container) => {
   const fontFace = {
     "font-family": "Inter",
     "font-weight": "normal",
     "font-size": "data(fontsize)",
+  }
+  const nodeStyle = {
+    ...fontFace,
+    "background-color": "#7cc0d8",
+    "line-color": "#000000",
+    label: "data(label)",
+    color: "#000",
+    "text-valign": "center",
+    "text-wrap": "ellipsis",
+    "text-max-width": "100px",
+    "border-style": "solid",
+    "border-color": "#248ac8",
+    "border-width": "1px",
+  }
+
+  const edgeStyle = {
+    ...fontFace,
+    label: "data(label)",
+    width: 1,
+    "line-color": "#000000",
+    "target-arrow-color": "#000000",
+    "target-arrow-shape": "vee",
+    "curve-style": "bezier",
+    "text-valign": "top",
+    "text-margin-y": "10px",
+    "font-size": "8px",
   }
 
   cy = cytoscape({
@@ -14,41 +40,34 @@ function initializeCytoscape(container) {
     minZoom: 0.5,
     elements: [],
 
-    // TODO: Usar classes
     style: [
       // the stylesheet for the graph
       {
         selector: "node",
-        style: {
-          ...fontFace,
-          "background-color": "#7cc0d8",
-          "line-color": "#000",
-          label: "data(label)",
-          color: "#000",
-          "text-valign": "center",
-          "text-wrap": "ellipsis",
-          "text-max-width": "100px",
-          "border-style": "solid",
-          "border-color": "#248ac8",
-          "border-width": "1px",
-        },
+        style: nodeStyle,
       },
+      // {
+      //   selector: "nodeDark",
+      //   style: {
+      //     ...nodeStyle,
+      //     "line-color": "#000000",
+      //     "background-color": "#00DFA2",
+      //   },
+      // },
       {
         selector: "edge",
-        style: {
-          ...fontFace,
-          label: "data(label)",
-          width: 1,
-          "line-color": "#000000",
-          "target-arrow-color": "#000000",
-          "target-arrow-shape": "vee",
-          "curve-style": "bezier",
-          "text-valign": "top",
-          "text-margin-y": "10px",
-          "font-size": "8px",
-        },
+        style: edgeStyle,
       },
+      // {
+      //   selector: "edgeDark",
+      //   style: {
+      //     ...edgeStyle,
+      //     "line-color": "#FFFFFF",
+      //     "target-arrow-color": "#FFFFFF",
+      //   }
+      // },
       {
+        // selector: 'node[type = "literal"], nodeDark[type = "literal"]',
         selector: 'node[type = "literal"]',
         style: {
           ...fontFace,
@@ -57,6 +76,7 @@ function initializeCytoscape(container) {
         },
       },
       {
+        // selector: 'node[type = "null"], nodeDark[type = "null"]',
         selector: 'node[type = "null"]',
         style: {
           ...fontFace,
@@ -73,44 +93,44 @@ function initializeCytoscape(container) {
         },
       },
     ],
-  });
+  })
 }
 
-function updateLayout() {
-  updateNodes(cy.elements());
+const updateLayout = () => {
+  console.info('update layout')
+  updateNodes(cy.elements())
 }
 
-function updateNodes(elements) {
+const updateNodes = (elements) => {
+  console.info('update nodes', elements)
   const layout = elements.layout({
     name: "cose",
     stop: () => {
-      const repl = cy.$("#REPL");
-      repl.renderedPosition({ x: -100, y: -100 });
-      repl.lock();
+      const repl = cy.$("#REPL")
+      repl.renderedPosition({ x: -100, y: -100 })
+      repl.lock()
     },
     animate: false,
     nodeDimensionsIncludeLabels: true,
     fit: true,
-  });
+  })
 
-  layout.run();
+  layout.run()
 }
 
-function reloadDiagram(elements) {
-  const ids = elements.map((e) => e.data.id);
-  cy.filter((e) => !ids.includes(e.id())).remove();
+const reloadDiagram = (elements) => {
+  console.info('reload diagram', elements)
+  const ids = elements.map((e) => e.data.id)
+  cy.filter((e) => !ids.includes(e.id())).remove()
 
-  const newElements = elements.filter((e) => !cy.hasElementWithId(e.data.id));
+  const newElements = elements.filter((e) => !cy.hasElementWithId(e.data.id))
   if (newElements.length) {
-    let shouldUpdateLayout = false;
-    if (cy.elements().length === 0) {
-      shouldUpdateLayout = true;
-    }
-    const addedNodes = cy.add(newElements);
+    const shouldUpdateLayout =  cy.elements().length === 0
+    const addedNodes = cy.add(newElements)
     if (shouldUpdateLayout) {
-      updateLayout();
+      updateLayout()
     } else {
-      updateNodes(readyForLayoutElems(addedNodes));
+      updateNodes(readyForLayoutElems(addedNodes))
     }
   }
 }
@@ -118,12 +138,20 @@ function reloadDiagram(elements) {
 /**
  * edges cant references nodes that going to be arranged
  */
-function readyForLayoutElems(elems) {
-  const isInElems = (elem) => elems.some((e) => e.id() === elem.id());
+const readyForLayoutElems = (elems) => {
+  const isInElems = (elem) => elems.some((e) => e.id() === elem.id())
 
   return elems.filter(
     (e) =>
       e.isNode() ||
       (e.isEdge() && isInElems(e.target()) && isInElems(e.source()))
-  );
+  )
 }
+
+const modeChanged = () => {
+  document.getElementById('main').style = `background-color: ${backgroundColor()}`
+}
+
+const backgroundColor = () => isDarkMode() ? 'black' : 'white'
+
+const isDarkMode = () => document.getElementById('toggle').checked
