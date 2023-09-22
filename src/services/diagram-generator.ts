@@ -76,10 +76,14 @@ function elementFromObject(obj: RuntimeObject, interpreter: Interpreter, already
 function concatOverlappedReferences(elementDefinitions: ElementDefinition[]): ElementDefinition[] {
   const cleanDefinitions: ElementDefinition[] = []
   elementDefinitions.forEach(elem => {
-    const repeated = elem.data.source && elem.data.target && cleanDefinitions.find(def => def.data.source === elem.data.source && def.data.target === elem.data.target)
-    if (repeated) {
-      repeated.data.id = `${repeated.data.id}_${elem.data.id}`
-      repeated.data.label = `${repeated.data.label}, ${elem.data.label}`
+    if (elem.data.source && elem.data.target) {
+      const repeated = cleanDefinitions.find(def => def.data.source === elem.data.source && def.data.target === elem.data.target)
+      if (repeated) {
+        repeated.data.id = `${repeated.data.id}_${elem.data.id}`
+        repeated.data.label = `${repeated.data.label}, ${elem.data.label}`
+      } else {
+        cleanDefinitions.push(elem)
+      }
     } else {
       cleanDefinitions.push(elem)
     }
@@ -166,8 +170,8 @@ function buildReference(obj: RuntimeObject, label: string) {
 function getCollections(obj: RuntimeObject, interpreter: Interpreter, alreadyVisited: string[]) {
   const { id } = obj
   return (obj.innerCollection || [])
-    .flatMap((item, i) =>
-      [
+    .flatMap((item, i) => {
+      const result = [
         {
           data: {
             id: `${id}_${item.id}`,
@@ -178,7 +182,9 @@ function getCollections(obj: RuntimeObject, interpreter: Interpreter, alreadyVis
         },
         ...elementFromObject(item, interpreter, [...alreadyVisited, id]),
       ]
-    )
+      alreadyVisited.push(item.id)
+      return result
+    })
 }
 
 function isList(moduleName: string | undefined) {
