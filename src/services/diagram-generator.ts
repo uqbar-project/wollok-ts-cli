@@ -116,12 +116,12 @@ function getType(obj: RuntimeObject, moduleName: string): objectType {
 function getLabel(obj: RuntimeObject, interpreter: Interpreter): string {
   const { innerValue, module } = obj
   if (innerValue === null) return 'null'
-  const moduleName: string = module.fullyQualifiedName
+  const moduleName = module.fullyQualifiedName
   if (shouldShortenRepresentation(moduleName)) return showInnerValue(interpreter.send('toString', obj)?.innerValue)
   // Otra opción es enviar el mensaje "printString" pero por cuestiones de performance preferí aprovechar el innerValue
   if (moduleName === STRING_MODULE) return `"${showInnerValue(innerValue)}"`
   if (shouldShowInnerValue(moduleName)) return showInnerValue(innerValue)
-  return showInnerValue(interpreter.send('kindName', obj)?.innerValue)
+  return module.name ?? 'Object'
 }
 
 function getFontSize(text: string) {
@@ -132,7 +132,8 @@ function getFontSize(text: string) {
 }
 
 function shouldShortenRepresentation(moduleName: string) {
-  return ['wollok.lang.Date', 'wollok.lang.Pair', 'wollok.lang.Range', 'wollok.lang.Closure'].includes(moduleName)
+  // Por ahora el Closure está viniendo como `wollok.lang.Closure#undefined` supongo que porque está en el contexto de un REPL
+  return ['wollok.lang.Date', 'wollok.lang.Pair', 'wollok.lang.Range'].includes(moduleName) || moduleName.startsWith('wollok.lang.Closure')
 }
 
 function shouldShowInnerValue(moduleName: string) {
