@@ -75,7 +75,7 @@ export default async function (filter: string | undefined, { project, skipValida
   logger.info(
     '\n',
     successDescription(`${successes} passing`),
-    failureDescription(`${failures.length} failing`),
+    failures.length ? failureDescription(`${failures.length} failing`) : '',
     '\n'
   )
 }
