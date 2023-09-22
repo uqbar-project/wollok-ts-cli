@@ -14,7 +14,7 @@ function initializeCytoscape(container) {
     label: "data(label)",
     color: "#000",
     "text-valign": "center",
-    "text-wrap": "ellipsis",
+    "text-wrap": "wrap",
     "text-max-width": "100px",
     "border-style": "solid",
     "border-color": "#248ac8",
