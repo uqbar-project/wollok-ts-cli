@@ -51,23 +51,23 @@ describe('Dinamic diagram', () => {
 
   it('should include lists and their elements', () => {
     getDataDiagram(interpreter).should
-      .include.nodeWith({ label: 'a List' }).and.to
+      .include.nodeWith({ label: 'List' }).and.to
       .include.nodeWith({ label: '"blue"' }).and.to
       .include.nodeWith({ label: '"orange"' }).and.to
       .include.nodeWith({ label: '"grey"' }).and.to
-      .connect('0', 'a List', '"blue"'  ).and.to
-      .connect('1', 'a List', '"orange"').and.to
-      .connect('2', 'a List', '"grey"'  )
+      .connect('0', 'List', '"blue"'  ).and.to
+      .connect('1', 'List', '"orange"').and.to
+      .connect('2', 'List', '"grey"'  )
   })
 
   it('should include sets and their elements', () => {
     getDataDiagram(interpreter).should
-      .include.nodeWith({ label: 'a Set' }).and.to
+      .include.nodeWith({ label: 'Set' }).and.to
       .include.nodeWith({ label: '"blue"' }).and.to
       .include.nodeWith({ label: '"orange"' }).and.to
       .include.nodeWith({ label: '"grey"' }).and.to
-      .connect('', 'a Set', '"blue"'  ).and.to
-      .connect('', 'a Set', '"orange"').and.to
-      .connect('', 'a Set', '"grey"'  )
+      .connect('', 'Set', '"blue"'  ).and.to
+      .connect('', 'Set', '"orange"').and.to
+      .connect('', 'Set', '"grey"'  )
   })
 })
