@@ -164,6 +164,7 @@ function buildReference(obj: RuntimeObject, label: string) {
       label: `${label}${isConstant(obj, label) ? '🔒' : ''}`,
       source: id,
       target: runtimeValue?.id,
+      style: 'solid',
     },
   }
 }
@@ -179,6 +180,7 @@ function getCollections(obj: RuntimeObject, interpreter: Interpreter, alreadyVis
             source: id,
             target: item.id,
             label: isList(obj.module.name) ? i.toString() : '',
+            style: 'dotted',
           },
         },
         ...elementFromObject(item, interpreter, [...alreadyVisited, id]),
