@@ -133,7 +133,7 @@ function getFontSize(text: string) {
 
 function shouldShortenRepresentation(moduleName: string) {
   // Por ahora el Closure está viniendo como `wollok.lang.Closure#undefined` supongo que porque está en el contexto de un REPL
-  return ['wollok.lang.Date', 'wollok.lang.Pair', 'wollok.lang.Range'].includes(moduleName) || moduleName.startsWith('wollok.lang.Closure')
+  return ['wollok.lang.Date', 'wollok.lang.Pair', 'wollok.lang.Range', 'wollok.lang.Dictionary'].includes(moduleName) || moduleName.startsWith('wollok.lang.Closure')
 }
 
 function shouldShowInnerValue(moduleName: string) {
@@ -145,7 +145,7 @@ function shouldIterateChildren(moduleName: string): boolean {
 }
 
 function showInnerValue(innerValue: InnerValue | undefined): string {
-  return innerValue?.toString() ?? ''
+  return innerValue?.toString().trim() ?? ''
 }
 
 function getLocalKeys(obj: RuntimeObject) {

@@ -12,7 +12,7 @@ should()
 
 const projectPath = join('examples', 'diagram-examples')
 
-describe('Dinamic diagram', () => {
+describe('Dynamic diagram', () => {
   const options = {
     project: projectPath,
     skipValidations: true,
@@ -35,8 +35,28 @@ describe('Dinamic diagram', () => {
     getDataDiagram(interpreter).should.connect('friend', 'bobbyTheShark', 'george')
   })
 
+  it('should include edges between WKOs and custom classes', () => {
+    getDataDiagram(interpreter).should.connect('bird', 'bobbyTheShark', 'Bird')
+  })
+
   it('should include edges between WKOs and literal attributes', () => {
     getDataDiagram(interpreter).should.connect('age', 'bobbyTheShark', '5')
+      .and.to.connect('name', 'bobbyTheShark', '"Bobby"')
+      .and.to.connect('born', 'bobbyTheShark', '2/14/1971')
+      .and.to.connect('isHappy', 'bobbyTheShark', 'true')
+      .and.to.connect('range1', 'bobbyTheShark', '2..11')
+      .and.to.connect('range2', 'bobbyTheShark', '[2, 7, 12]')
+      .and.to.connect('aClosure', 'bobbyTheShark', '{ 5 + 2 }')
+      .and.to.connect('someObject', 'bobbyTheShark', 'Object')
+      .and.to.connect('dictionary', 'bobbyTheShark', 'a Dictionary []')
+  })
+
+  it('should include edges with extra info for constants', () => {
+    getDataDiagram(interpreter).should.connect('fixedValue🔒', 'bobbyTheShark', '"Fixed"')
+  })
+
+  it('should include edges between classes and literal attributes', () => {
+    getDataDiagram(interpreter).should.connect('energy', 'Bird', '100')
   })
 
   it('should include the REPL object', () => {
