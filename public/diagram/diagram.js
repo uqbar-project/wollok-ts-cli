@@ -26,6 +26,7 @@ function initializeCytoscape(container) {
     label: "data(label)",
     width: 1,
     "line-color": "#000000",
+    "line-style": "data(style)",
     "target-arrow-color": "#000000",
     "target-arrow-shape": "vee",
     "curve-style": "bezier",
