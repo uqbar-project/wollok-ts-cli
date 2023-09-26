@@ -14,6 +14,7 @@ describe('REPL', () => {
   const options = {
     project: projectPath,
     skipValidations: false,
+    darkMode: true,
     port: '8080',
   }
   let interpreter: Interpreter
