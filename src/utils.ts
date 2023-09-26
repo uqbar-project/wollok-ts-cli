@@ -9,9 +9,19 @@ const { time, timeEnd } = console
 
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// FILE / PATH HANDLING
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+export function relativeFilePath(project: string, filePath: string): string {
+  return path.relative(project, filePath).split('.')[0]
+}
+
+export function getFQN(project: string, filePath: string): string {
+  return relativeFilePath(project, filePath).replaceAll(path.sep, '.')
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // ENVIRONMENT CREATION
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-
 export async function buildEnvironmentForProject(cwd: string): Promise<Environment> {
   const paths = await globby('**/*.@(wlk|wtest|wpgm)', { cwd })
 
