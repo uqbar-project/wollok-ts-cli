@@ -57,6 +57,7 @@ function buildReplElement(obj: RuntimeObject, name: string) {
         id: replId,
         label: REPL,
         type: REPL,
+        fontsize: '8px', // irrelevante porque no se muestra
       },
     },
     {
@@ -68,6 +69,8 @@ function buildReplElement(obj: RuntimeObject, name: string) {
         // No funciona sacar la constante
         // label: `${name}${isConstant(obj, name) ? '🔒' : ''}`,
         label: name,
+        style: 'solid',
+        fontsize: getFontSize(name),
       },
     },
   ]
