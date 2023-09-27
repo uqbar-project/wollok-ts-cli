@@ -17,12 +17,13 @@ describe('Dynamic diagram', () => {
     project: projectPath,
     skipValidations: true,
     port: '8080',
+    darkMode: true,
   }
   let interpreter: Interpreter
 
 
   beforeEach(async () => {
-    interpreter = await initializeInterpreter(undefined, options)
+    interpreter = await initializeInterpreter('examples/diagram-examples/fish.wlk', options)
   })
 
   it('should include WKOs', () => {
