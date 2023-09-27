@@ -1,5 +1,5 @@
 import { ElementDefinition } from 'cytoscape'
-import { InnerValue, RuntimeObject } from 'wollok-ts'
+import { Entity, InnerValue, Package, Reference, RuntimeObject } from 'wollok-ts'
 import { isConstant } from '../utils'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 
@@ -12,9 +12,16 @@ const WOLLOK_BASE_MODULES = 'wollok.'
 const SELF = 'self'
 const REPL = 'REPL'
 
+function getImportedDefinitionsFromConsole(interpreter: Interpreter): string[] {
+  const imports = interpreter.evaluation.environment.getNodeByFQN<Package>(REPL).imports
+  return imports.flatMap(imp => imp.children.map(child => (child as unknown as Reference<Entity>).name))
+}
+
 export function getDataDiagram(interpreter: Interpreter): ElementDefinition[] {
+  const importedFromConsole = getImportedDefinitionsFromConsole(interpreter)
+
   return Array.from(interpreter.evaluation.currentFrame.locals.keys())
-    .filter((name) =>  !isLanguageLocal(name))
+    .filter((name) =>  !isLanguageLocal(name) && autoImportedFromConsole(name, importedFromConsole))
     .flatMap((name) => fromLocal(name, interpreter.evaluation.currentFrame.get(name)!, interpreter))
     // TODO: convertirlo a un mapa para mejorar performance, pero dado que no tendremos más de ¿100 objetos?
     // no vale la pena optimizar por el momento
@@ -27,6 +34,10 @@ export function getDataDiagram(interpreter: Interpreter): ElementDefinition[] {
 
 function isLanguageLocal(name: string) {
   return name.startsWith(WOLLOK_BASE_MODULES) || ['true', 'false', 'null'].includes(name)
+}
+
+function autoImportedFromConsole(name: string, importedFromConsole: string[]) {
+  return isConsoleLocal(name) || importedFromConsole.some(imported => name.startsWith(imported))
 }
 
 function fromLocal(name: string, obj: RuntimeObject, interpreter: Interpreter): ElementDefinition[] {
