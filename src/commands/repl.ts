@@ -105,8 +105,6 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
       }
       else log(failureDescription(`File ${valueDescription(autoImportPath)} doesn't exist or is outside of project!`))
     }
-    console.info('imports', imports.length)
-
   } catch (error: any) {
     if (error.level === 'error') {
       logger.error(failureDescription('Exiting REPL due to validation errors!'))
