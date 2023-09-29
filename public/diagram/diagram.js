@@ -127,10 +127,10 @@ function updateNodes(elements) {
 function reloadDiagram(elements) {
   currentElements = [...elements]
   changeElementsMode()
-  const ids = elements.map((e) => e.data.id)
-  cy.filter((e) => !ids.includes(e.id())).remove()
+  const ids = elements.map((element) => element.data.id)
+  cy.filter((element) => !ids.includes(element.id())).remove()
 
-  const newElements = elements.filter((e) => !cy.hasElementWithId(e.data.id))
+  const newElements = elements.filter((element) => !cy.hasElementWithId(element.data.id))
   if (newElements.length) {
     const shouldUpdateLayout =  cy.elements().length === 0
     const addedNodes = cy.add(newElements)
@@ -143,15 +143,15 @@ function reloadDiagram(elements) {
 }
 
 /**
- * edges cant references nodes that going to be arranged
+ * edges can't reference nodes that going to be arranged
  */
-function readyForLayoutElems(elems) {
-  const isInElems = (elem) => elems.some((e) => e.id() === elem.id())
+function readyForLayoutElems(elements) {
+  const isInElems = (elem) => elements.some((element) => element.id() === elem.id())
 
-  return elems.filter(
-    (e) =>
-      e.isNode() ||
-      (e.isEdge() && isInElems(e.target()) && isInElems(e.source()))
+  return elements.filter(
+    (element) =>
+      element.isNode() ||
+      (element.isEdge() && isInElems(element.target()) && isInElems(element.source()))
   )
 }
 
