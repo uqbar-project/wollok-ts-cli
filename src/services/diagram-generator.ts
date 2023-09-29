@@ -199,6 +199,7 @@ function getCollections(obj: RuntimeObject, interpreter: Interpreter, alreadyVis
             target: item.id,
             label: isList(obj.module.name) ? i.toString() : '',
             style: 'dotted',
+            width: 1,
           },
         },
         ...elementFromObject(item, interpreter, [...alreadyVisited, id]),
