@@ -28,7 +28,7 @@ let timmer = 0
 
 export default async function (programFQN: Name, { project, assets, skipValidations, port }: Options): Promise<void> {
   logger.info(`Running ${valueDescription(programFQN)} on ${valueDescription(project)}`)
-  
+
   projectPath = project
   const packageProperties = readPackageProperties(project)
   const assetsFolder = assets ?? packageProperties?.assets

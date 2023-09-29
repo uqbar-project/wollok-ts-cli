@@ -3,6 +3,7 @@ LIB_FOLDER=./public/diagram/lib
 # socket.io
 if [ ! -f $LIB_FOLDER/socket.io.esm.min.js ]; then
     wget -P $LIB_FOLDER "https://cdn.socket.io/4.4.1/socket.io.esm.min.js"
+    wget -P $LIB_FOLDER "https://cdn.socket.io/4.4.1/socket.io.esm.min.js.map"
 fi
 
 # cytoscape

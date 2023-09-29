@@ -12,11 +12,68 @@
 * {
   font-family: "Inter", "Arial", sans-serif;
   font-size: 10px;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+.botonera {
+  display: flex;
+  flex-direction: row;
+  align-items: end;
+  font-size: 1.2rem;
 }
 
 .button {
-  border-radius: 15%;
+  border-radius: 5em;
   background-color: white;
-  padding: 0.5em 0.2em;
+  padding: 0.6em 0.3em;
   font-weight: 600;
+  position: absolute;
+  top: 10px;
+  right: 30px;
+  width: 10em;
+  height: 4em;
+  z-index: 10;
+}
+
+#toggle {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 60px;
+  height: 30px;
+  border-radius: 30px;
+  background-color: #333;
+  position: absolute;
+  top: 6em;
+  right: 5em;
+  transition: all 0.5s ease-in;
+  cursor: pointer;
+  z-index: 1;
+}
+
+/* Making a dot switch inside the Toggle Button */
+#toggle::before {
+  content: "";
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: white;
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  transform: translateY(-50%);
+  transition: all 0.5s ease-in;
+}
+
+/* Changing toggle button background when checked */
+#toggle:checked {
+  background: #d8dbe0;
+}
+
+/* Changing dot switch color and moving to the right side when checked */
+#toggle:checked::before {
+  background: #333;
+  left: 32px;
 }

@@ -10,23 +10,38 @@ const { time, timeEnd } = console
 
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// FILE / PATH HANDLING
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+export function relativeFilePath(project: string, filePath: string): string {
+  return path.relative(project, filePath).split('.')[0]
+}
+
+export function getFQN(project: string, filePath: string): string {
+  return relativeFilePath(project, filePath).replaceAll(path.sep, '.')
+}
+
+export type FileContent = {
+  name: string,
+  content: string,
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // ENVIRONMENT CREATION
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-
-export async function buildEnvironmentForProject(cwd: string): Promise<Environment> {
-  const paths = await globby('**/*.@(wlk|wtest|wpgm)', { cwd })
-
+export async function buildEnvironmentForProject(project: string, files: string[] = []): Promise<Environment> {
   const debug = logger.getLevel() <= logger.levels.DEBUG
 
-  if (debug) time('Reading project files')
-  const files = await Promise.all(paths.map(async name =>
-    ({ name, content: await readFile(join(cwd, name), 'utf8') })
+  const paths = files.length ? files : await globby('**/*.@(wlk|wtest|wpgm)', { cwd: project })
+
+  if(debug) time('Reading project files')
+  const environmentFiles = await Promise.all(paths.map(async name =>
+    ({ name, content: await readFile(join(project, name), 'utf8') })
   ))
   if (debug) timeEnd('Reading project files')
 
-  if (debug) time('Building environment')
-  try { return buildEnvironment(files) }
-  finally { if (debug) timeEnd('Building environment') }
+  if(debug) time('Building environment')
+  try { return buildEnvironment(environmentFiles) }
+  finally { if(debug) timeEnd('Building environment' ) }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -69,7 +84,7 @@ export const readPackageProperties = (pathProject: string): any | undefined => {
 }
 
 const imageExtensions = ['png', 'jpg']
-export const isImageFile = (file: Dirent) => imageExtensions.some(ext => file.name.endsWith(ext))
+export const isImageFile = (file: Dirent): boolean => imageExtensions.some(ext => file.name.endsWith(ext))
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // WOLLOK AST

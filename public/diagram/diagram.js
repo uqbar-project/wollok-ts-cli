@@ -1,10 +1,38 @@
-let cy;
+let cy
+let currentElements = []
 
 function initializeCytoscape(container) {
   const fontFace = {
     "font-family": "Inter",
     "font-weight": "normal",
     "font-size": "data(fontsize)",
+  }
+  const nodeStyle = {
+    ...fontFace,
+    "background-color": "#7cc0d8",
+    "line-color": "#000000",
+    label: "data(label)",
+    color: "#000",
+    "text-valign": "center",
+    "text-wrap": "wrap",
+    "text-max-width": "100px",
+    "border-style": "solid",
+    "border-color": "#248ac8",
+    "border-width": "1px",
+  }
+
+  const edgeStyle = {
+    ...fontFace,
+    label: "data(label)",
+    width: "data(width)",
+    "line-color": "#000000",
+    "line-style": "data(style)",
+    "target-arrow-color": "#000000",
+    "target-arrow-shape": "vee",
+    "curve-style": "bezier",
+    "text-valign": "top",
+    "text-margin-y": "10px",
+    "font-size": "8px",
   }
 
   cy = cytoscape({
@@ -14,42 +42,37 @@ function initializeCytoscape(container) {
     minZoom: 0.5,
     elements: [],
 
-    // TODO: Usar classes
     style: [
       // the stylesheet for the graph
       {
         selector: "node",
+        style: nodeStyle,
+      },
+      {
+        selector: `node[mode = "dark"]`,
         style: {
-          ...fontFace,
-          "background-color": "#7cc0d8",
-          "line-color": "#000",
-          label: "data(label)",
-          color: "#000",
-          "text-valign": "center",
-          "text-wrap": "ellipsis",
-          "text-max-width": "100px",
-          "border-style": "solid",
-          "border-color": "#248ac8",
-          "border-width": "1px",
+          ...nodeStyle,
+          "line-color": "#000000",
+          "background-color": "#4F709C",
+          "border-color": "#6F8FC0",
+          color: "#FFFFFF",
         },
       },
       {
         selector: "edge",
-        style: {
-          ...fontFace,
-          label: "data(label)",
-          width: 1,
-          "line-color": "#000000",
-          "target-arrow-color": "#000000",
-          "target-arrow-shape": "vee",
-          "curve-style": "bezier",
-          "text-valign": "top",
-          "text-margin-y": "10px",
-          "font-size": "8px",
-        },
+        style: edgeStyle,
       },
       {
-        selector: 'node[type = "literal"]',
+        selector: `edge[mode = "dark"]`,
+        style: {
+          ...edgeStyle,
+          "line-color": "#FFFFFF",
+          "target-arrow-color": "#FFFFFF",
+          color: "#FFFFFF",
+        }
+      },
+      {
+        selector: `node[type = "literal"]`,
         style: {
           ...fontFace,
           "background-color": "#6fdc4b",
@@ -57,12 +80,22 @@ function initializeCytoscape(container) {
         },
       },
       {
-        selector: 'node[type = "null"]',
+        selector: `node[type = "literal"][mode = "dark"]`,
+        style: {
+          ...fontFace,
+          "background-color": "#BB2525",
+          "border-color": "#E53935",
+          color: "#FFFFFF",
+        },
+      },
+      {
+        selector: `node[type = "null"]`,
         style: {
           ...fontFace,
           "background-color": "#FFFFFF",
           "font-size": "10px",
           "font-weight": "bold",
+          color: "#000000",
           "border-color": "#000000",
         },
       },
@@ -73,57 +106,69 @@ function initializeCytoscape(container) {
         },
       },
     ],
-  });
+  })
 }
 
 function updateLayout() {
-  updateNodes(cy.elements());
+  updateNodes(cy.elements())
 }
 
 function updateNodes(elements) {
   const layout = elements.layout({
     name: "cose",
-    stop: () => {
-      const repl = cy.$("#REPL");
-      repl.renderedPosition({ x: -100, y: -100 });
-      repl.lock();
-    },
     animate: false,
     nodeDimensionsIncludeLabels: true,
     fit: true,
-  });
+  })
 
-  layout.run();
+  layout.run()
 }
 
 function reloadDiagram(elements) {
-  const ids = elements.map((e) => e.data.id);
-  cy.filter((e) => !ids.includes(e.id())).remove();
+  currentElements = [...elements]
+  changeElementsMode()
+  const ids = elements.map((element) => element.data.id)
+  cy.filter((element) => !ids.includes(element.id())).remove()
 
-  const newElements = elements.filter((e) => !cy.hasElementWithId(e.data.id));
+  const newElements = elements.filter((element) => !cy.hasElementWithId(element.data.id))
   if (newElements.length) {
-    let shouldUpdateLayout = false;
-    if (cy.elements().length === 0) {
-      shouldUpdateLayout = true;
-    }
-    const addedNodes = cy.add(newElements);
+    const shouldUpdateLayout =  cy.elements().length === 0
+    const addedNodes = cy.add(newElements)
     if (shouldUpdateLayout) {
-      updateLayout();
+      updateLayout()
     } else {
-      updateNodes(readyForLayoutElems(addedNodes));
+      updateNodes(readyForLayoutElems(addedNodes))
     }
   }
 }
 
 /**
- * edges cant references nodes that going to be arranged
+ * edges can't reference nodes that going to be arranged
  */
-function readyForLayoutElems(elems) {
-  const isInElems = (elem) => elems.some((e) => e.id() === elem.id());
+function readyForLayoutElems(elements) {
+  const isInElems = (elem) => elements.some((element) => element.id() === elem.id())
 
-  return elems.filter(
-    (e) =>
-      e.isNode() ||
-      (e.isEdge() && isInElems(e.target()) && isInElems(e.source()))
-  );
+  return elements.filter(
+    (element) =>
+      element.isNode() ||
+      (element.isEdge() && isInElems(element.target()) && isInElems(element.source()))
+  )
+}
+
+function modeChanged() {
+  document.getElementById('main').style = `background-color: ${backgroundColor()}`
+  cy.elements().remove()
+  reloadDiagram(currentElements)
+}
+
+function backgroundColor() {
+  return isDarkMode() ? 'black' : 'white'
+}
+
+function isDarkMode() {
+  return document.getElementById('toggle').checked
+}
+
+function changeElementsMode() {
+  currentElements.forEach(element => { element.data.mode = isDarkMode() ? 'dark' : 'light' })
 }

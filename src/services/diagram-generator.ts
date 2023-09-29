@@ -1,7 +1,7 @@
 import { ElementDefinition } from 'cytoscape'
-import { InnerValue, RuntimeObject } from 'wollok-ts'
-import { isConstant } from '../utils'
+import { InnerValue, Package, RuntimeObject } from 'wollok-ts'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
+import { isConstant } from '../utils'
 
 type objectType = 'literal' | 'object' | 'null'
 
@@ -12,12 +12,21 @@ const WOLLOK_BASE_MODULES = 'wollok.'
 const SELF = 'self'
 const REPL = 'REPL'
 
+function getImportedDefinitionsFromConsole(interpreter: Interpreter): Package[] {
+  return interpreter.evaluation.environment.getNodeByFQN<Package>(REPL).imports.map(imp => imp.entity.target) as unknown as Package[]
+}
+
 export function getDataDiagram(interpreter: Interpreter): ElementDefinition[] {
-  return Array.from(interpreter.evaluation.currentFrame.locals.keys())
-    .filter((name) =>  !isLanguageLocal(name))
-    .flatMap((name) => fromLocal(name, interpreter.evaluation.currentFrame.get(name)!, interpreter))
-    // TODO: convertirlo a un mapa para mejorar performance, pero dado que no tendremos más de ¿100 objetos?
-    // no vale la pena optimizar por el momento
+  const importedFromConsole = getImportedDefinitionsFromConsole(interpreter)
+  const currentFrame = interpreter.evaluation.currentFrame
+  const objects = new Map(Array.from(currentFrame.locals.keys()).map((name) => [name, currentFrame.get(name)]))
+
+  return Array.from(objects.keys())
+    .filter((name) => {
+      const object = objects.get(name)
+      return isConsoleLocal(name) || object && autoImportedFromConsole(object, importedFromConsole)
+    })
+    .flatMap((name) => fromLocal(name, objects.get(name)!, interpreter))
     .reduce<ElementDefinition[]>((uniques, elem) => {
       if (!uniques.find(uniqueElement => uniqueElement.data.id === elem.data.id))
         uniques.push(elem)
@@ -25,8 +34,8 @@ export function getDataDiagram(interpreter: Interpreter): ElementDefinition[] {
     }, [])
 }
 
-function isLanguageLocal(name: string) {
-  return name.startsWith(WOLLOK_BASE_MODULES) || ['true', 'false', 'null'].includes(name)
+function autoImportedFromConsole(obj: RuntimeObject, importedFromConsole: Package[]) {
+  return importedFromConsole.includes(obj.module.parent as Package)
 }
 
 function fromLocal(name: string, obj: RuntimeObject, interpreter: Interpreter): ElementDefinition[] {
@@ -46,14 +55,21 @@ function buildReplElement(obj: RuntimeObject, name: string) {
         id: replId,
         label: REPL,
         type: REPL,
+        fontsize: '8px', // irrelevante porque no se muestra
       },
     },
     {
       data: {
-        id: `${REPL}_${obj.id}`,
+        // Hacemos que cada referencia sea distinta, incluso si apuntan al mismo objeto
+        id: `${REPL}_${Math.random() * 100000000}`,
         source: replId,
         target: obj.id,
+        // No funciona sacar la constante
+        // label: `${name}${isConstant(obj, name) ? '🔒' : ''}`,
+        width: 1.5,
         label: name,
+        style: 'solid',
+        fontsize: getFontSize(name),
       },
     },
   ]
@@ -102,7 +118,11 @@ function decoration(obj: RuntimeObject, interpreter: Interpreter) {
 }
 
 function isConsoleLocal(name: string): boolean {
-  return !name.includes('.')
+  return !name.includes('.') && !isLanguageLocal(name)
+}
+
+function isLanguageLocal(name: string) {
+  return name.startsWith(WOLLOK_BASE_MODULES) || ['true', 'false', 'null'].includes(name)
 }
 
 function getType(obj: RuntimeObject, moduleName: string): objectType {
@@ -113,12 +133,12 @@ function getType(obj: RuntimeObject, moduleName: string): objectType {
 function getLabel(obj: RuntimeObject, interpreter: Interpreter): string {
   const { innerValue, module } = obj
   if (innerValue === null) return 'null'
-  const moduleName: string = module.fullyQualifiedName
+  const moduleName = module.fullyQualifiedName
   if (shouldShortenRepresentation(moduleName)) return showInnerValue(interpreter.send('toString', obj)?.innerValue)
   // Otra opción es enviar el mensaje "printString" pero por cuestiones de performance preferí aprovechar el innerValue
   if (moduleName === STRING_MODULE) return `"${showInnerValue(innerValue)}"`
   if (shouldShowInnerValue(moduleName)) return showInnerValue(innerValue)
-  return showInnerValue(interpreter.send('kindName', obj)?.innerValue)
+  return module.name ?? 'Object'
 }
 
 function getFontSize(text: string) {
@@ -129,7 +149,8 @@ function getFontSize(text: string) {
 }
 
 function shouldShortenRepresentation(moduleName: string) {
-  return ['wollok.lang.Date', 'wollok.lang.Pair', 'wollok.lang.Range', 'wollok.lang.Closure'].includes(moduleName)
+  // Por ahora el Closure está viniendo como `wollok.lang.Closure#undefined` supongo que porque está en el contexto de un REPL
+  return ['wollok.lang.Date', 'wollok.lang.Pair', 'wollok.lang.Range', 'wollok.lang.Dictionary'].includes(moduleName) || moduleName.startsWith('wollok.lang.Closure')
 }
 
 function shouldShowInnerValue(moduleName: string) {
@@ -141,7 +162,7 @@ function shouldIterateChildren(moduleName: string): boolean {
 }
 
 function showInnerValue(innerValue: InnerValue | undefined): string {
-  return innerValue?.toString() ?? ''
+  return innerValue?.toString().trim() ?? ''
 }
 
 function getLocalKeys(obj: RuntimeObject) {
@@ -160,6 +181,8 @@ function buildReference(obj: RuntimeObject, label: string) {
       label: `${label}${isConstant(obj, label) ? '🔒' : ''}`,
       source: id,
       target: runtimeValue?.id,
+      style: 'solid',
+      width: 1,
     },
   }
 }
@@ -167,19 +190,22 @@ function buildReference(obj: RuntimeObject, label: string) {
 function getCollections(obj: RuntimeObject, interpreter: Interpreter, alreadyVisited: string[]) {
   const { id } = obj
   return (obj.innerCollection || [])
-    .flatMap((item, i) =>
-      [
+    .flatMap((item, i) => {
+      const result = [
         {
           data: {
             id: `${id}_${item.id}`,
             source: id,
             target: item.id,
             label: isList(obj.module.name) ? i.toString() : '',
+            style: 'dotted',
           },
         },
         ...elementFromObject(item, interpreter, [...alreadyVisited, id]),
       ]
-    )
+      alreadyVisited.push(item.id)
+      return result
+    })
 }
 
 function isList(moduleName: string | undefined) {

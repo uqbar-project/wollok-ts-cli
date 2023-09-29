@@ -4,7 +4,6 @@ import cors from 'cors'
 import express from 'express'
 import http from 'http'
 import logger from 'loglevel'
-import path from 'path'
 import { CompleterResult, createInterface as REPL } from 'readline'
 import { Server } from 'socket.io'
 import { Entity, Environment, Evaluation, Import, Package, parse, Reference, Sentence, validate, WollokException } from 'wollok-ts'
@@ -13,7 +12,7 @@ import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import link, { LocalScope } from 'wollok-ts/dist/linker'
 import { ParseError } from 'wollok-ts/dist/parser'
 import natives from 'wollok-ts/dist/wre/wre.natives'
-import { buildEnvironmentForProject, failureDescription, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
+import { buildEnvironmentForProject, failureDescription, getFQN, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
 import { getDataDiagram } from '../services/diagram-generator'
 
 // TODO:
@@ -24,6 +23,7 @@ const { log } = console
 type Options = {
   project: string
   skipValidations: boolean,
+  darkMode: boolean,
   port: string
 }
 
@@ -65,6 +65,7 @@ export default async function (autoImportPath: string | undefined, options: Opti
     })
 
   io.on('connection', socket => {
+    socket.emit('initDiagram', options)
     socket.emit('updateDiagram', getDataDiagram(interpreter))
   })
 
@@ -87,7 +88,7 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
 
     let autoImport: Import | undefined
     if (autoImportPath) {
-      const fqn = path.relative(project, autoImportPath).split('.')[0].replaceAll(path.sep, '.')
+      const fqn = getFQN(project, autoImportPath)
       const entity = environment.getNodeOrUndefinedByFQN<Entity>(fqn)
       if (entity) {
         autoImport = new Import({
@@ -96,12 +97,14 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
         })
         imports.push(autoImport)
         // Import all imports from auto-imported files
-        if (entity.is(Package))
-          entity.imports.forEach(i => imports.push(i))
+        if (entity.is(Package)) {
+          entity.imports.forEach(i => {
+            imports.push(i)
+          })
+        }
       }
       else log(failureDescription(`File ${valueDescription(autoImportPath)} doesn't exist or is outside of project!`))
     }
-
   } catch (error: any) {
     if (error.level === 'error') {
       logger.error(failureDescription('Exiting REPL due to validation errors!'))
@@ -148,10 +151,10 @@ function defineCommands(autoImportPath: string | undefined, options: Options, re
 
   commandHandler.command(':diagram')
     .alias(':d')
-    .description('Opens the Object Diagram')
+    .description('Opens Dynamic Diagram')
     .allowUnknownOption()
     .action(async () => {
-      logger.info(successDescription('Object diagram available at: ' + bold(`http://localhost:${options.port}`)))
+      logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://localhost:${options.port}`)))
     })
 
   commandHandler.command(':help')
@@ -232,8 +235,8 @@ async function initializeClient(options: Options) {
   const io = new Server(server)
 
   io.on('connection', socket => {
-    logger.info(successDescription('Connected to object diagram'))
-    socket.on('disconnect', () => { logger.info(failureDescription('Object diagram closed')) })
+    logger.info(successDescription('Connected to Dynamic diagram'))
+    socket.on('disconnect', () => { logger.info(failureDescription('Dynamic diagram closed')) })
   })
   app.use(
     cors({ allowedHeaders: '*' }),
@@ -241,7 +244,7 @@ async function initializeClient(options: Options) {
   )
   server.listen(parseInt(options.port), 'localhost')
 
-  logger.info(successDescription('Object diagram available at: ' + bold(`http://localhost:${options.port}`)))
+  logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://localhost:${options.port}`)))
   return io
 }
 
