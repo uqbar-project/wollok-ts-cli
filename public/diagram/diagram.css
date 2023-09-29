@@ -1,4 +1,8 @@
 /* place your styles here */
+:root {
+  --background-color-action: #d8dbe0;
+  --color-action: #333;
+}
 
 /* inter-regular - latin */
 @font-face {
@@ -19,19 +23,35 @@
 
 .botonera {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: end;
   font-size: 1.2rem;
+  width: 10rem;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+}
+
+.row img {
+  height: 3em;
+  width: 3em;
+  position: absolute;
+  right: 9.5em;
+  top: 6em;
+  align-self: flex-end;
 }
 
 .button {
-  border-radius: 5em;
-  background-color: white;
+  border-radius: 2em;
+  background-color: var(--background-color-action);
+  color: var(--color-action);
   padding: 0.6em 0.3em;
   font-weight: 600;
   position: absolute;
   top: 10px;
-  right: 30px;
+  right: 25px;
   width: 10em;
   height: 4em;
   z-index: 10;
@@ -44,13 +64,13 @@
   width: 60px;
   height: 30px;
   border-radius: 30px;
-  background-color: #333;
+  background-color: var(--color-action);
   position: absolute;
   top: 6em;
-  right: 5em;
+  right: 3em;
   transition: all 0.5s ease-in;
   cursor: pointer;
-  z-index: 1;
+  z-index: 10;
 }
 
 /* Making a dot switch inside the Toggle Button */
@@ -59,7 +79,7 @@
   width: 25px;
   height: 25px;
   border-radius: 50%;
-  background: white;
+  background: var(--background-color-action);
   position: absolute;
   top: 50%;
   left: 3px;
@@ -69,11 +89,11 @@
 
 /* Changing toggle button background when checked */
 #toggle:checked {
-  background: #d8dbe0;
+  background-color: var(--background-color-action);
 }
 
 /* Changing dot switch color and moving to the right side when checked */
 #toggle:checked::before {
-  background: #333;
+  background: var(--color-action);
   left: 32px;
 }
