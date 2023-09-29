@@ -1,7 +1,7 @@
 import { ElementDefinition } from 'cytoscape'
-import { Entity, InnerValue, Package, Reference, RuntimeObject } from 'wollok-ts'
-import { isConstant } from '../utils'
+import { InnerValue, Package, RuntimeObject } from 'wollok-ts'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
+import { isConstant } from '../utils'
 
 type objectType = 'literal' | 'object' | 'null'
 
@@ -12,19 +12,21 @@ const WOLLOK_BASE_MODULES = 'wollok.'
 const SELF = 'self'
 const REPL = 'REPL'
 
-function getImportedDefinitionsFromConsole(interpreter: Interpreter): string[] {
-  const imports = interpreter.evaluation.environment.getNodeByFQN<Package>(REPL).imports
-  return imports.flatMap(imp => imp.children.map(child => (child as unknown as Reference<Entity>).name))
+function getImportedDefinitionsFromConsole(interpreter: Interpreter): Package[] {
+  return interpreter.evaluation.environment.getNodeByFQN<Package>(REPL).imports.map(imp => imp.entity.target) as unknown as Package[]
 }
 
 export function getDataDiagram(interpreter: Interpreter): ElementDefinition[] {
   const importedFromConsole = getImportedDefinitionsFromConsole(interpreter)
+  const currentFrame = interpreter.evaluation.currentFrame
+  const objects = new Map(Array.from(currentFrame.locals.keys()).map((name) => [name, currentFrame.get(name)]))
 
-  return Array.from(interpreter.evaluation.currentFrame.locals.keys())
-    .filter((name) =>  !isLanguageLocal(name) && autoImportedFromConsole(name, importedFromConsole))
-    .flatMap((name) => fromLocal(name, interpreter.evaluation.currentFrame.get(name)!, interpreter))
-    // TODO: convertirlo a un mapa para mejorar performance, pero dado que no tendremos más de ¿100 objetos?
-    // no vale la pena optimizar por el momento
+  return Array.from(objects.keys())
+    .filter((name) => {
+      const object = objects.get(name)
+      return object && autoImportedFromConsole(object, importedFromConsole)
+    })
+    .flatMap((name) => fromLocal(name, objects.get(name)!, interpreter))
     .reduce<ElementDefinition[]>((uniques, elem) => {
       if (!uniques.find(uniqueElement => uniqueElement.data.id === elem.data.id))
         uniques.push(elem)
@@ -32,12 +34,8 @@ export function getDataDiagram(interpreter: Interpreter): ElementDefinition[] {
     }, [])
 }
 
-function isLanguageLocal(name: string) {
-  return name.startsWith(WOLLOK_BASE_MODULES) || ['true', 'false', 'null'].includes(name)
-}
-
-function autoImportedFromConsole(name: string, importedFromConsole: string[]) {
-  return isConsoleLocal(name) || importedFromConsole.some(imported => name.startsWith(imported))
+function autoImportedFromConsole(obj: RuntimeObject, importedFromConsole: Package[]) {
+  return importedFromConsole.includes(obj.module.parent as Package)
 }
 
 function fromLocal(name: string, obj: RuntimeObject, interpreter: Interpreter): ElementDefinition[] {
