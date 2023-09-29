@@ -21,4 +21,5 @@ object george {
 
 class Bird {
     var energy = 100
+    var friend = bobbyTheShark
 }

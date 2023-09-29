@@ -28,8 +28,8 @@ describe('Dynamic diagram', () => {
 
   it('should include WKOs', () => {
     getDataDiagram(interpreter).should
-      .include.nodeWith({ label: 'george' }).and.to
-      .include.nodeWith({ label: 'bobbyTheShark' })
+      .include.nodeWith({ type: 'object', label: 'george' }).and.to
+      .include.nodeWith({ type: 'object', label: 'bobbyTheShark' })
   })
 
   it('should include edges between WKOs', () => {
@@ -60,6 +60,11 @@ describe('Dynamic diagram', () => {
     getDataDiagram(interpreter).should.connect('energy', 'Bird', '100')
   })
 
+  it('should resolve circular references successfully', () => {
+    getDataDiagram(interpreter).should.connect('friend', 'Bird', 'bobbyTheShark')
+      .and.to.connect('bird', 'bobbyTheShark', 'Bird')
+  })
+
   it('should include the REPL object', () => {
     interpreter.exec(new Variable({ isConstant: false, name: 'x' }))
     getDataDiagram(interpreter).should.include.nodeWith({ label: 'REPL', type: 'REPL' })
@@ -70,12 +75,17 @@ describe('Dynamic diagram', () => {
     getDataDiagram(interpreter).should.connect('x', 'REPL', 'null')
   })
 
+  it('should have a specific type for null object', () => {
+    interpreter.exec(new Variable({ isConstant: false, name: 'x' }))
+    getDataDiagram(interpreter).should.include.nodeWith({ label: 'null', type: 'null' })
+  })
+
   it('should include lists and their elements', () => {
     getDataDiagram(interpreter).should
-      .include.nodeWith({ label: 'List' }).and.to
-      .include.nodeWith({ label: '"blue"' }).and.to
-      .include.nodeWith({ label: '"orange"' }).and.to
-      .include.nodeWith({ label: '"grey"' }).and.to
+      .include.nodeWith({ type: 'literal', label: 'List' }).and.to
+      .include.nodeWith({ type: 'literal', label: '"blue"' }).and.to
+      .include.nodeWith({ type: 'literal', label: '"orange"' }).and.to
+      .include.nodeWith({ type: 'literal', label: '"grey"' }).and.to
       .connect('0', 'List', '"blue"'  ).and.to
       .connect('1', 'List', '"orange"').and.to
       .connect('2', 'List', '"grey"'  )
@@ -83,10 +93,10 @@ describe('Dynamic diagram', () => {
 
   it('should include sets and their elements', () => {
     getDataDiagram(interpreter).should
-      .include.nodeWith({ label: 'Set' }).and.to
-      .include.nodeWith({ label: '"blue"' }).and.to
-      .include.nodeWith({ label: '"orange"' }).and.to
-      .include.nodeWith({ label: '"grey"' }).and.to
+      .include.nodeWith({ type: 'literal', label: 'Set' }).and.to
+      .include.nodeWith({ type: 'literal', label: '"blue"' }).and.to
+      .include.nodeWith({ type: 'literal', label: '"orange"' }).and.to
+      .include.nodeWith({ type: 'literal', label: '"grey"' }).and.to
       .connect('', 'Set', '"blue"'  ).and.to
       .connect('', 'Set', '"orange"').and.to
       .connect('', 'Set', '"grey"'  )
