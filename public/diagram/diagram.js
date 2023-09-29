@@ -24,7 +24,7 @@ function initializeCytoscape(container) {
   const edgeStyle = {
     ...fontFace,
     label: "data(label)",
-    width: 1,
+    width: "data(width)",
     "line-color": "#000000",
     "line-style": "data(style)",
     "target-arrow-color": "#000000",
@@ -54,7 +54,7 @@ function initializeCytoscape(container) {
           ...nodeStyle,
           "line-color": "#000000",
           "background-color": "#4F709C",
-          "border-color": "#4F709C",
+          "border-color": "#6F8FC0",
           color: "#FFFFFF",
         },
       },
@@ -84,7 +84,7 @@ function initializeCytoscape(container) {
         style: {
           ...fontFace,
           "background-color": "#BB2525",
-          "border-color": "#BB2525",
+          "border-color": "#E53935",
           color: "#FFFFFF",
         },
       },

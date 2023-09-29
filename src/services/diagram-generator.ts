@@ -66,6 +66,7 @@ function buildReplElement(obj: RuntimeObject, name: string) {
         target: obj.id,
         // No funciona sacar la constante
         // label: `${name}${isConstant(obj, name) ? '🔒' : ''}`,
+        width: 1.5,
         label: name,
         style: 'solid',
         fontsize: getFontSize(name),
@@ -181,6 +182,7 @@ function buildReference(obj: RuntimeObject, label: string) {
       source: id,
       target: runtimeValue?.id,
       style: 'solid',
+      width: 1,
     },
   }
 }
