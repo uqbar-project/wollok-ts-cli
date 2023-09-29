@@ -24,7 +24,7 @@ export function getDataDiagram(interpreter: Interpreter): ElementDefinition[] {
   return Array.from(objects.keys())
     .filter((name) => {
       const object = objects.get(name)
-      return object && autoImportedFromConsole(object, importedFromConsole)
+      return isConsoleLocal(name) || object && autoImportedFromConsole(object, importedFromConsole)
     })
     .flatMap((name) => fromLocal(name, objects.get(name)!, interpreter))
     .reduce<ElementDefinition[]>((uniques, elem) => {
@@ -117,7 +117,11 @@ function decoration(obj: RuntimeObject, interpreter: Interpreter) {
 }
 
 function isConsoleLocal(name: string): boolean {
-  return !name.includes('.')
+  return !name.includes('.') && !isLanguageLocal(name)
+}
+
+function isLanguageLocal(name: string) {
+  return name.startsWith(WOLLOK_BASE_MODULES) || ['true', 'false', 'null'].includes(name)
 }
 
 function getType(obj: RuntimeObject, moduleName: string): objectType {
