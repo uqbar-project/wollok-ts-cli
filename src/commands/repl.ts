@@ -42,7 +42,7 @@ export default async function (autoImportPath: string | undefined, options: Opti
     repl.prompt()
   })
 
-  const autoImportName = autoImportPath && replNode(interpreter.evaluation.environment).imports[0].entity.name
+  const autoImportName = autoImportPath && replNode(interpreter.evaluation.environment).name
   const repl = Repl({
     input: process.stdin,
     output: process.stdout,
