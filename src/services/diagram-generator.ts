@@ -1,7 +1,7 @@
 import { ElementDefinition } from 'cytoscape'
 import { Entity, InnerValue, Package, RuntimeObject } from 'wollok-ts'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
-import { replNode } from '../commands/repl'
+import { REPL, replNode } from '../commands/repl'
 import { isConstant } from '../utils'
 
 type objectType = 'literal' | 'object' | 'null'
@@ -11,11 +11,10 @@ const STRING_MODULE = 'wollok.lang.String'
 const WOLLOK_BASE_MODULES = 'wollok.'
 
 const SELF = 'self'
-const REPL = 'REPL'
 
 function getImportedDefinitionsFromConsole(interpreter: Interpreter): Entity[] {
   const replPackage = replNode(interpreter.evaluation.environment)
-  const imports = [replPackage, ...replPackage.imports.map(imp => imp.entity.target)] as Entity[]
+  const imports = [replPackage, ...replPackage.imports.map(imp => imp.entity.target!)]
   return imports.flatMap(imp => imp.is(Package) ? imp.members : [imp])
 }
 

@@ -4,7 +4,7 @@ import cors from 'cors'
 import express from 'express'
 import http from 'http'
 import logger from 'loglevel'
-import { CompleterResult, createInterface as REPL } from 'readline'
+import { CompleterResult, createInterface as Repl } from 'readline'
 import { Server } from 'socket.io'
 import { Entity, Environment, Evaluation, Import, Package, parse, Reference, Sentence, validate, WollokException } from 'wollok-ts'
 import { notEmpty } from 'wollok-ts/dist/extensions'
@@ -14,6 +14,8 @@ import { ParseError } from 'wollok-ts/dist/parser'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { buildEnvironmentForProject, failureDescription, getFQN, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
 import { getDataDiagram } from '../services/diagram-generator'
+
+export const REPL = 'REPL'
 
 // TODO:
 // - autocomplete piola
@@ -41,7 +43,7 @@ export default async function (autoImportPath: string | undefined, options: Opti
   })
 
   const autoImportName = autoImportPath && replNode(interpreter.evaluation.environment).imports[0].entity.name
-  const repl = REPL({
+  const repl = Repl({
     input: process.stdin,
     output: process.stdout,
     terminal: true,
@@ -88,11 +90,11 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
     if (autoImportPath) {
       const fqn = getFQN(project, autoImportPath)
       const entity = environment.getNodeOrUndefinedByFQN<Entity>(fqn)
-      if (entity && entity.is(Package)) environment.scope.register(['REPL', entity]) // Register the auto-imported package as REPL package
+      if (entity && entity.is(Package)) environment.scope.register([REPL, entity]) // Register the auto-imported package as REPL package
       else log(failureDescription(`File ${valueDescription(autoImportPath)} doesn't exist or is outside of project!`))
     } else {
       // Create a new REPL package
-      const replPackage = new Package({ name: 'REPL' })
+      const replPackage = new Package({ name: REPL })
       environment = link([replPackage], environment)
     }
   } catch (error: any) {
@@ -258,4 +260,4 @@ function newImport(importNode: Import, environment: Environment) {
   return node.scope.register([imported.name!, imported])
 }
 
-export const replNode = (environment: Environment): Package => environment.getNodeByFQN<Package>('REPL')
+export const replNode = (environment: Environment): Package => environment.getNodeByFQN<Package>(REPL)
