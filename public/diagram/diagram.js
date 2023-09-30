@@ -134,10 +134,16 @@ function objectsKeepTheirPosition() {
 }
 
 function reloadDiagram(elements) {
+  const initTime = Date.now()
+
   currentElements = [...elements]
   changeElementsMode()
   const ids = elements.map((element) => element.data.id)
   cy.filter((element) => !ids.includes(element.id())).remove()
+
+  console.info('Dynamic Diagram - Performance metrics')
+  console.info('- Removing old elements', Date.now() - initTime)
+  const midTime = Date.now()
 
   const newElements = elements.filter((element) => !cy.hasElementWithId(element.data.id))
   if (newElements.length) {
@@ -148,7 +154,10 @@ function reloadDiagram(elements) {
     } else {
       updateNodes(readyForLayoutElems(addedNodes))
     }
+    console.info(shouldUpdateLayout ? '- Updating whole layout' : '- Adding new elements', Date.now() - midTime)
   }
+
+  console.info('Reload diagram - full time', Date.now() - initTime)
 }
 
 /**
