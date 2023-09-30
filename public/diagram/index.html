@@ -23,8 +23,12 @@
         <button class="button" onclick="updateLayout()" title="Relocate the objects and their relationships in the diagram">ORGANIZE</button>
         <!-- Modo Oscuro/Claro -->
         <div class="row">
-          <img src="images/dark-mode.png" title="Dark/Light mode"/>
-          <input type="checkbox" id="toggle" title="Dark/Light mode" onchange="modeChanged()">
+          <img src="images/dark-mode.png" id="img-mode" title="Dark/Light mode"/>
+          <input type="checkbox" id="toggle-mode" class="toggle" onchange="modeChanged()">
+        </div>
+        <div class="row">
+          <img src="images/pin-objects.png" id="img-pin" title="Fix objects position"/>
+          <input type="checkbox" id="toggle-pin" class="toggle" onshow="objectsPositionChanged()" onchange="objectsPositionChanged()">
         </div>
       </div>
       <script type="module">
@@ -46,7 +50,7 @@
         initializeCytoscape(document.getElementById("cy"));
 
         socket.on("initDiagram", function (options) {
-          document.getElementById('toggle').checked = options?.darkMode ?? false;
+          document.getElementById('toggle-mode').checked = options?.darkMode ?? false;
           modeChanged();
         });
 

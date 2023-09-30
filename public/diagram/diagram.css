@@ -29,20 +29,6 @@
   width: 10rem;
 }
 
-.row {
-  display: flex;
-  flex-direction: row;
-}
-
-.row img {
-  height: 3em;
-  width: 3em;
-  position: absolute;
-  right: 9.5em;
-  top: 6em;
-  align-self: flex-end;
-}
-
 .button {
   border-radius: 2em;
   background-color: var(--background-color-action);
@@ -57,7 +43,31 @@
   z-index: 10;
 }
 
-#toggle {
+.row {
+  display: flex;
+  flex-direction: row;
+}
+
+.row img {
+  height: 3em;
+  width: 3em;
+  position: absolute;
+  right: 9.5em;
+  align-self: flex-end;
+}
+
+#img-mode {
+  top: 6em;
+}
+
+#img-pin {
+  top: 10em;
+  right: 9em;
+  width: 4em;
+  height: 2.75em;
+}
+
+.toggle {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -66,15 +76,22 @@
   border-radius: 30px;
   background-color: var(--color-action);
   position: absolute;
-  top: 6em;
   right: 3em;
   transition: all 0.5s ease-in;
   cursor: pointer;
   z-index: 10;
 }
 
+#toggle-mode {
+  top: 6em;
+}
+
+#toggle-pin {
+  top: 10em;
+}
+
 /* Making a dot switch inside the Toggle Button */
-#toggle::before {
+.toggle::before {
   content: "";
   width: 25px;
   height: 25px;
@@ -88,12 +105,12 @@
 }
 
 /* Changing toggle button background when checked */
-#toggle:checked {
+.toggle:checked {
   background-color: var(--background-color-action);
 }
 
 /* Changing dot switch color and moving to the right side when checked */
-#toggle:checked::before {
+.toggle:checked::before {
   background: var(--color-action);
   left: 32px;
 }

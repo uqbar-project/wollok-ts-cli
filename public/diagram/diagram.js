@@ -124,6 +124,15 @@ function updateNodes(elements) {
   layout.run()
 }
 
+function objectsPositionChanged() {
+  const newTitle = objectsKeepTheirPosition() ? 'ON -> objects will keep their positions' : 'OFF -> objects will be relocated to fit into the graph layout'
+  document.getElementById('toggle-pin').setAttribute('title', `Fix objects position: ${newTitle}`)
+}
+
+function objectsKeepTheirPosition() {
+  return document.getElementById('toggle-pin').checked
+}
+
 function reloadDiagram(elements) {
   currentElements = [...elements]
   changeElementsMode()
@@ -132,7 +141,7 @@ function reloadDiagram(elements) {
 
   const newElements = elements.filter((element) => !cy.hasElementWithId(element.data.id))
   if (newElements.length) {
-    const shouldUpdateLayout =  cy.elements().length === 0
+    const shouldUpdateLayout = !objectsKeepTheirPosition() || cy.elements().length === 0
     const addedNodes = cy.add(newElements)
     if (shouldUpdateLayout) {
       updateLayout()
@@ -156,6 +165,10 @@ function readyForLayoutElems(elements) {
 }
 
 function modeChanged() {
+  const toggleMode = document.getElementById('toggle-mode')
+  const newTitle = toggleMode.checked ? 'Dark mode ON' : 'Light Mode ON'
+  toggleMode.setAttribute('title', newTitle)
+
   document.getElementById('main').style = `background-color: ${backgroundColor()}`
   cy.elements().remove()
   reloadDiagram(currentElements)
@@ -166,7 +179,7 @@ function backgroundColor() {
 }
 
 function isDarkMode() {
-  return document.getElementById('toggle').checked
+  return document.getElementById('toggle-mode').checked
 }
 
 function changeElementsMode() {
