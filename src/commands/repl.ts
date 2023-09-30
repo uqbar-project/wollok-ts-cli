@@ -74,7 +74,6 @@ export default async function (autoImportPath: string | undefined, options: Opti
 
 export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations }: Options): Promise<Interpreter> {
   let environment: Environment
-  const imports: Import[] = []
 
   try {
     environment = await buildEnvironmentForProject(project)
@@ -86,24 +85,15 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
       else if (problems.some(_ => _.level === 'error')) throw problems.find(_ => _.level === 'error')
     }
 
-    let autoImport: Import | undefined
     if (autoImportPath) {
       const fqn = getFQN(project, autoImportPath)
       const entity = environment.getNodeOrUndefinedByFQN<Entity>(fqn)
-      if (entity) {
-        autoImport = new Import({
-          isGeneric: entity.is(Package),
-          entity: new Reference({ name: entity.fullyQualifiedName }),
-        })
-        imports.push(autoImport)
-        // Import all imports from auto-imported files
-        if (entity.is(Package)) {
-          entity.imports.forEach(i => {
-            imports.push(i)
-          })
-        }
-      }
+      if (entity && entity.is(Package)) environment.scope.register(['REPL', entity]) // Register the auto-imported package as REPL package
       else log(failureDescription(`File ${valueDescription(autoImportPath)} doesn't exist or is outside of project!`))
+    } else {
+      // Create a new REPL package
+      const replPackage = new Package({ name: 'REPL' })
+      environment = link([replPackage], environment)
     }
   } catch (error: any) {
     if (error.level === 'error') {
@@ -114,9 +104,6 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
     }
     process.exit()
   }
-
-  const replPackage = new Package({ name: 'REPL', imports })
-  environment = link([replPackage], environment)
 
   return new Interpreter(Evaluation.build(environment, natives))
 }
