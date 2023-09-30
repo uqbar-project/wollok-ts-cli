@@ -1,0 +1,3 @@
+object d { }
+
+object e { }

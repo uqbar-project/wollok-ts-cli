@@ -11,6 +11,8 @@ should()
 
 
 const projectPath = join('examples', 'diagram-examples')
+const simpleFile = join(projectPath, 'fish.wlk')
+const fileWithImports = join(projectPath, 'using-imports', 'base.wlk')
 
 describe('Dynamic diagram', () => {
   const options = {
@@ -23,7 +25,7 @@ describe('Dynamic diagram', () => {
 
 
   beforeEach(async () => {
-    interpreter = await initializeInterpreter('examples/diagram-examples/fish.wlk', options)
+    interpreter = await initializeInterpreter(simpleFile, options)
   })
 
   it('should include WKOs', () => {
@@ -86,9 +88,9 @@ describe('Dynamic diagram', () => {
       .include.nodeWith({ type: 'literal', label: '"blue"' }).and.to
       .include.nodeWith({ type: 'literal', label: '"orange"' }).and.to
       .include.nodeWith({ type: 'literal', label: '"grey"' }).and.to
-      .connect('0', 'List', '"blue"'  ).and.to
+      .connect('0', 'List', '"blue"').and.to
       .connect('1', 'List', '"orange"').and.to
-      .connect('2', 'List', '"grey"'  )
+      .connect('2', 'List', '"grey"')
   })
 
   it('should include sets and their elements', () => {
@@ -97,8 +99,20 @@ describe('Dynamic diagram', () => {
       .include.nodeWith({ type: 'literal', label: '"blue"' }).and.to
       .include.nodeWith({ type: 'literal', label: '"orange"' }).and.to
       .include.nodeWith({ type: 'literal', label: '"grey"' }).and.to
-      .connect('', 'Set', '"blue"'  ).and.to
+      .connect('', 'Set', '"blue"').and.to
       .connect('', 'Set', '"orange"').and.to
-      .connect('', 'Set', '"grey"'  )
+      .connect('', 'Set', '"grey"')
+  })
+
+
+  it('should only include imported WKOs', async () => {
+    interpreter = await initializeInterpreter(fileWithImports, options)
+    const dataDiagram = getDataDiagram(interpreter)
+    dataDiagram.should
+      .include.nodeWith({ type: 'object', label: 'a' }).and.to
+      .include.nodeWith({ type: 'object', label: 'b' }).and.to
+      .include.nodeWith({ type: 'object', label: 'c' }).and.to
+      .include.nodeWith({ type: 'object', label: 'd' })
+    dataDiagram.filter(_ => _.data.type == 'object' ).should.have.length(4)
   })
 })
