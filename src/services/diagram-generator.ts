@@ -1,5 +1,5 @@
 import { ElementDefinition } from 'cytoscape'
-import { Entity, InnerValue, Package, RuntimeObject } from 'wollok-ts'
+import { Entity, Import, InnerValue, Package, RuntimeObject } from 'wollok-ts'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import { REPL, replNode } from '../commands/repl'
 import { isConstant } from '../utils'
@@ -14,8 +14,17 @@ const SELF = 'self'
 
 function getImportedDefinitionsFromConsole(interpreter: Interpreter): Entity[] {
   const replPackage = replNode(interpreter.evaluation.environment)
-  const imports = [replPackage, ...replPackage.imports.map(imp => imp.entity.target!)]
-  return imports.flatMap(imp => imp.is(Package) ? imp.members : [imp])
+  return [
+    ...replPackage.members,
+    ...replPackage.imports.flatMap(resolveImport),
+  ]
+}
+
+function resolveImport(imp: Import): Entity[] {
+  const importedEntity = imp.entity.target!
+  return imp.isGeneric
+    ? [...(importedEntity as Package).members]
+    : [importedEntity]
 }
 
 export function getDataDiagram(interpreter: Interpreter): ElementDefinition[] {
