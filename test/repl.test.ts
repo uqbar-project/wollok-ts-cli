@@ -1,11 +1,10 @@
 import { should } from 'chai'
 import { join } from 'path'
-import { Import } from 'wollok-ts'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
-import { initializeInterpreter, interprete, replNode } from '../src/commands/repl'
+import { initializeInterpreter, interprete, REPL, replNode } from '../src/commands/repl'
 import { failureDescription, successDescription, valueDescription } from '../src/utils'
 
-const projectPath = join('examples')
+const projectPath = join('examples', 'repl-examples')
 
 should()
 
@@ -18,12 +17,10 @@ describe('REPL', () => {
     port: '8080',
   }
   let interpreter: Interpreter
-  let imports: Import[]
 
-  beforeEach(async () => {
+  beforeEach(async () =>
     interpreter = await initializeInterpreter(undefined, options)
-    imports = [...replNode(interpreter.evaluation.environment).imports]
-  })
+  )
 
   describe('should accept', () => {
 
@@ -105,15 +102,14 @@ describe('REPL', () => {
 
     const fileName = join(projectPath, 'aves.wlk')
 
-    beforeEach(async () => {
+    beforeEach(async () =>
       interpreter = await initializeInterpreter(fileName, options)
-      imports = [...replNode(interpreter.evaluation.environment).imports]
-    })
+    )
 
     it('should auto import the file and imported entities', () => {
-      imports.should.be.have.lengthOf(2)
-      imports[0].entity.name.should.be.equal('aves')
-      imports[1].entity.name.should.be.equal('otros.comidas')
+      const replPackage = replNode(interpreter.evaluation.environment)
+      replPackage.fullyQualifiedName.should.be.equal('aves')
+      replPackage.imports[0].entity.target!.fullyQualifiedName.should.be.equal('otros.comidas')
     })
 
     it('file definitions should be accessible', () => {
@@ -145,20 +141,40 @@ describe('REPL', () => {
       result2.should.be.equal(successDescription('ash'))
     })
 
-    it('can be initialized with sub-folders file', async () => {
-      interpreter = await initializeInterpreter(join(projectPath, 'otros', 'personas', 'entrenadores'), options)
-      imports = [...replNode(interpreter.evaluation.environment).imports]
-      imports.should.be.have.lengthOf(1)
-      const result = interprete(interpreter, 'ash')
-      result.should.be.equal(successDescription('ash'))
 
+    describe('in a sub-folder', () => {
+
+      const fileName = join(projectPath, 'otros', 'comidas.wlk')
+
+      beforeEach(async () =>
+        interpreter = await initializeInterpreter(fileName, options)
+      )
+
+      it('should auto import the file and relative imported entities', () => {
+        const replPackage = replNode(interpreter.evaluation.environment)
+        replPackage.fullyQualifiedName.should.be.equal('otros.comidas')
+        replPackage.imports[0].entity.target!.fullyQualifiedName.should.be.equal('otros.personas.entrenadores')
+      })
+
+      it('file definitions should be accessible', () => {
+        const result = interprete(interpreter, 'alpiste')
+        result.should.be.equal(successDescription('alpiste'))
+      })
+
+      it('imported definitions should be accessible', () => {
+        const result = interprete(interpreter, 'ash')
+        result.should.be.equal(successDescription('ash'))
+      })
     })
+
   })
 
   describe('without file', () => {
 
     it('should not auto import any file', () => {
-      imports.should.be.empty
+      const replPackage = replNode(interpreter.evaluation.environment)
+      replPackage.fullyQualifiedName.should.be.equal(REPL)
+      replPackage.imports.should.be.empty
     })
 
     it('global definitions should be accessible', () => {

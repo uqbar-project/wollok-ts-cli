@@ -1,6 +1,7 @@
 import { ElementDefinition } from 'cytoscape'
-import { InnerValue, Package, RuntimeObject } from 'wollok-ts'
+import { Entity, Import, InnerValue, Package, RuntimeObject } from 'wollok-ts'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
+import { REPL, replNode } from '../commands/repl'
 import { isConstant } from '../utils'
 
 type objectType = 'literal' | 'object' | 'null'
@@ -10,10 +11,20 @@ const STRING_MODULE = 'wollok.lang.String'
 const WOLLOK_BASE_MODULES = 'wollok.'
 
 const SELF = 'self'
-const REPL = 'REPL'
 
-function getImportedDefinitionsFromConsole(interpreter: Interpreter): Package[] {
-  return interpreter.evaluation.environment.getNodeByFQN<Package>(REPL).imports.map(imp => imp.entity.target) as unknown as Package[]
+function getImportedDefinitionsFromConsole(interpreter: Interpreter): Entity[] {
+  const replPackage = replNode(interpreter.evaluation.environment)
+  return [
+    ...replPackage.members,
+    ...replPackage.imports.flatMap(resolveImport),
+  ]
+}
+
+function resolveImport(imp: Import): Entity[] {
+  const importedEntity = imp.entity.target!
+  return imp.isGeneric
+    ? [...(importedEntity as Package).members]
+    : [importedEntity]
 }
 
 export function getDataDiagram(interpreter: Interpreter): ElementDefinition[] {
@@ -34,8 +45,8 @@ export function getDataDiagram(interpreter: Interpreter): ElementDefinition[] {
     }, [])
 }
 
-function autoImportedFromConsole(obj: RuntimeObject, importedFromConsole: Package[]) {
-  return importedFromConsole.includes(obj.module.parent as Package)
+function autoImportedFromConsole(obj: RuntimeObject, importedFromConsole: Entity[]) {
+  return importedFromConsole.includes(obj.module)
 }
 
 function fromLocal(name: string, obj: RuntimeObject, interpreter: Interpreter): ElementDefinition[] {

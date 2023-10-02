@@ -1,25 +1,32 @@
 object bobbyTheShark {
+    const fixedValue = "Fixed"
     var name = "Bobby"
     var age = 5
-    var friend = george
-    var born = new Date(day = 14, month = 2, year = 1971)
-    var isHappy = true
-    var range1 = new Range(start = 2, end = 11)
-    var range2 = new Range(start = 2, end = 14, step = 5)
-    var aClosure = { 5 + 2 }
-    var someObject =  object { var j = 1 }
-    var aPair = new Pair(x = 2, y = 1)
-    var dictionary = new Dictionary()
-    var bird = new Bird()
-    const fixedValue = "Fixed"
+    var property friend = george
+    var property born = new Date(day = 14, month = 2, year = 1971)
+    var property isHappy = true
+    var property range1 = new Range(start = 2, end = 11)
+    var property range2 = new Range(start = 2, end = 14, step = 5)
+    var property aClosure = { 5 + 2 }
+    var property someObject =  object { var property j = 1 }
+    var property aPair = new Pair(x = 2, y = 1)
+    var property dictionary = new Dictionary()
+    var property bird = new Bird()
+
+    method label() = fixedValue + " " + name
+
+    method restart() {
+        name = ""
+        age = 0
+    }
 }
 
 object george {
-    var colors = ["blue", "orange", "grey"]
-    var colorsAsSet = #{"blue", "orange", "grey"}
+    var property colors = ["blue", "orange", "grey"]
+    var property colorsAsSet = #{"blue", "orange", "grey"}
 }
 
 class Bird {
-    var energy = 100
-    var friend = bobbyTheShark
+    var property energy = 100
+    var property friend = bobbyTheShark
 }
