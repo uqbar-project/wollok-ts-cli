@@ -1,4 +1,3 @@
-import { red, bold } from 'chalk'
 import { should } from 'chai'
 import { join } from 'path'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
@@ -142,6 +141,15 @@ describe('REPL', () => {
       result2.should.be.equal(successDescription('ash'))
     })
 
+    it('should show only custom stack trace elements when an error occurs (with a file)', async () => {
+      const result = interprete(interpreter, 'pepitaRota.vola(10)')
+      const stackTrace = result.split('\n')
+      stackTrace.length.should.equal(4)
+      consoleCharacters(stackTrace[0]).should.be.equal('✗ Evaluation Error!')
+      consoleCharacters(stackTrace[1]).should.be.equal('wollok.lang.EvaluationError wrapping TypeScript TypeError: Expected an instance of wollok.lang.Number but got a wollok.lang.String instead')
+      consoleCharacters(stackTrace[2]).should.be.equal('at aves.pepitaRota.vola(distancia) [aves.wlk:22]')
+      consoleCharacters(stackTrace[3]).should.be.equal('')
+    })
 
     describe('in a sub-folder', () => {
 
@@ -167,15 +175,6 @@ describe('REPL', () => {
         result.should.be.equal(successDescription('ash'))
       })
 
-      it('should show only custom stack trace elements when an error occurs', async () => {
-        interpreter = await initializeInterpreter(join(projectPath, 'avesConError.wlk'), options)
-        const result = interprete(interpreter, 'pepita.vola(10)')
-        const stackTrace = result.split('\n')
-        stackTrace[0].trim().should.be.equal(red(`${bold('✗')} Evaluation Error!`))
-        stackTrace[1].trim().should.be.equal(red('  wollok.lang.EvaluationError wrapping TypeScript TypeError: Expected an instance of wollok.lang.Number but got a wollok.lang.String instead'))
-        stackTrace[2].trim().should.be.equal(red('    at avesConError.pepita.vola(distancia) [avesConError.wlk:4]'))
-      })
-
     })
 
   })
@@ -193,12 +192,19 @@ describe('REPL', () => {
       result.should.be.equal(successDescription('assert'))
     })
 
-    it('should show only custom stack trace elements when an error occurs', async () => {
+    it('should show only custom stack trace elements when an error occurs (without a file)', async () => {
       const result = interprete(interpreter, 'assert.equals(2, 1)')
       const stackTrace = result.split('\n')
-      stackTrace[0].trim().should.be.equal(red(`${bold('✗')} Evaluation Error!`))
-      stackTrace[1].trim().should.be.equal(red('  wollok.lib.AssertionException: Expected <2> but found <1>'))
+      stackTrace.length.should.equal(4)
+      consoleCharacters(stackTrace[0]).should.be.equal('✗ Evaluation Error!')
+      consoleCharacters(stackTrace[1]).should.be.equal('wollok.lib.AssertionException: Expected <2> but found <1>')
+      consoleCharacters(stackTrace[2]).should.be.equal('')
+      consoleCharacters(stackTrace[3]).should.be.equal('')
     })
 
   })
 })
+
+const consoleCharacters = (value: string) =>
+  // eslint-disable-next-line no-control-regex
+  value.replace(/\u001b\[.*?m/g, '').trim()
