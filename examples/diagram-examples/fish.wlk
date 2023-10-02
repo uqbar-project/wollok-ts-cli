@@ -1,6 +1,7 @@
 object bobbyTheShark {
-    var property name = "Bobby"
-    var property age = 5
+    const fixedValue = "Fixed"
+    var name = "Bobby"
+    var age = 5
     var property friend = george
     var property born = new Date(day = 14, month = 2, year = 1971)
     var property isHappy = true
@@ -11,7 +12,13 @@ object bobbyTheShark {
     var property aPair = new Pair(x = 2, y = 1)
     var property dictionary = new Dictionary()
     var property bird = new Bird()
-    const property fixedValue = "Fixed"
+
+    method label() = fixedValue + " " + name
+
+    method restart() {
+        name = ""
+        age = 0
+    }
 }
 
 object george {
