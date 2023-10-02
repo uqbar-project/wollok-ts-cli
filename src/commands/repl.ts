@@ -1,4 +1,4 @@
-import { bold } from 'chalk'
+import { bold, yellow } from 'chalk'
 import { Command } from 'commander'
 import cors from 'cors'
 import express from 'express'
@@ -70,7 +70,6 @@ export default async function (autoImportPath: string | undefined, options: Opti
     socket.emit('initDiagram', options)
     socket.emit('updateDiagram', getDataDiagram(interpreter))
   })
-
   repl.prompt()
 }
 
@@ -221,6 +220,17 @@ async function autocomplete(input: string): Promise<CompleterResult> {
 async function initializeClient(options: Options) {
   const app = express()
   const server = http.createServer(app)
+
+  server.addListener('error', ({ port, code }: { port: string, code: string }) => {
+    console.info('')
+    if (code === 'EADDRINUSE') {
+      console.info(yellow(bold(`Ya tenés levantado un REPL en el puerto ${port}. Si querés levantar otra instancia, utilizá la opción '--new'.`)))
+    } else {
+      console.info(yellow(bold(`No se pudo levantar el REPL en el puerto ${port}, por un código de error "${code}.`)))
+    }
+    process.exit(1)
+  })
+
   const io = new Server(server)
 
   io.on('connection', socket => {
