@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Object Diagram</title>
+    <title>Dynamic Diagram</title>
     <script
       src="./lib/cytoscape.min.js"
     ></script>
@@ -22,7 +22,14 @@
       <div class="botonera">
         <button class="button" onclick="updateLayout()" title="Relocate the objects and their relationships in the diagram">ORGANIZE</button>
         <!-- Modo Oscuro/Claro -->
-        <input type="checkbox" id="toggle" onchange="modeChanged()" title="Dark/Light mode">
+        <div class="row">
+          <img src="images/dark-mode.png" id="img-mode" title="Dark/Light mode"/>
+          <input type="checkbox" id="toggle-mode" class="toggle" onchange="modeChanged()">
+        </div>
+        <div class="row">
+          <img src="images/pin-objects.png" id="img-pin" title="Fix objects position"/>
+          <input type="checkbox" id="toggle-pin" class="toggle" onshow="objectsPositionChanged()" onchange="objectsPositionChanged()">
+        </div>
       </div>
       <script type="module">
         import { io } from "./lib/socket.io.esm.min.js";
@@ -43,7 +50,7 @@
         initializeCytoscape(document.getElementById("cy"));
 
         socket.on("initDiagram", function (options) {
-          document.getElementById('toggle').checked = options?.darkMode ?? false;
+          document.getElementById('toggle-mode').checked = options?.darkMode ?? false;
           modeChanged();
         });
 
