@@ -1,7 +1,7 @@
 import { should } from 'chai'
 import { join } from 'path'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
-import { initializeInterpreter, interprete, replNode } from '../src/commands/repl'
+import { initializeInterpreter, interprete, REPL, replNode } from '../src/commands/repl'
 import { failureDescription, successDescription, valueDescription } from '../src/utils'
 
 const projectPath = join('examples', 'repl-examples')
@@ -173,7 +173,7 @@ describe('REPL', () => {
 
     it('should not auto import any file', () => {
       const replPackage = replNode(interpreter.evaluation.environment)
-      replPackage.fullyQualifiedName.should.be.equal('REPL')
+      replPackage.fullyQualifiedName.should.be.equal(REPL)
       replPackage.imports.should.be.empty
     })
 
