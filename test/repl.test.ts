@@ -141,6 +141,15 @@ describe('REPL', () => {
       result2.should.be.equal(successDescription('ash'))
     })
 
+    it('should show only custom stack trace elements when an error occurs (with a file)', async () => {
+      const result = interprete(interpreter, 'pepitaRota.vola(10)')
+      const stackTrace = result.split('\n')
+      stackTrace.length.should.equal(4)
+      consoleCharacters(stackTrace[0]).should.be.equal('✗ Evaluation Error!')
+      consoleCharacters(stackTrace[1]).should.be.equal('wollok.lang.EvaluationError wrapping TypeScript TypeError: Expected an instance of wollok.lang.Number but got a wollok.lang.String instead')
+      consoleCharacters(stackTrace[2]).should.be.equal('at aves.pepitaRota.vola(distancia) [aves.wlk:22]')
+      consoleCharacters(stackTrace[3]).should.be.equal('')
+    })
 
     describe('in a sub-folder', () => {
 
@@ -165,6 +174,7 @@ describe('REPL', () => {
         const result = interprete(interpreter, 'ash')
         result.should.be.equal(successDescription('ash'))
       })
+
     })
 
   })
@@ -181,5 +191,20 @@ describe('REPL', () => {
       const result = interprete(interpreter, 'assert')
       result.should.be.equal(successDescription('assert'))
     })
+
+    it('should show only custom stack trace elements when an error occurs (without a file)', async () => {
+      const result = interprete(interpreter, 'assert.equals(2, 1)')
+      const stackTrace = result.split('\n')
+      stackTrace.length.should.equal(4)
+      consoleCharacters(stackTrace[0]).should.be.equal('✗ Evaluation Error!')
+      consoleCharacters(stackTrace[1]).should.be.equal('wollok.lib.AssertionException: Expected <2> but found <1>')
+      consoleCharacters(stackTrace[2]).should.be.equal('')
+      consoleCharacters(stackTrace[3]).should.be.equal('')
+    })
+
   })
 })
+
+const consoleCharacters = (value: string) =>
+  // eslint-disable-next-line no-control-regex
+  value.replace(/\u001b\[.*?m/g, '').trim()

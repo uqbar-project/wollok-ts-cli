@@ -15,3 +15,15 @@ object pepita {
 		return energia
 	}
 }
+
+object pepitaRota {
+	var energia = 100
+
+	method vola(distancia) {
+		energia = energia + 'papa'
+	}
+
+	method energia() {
+		return energia
+	}
+}

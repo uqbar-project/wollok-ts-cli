@@ -4,7 +4,7 @@ import { readFile } from 'fs/promises'
 import globby from 'globby'
 import logger from 'loglevel'
 import path, { join } from 'path'
-import { buildEnvironment, Environment, Problem, RuntimeObject } from 'wollok-ts'
+import { Environment, Problem, RuntimeObject, WOLLOK_EXTRA_STACK_TRACE_HEADER, buildEnvironment } from 'wollok-ts'
 
 const { time, timeEnd } = console
 
@@ -54,11 +54,14 @@ export const successDescription = (description: string): string =>
   green(`${bold('✓')} ${description}`)
 
 export const failureDescription = (description: string, e?: Error): string => {
-  const stack = e?.stack
-    ?.replaceAll('\t', '  ')
-    ?.replaceAll('     ', '  ')
-    ?.replaceAll('    ', '  ')
-    ?.split('\n')?.join('\n  ')
+  const indexOfTsStack = e?.stack?.indexOf(WOLLOK_EXTRA_STACK_TRACE_HEADER)
+  const fullStack = e?.stack?.slice(0, indexOfTsStack ?? -1) ?? ''
+
+  const stack = fullStack
+    .replaceAll('\t', '  ')
+    .replaceAll('     ', '  ')
+    .replaceAll('    ', '  ')
+    .split('\n').join('\n  ')
 
   return red(`${bold('✗')} ${description}${stack ? '\n  ' + stack : ''}`)
 }
