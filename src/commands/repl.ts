@@ -67,11 +67,13 @@ export default async function (autoImportPath: string | undefined, options: Opti
     })
 
   io.on('connection', socket => {
+    logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://localhost:${options.port}`)))
+    repl.prompt()
+  })
+  io.on('connection', socket => {
     socket.emit('initDiagram', options)
     socket.emit('updateDiagram', getDataDiagram(interpreter))
   })
-  logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://localhost:${options.port}`)))
-  repl.prompt()
 }
 
 export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations }: Options): Promise<Interpreter> {
