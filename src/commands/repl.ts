@@ -6,8 +6,8 @@ import http from 'http'
 import logger from 'loglevel'
 import { CompleterResult, createInterface as Repl } from 'readline'
 import { Server } from 'socket.io'
-import { Entity, Environment, Evaluation, Import, Package, parse, Reference, Sentence, validate, WollokException } from 'wollok-ts'
-import { notEmpty } from 'wollok-ts/dist/extensions'
+import { Body, Entity, Environment, Evaluation, Import, Package, parse, Program, Reference, Sentence, validate, WollokException } from 'wollok-ts'
+import { last, notEmpty } from 'wollok-ts/dist/extensions'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import link, { LocalScope } from 'wollok-ts/dist/linker'
 import { ParseError } from 'wollok-ts/dist/parser'
@@ -16,6 +16,8 @@ import { buildEnvironmentForProject, failureDescription, getFQN, problemDescript
 import { getDataDiagram } from '../services/diagram-generator'
 
 export const REPL = 'REPL'
+
+const replSentences: Sentence[] = []
 
 // TODO:
 // - autocomplete piola
@@ -238,17 +240,22 @@ async function initializeClient(options: Options) {
 }
 
 
-function newSentence<S extends Sentence>(sentence: S, environment: Environment): S {
+function newSentence<S extends Sentence>(sentence: S, environment: Environment): Sentence {
+  replSentences.push(sentence)
+  const program = new Program({ name: 'fakeRepl', body: new Body({ sentences: replSentences }) })
+  const newPackage = new Package({ name: 'fakePackage', members: [program] })
+  const fakeEnvironment = link([newPackage])
+  const linkedProgram = fakeEnvironment.getNodeByFQN<Program>('fakePackage.fakeRepl')
   const replScope = replNode(environment).scope
 
-  sentence.forEach(node => {
+  linkedProgram.forEach(node => {
     Object.assign(node, {
       scope: new LocalScope(replScope),
-      environment,
+      // environment,
     })
   })
 
-  return sentence
+  return linkedProgram.sentences()[linkedProgram.sentences().length - 1]
 }
 
 function newImport(importNode: Import, environment: Environment) {
