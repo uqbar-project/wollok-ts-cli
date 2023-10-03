@@ -70,6 +70,7 @@ export default async function (autoImportPath: string | undefined, options: Opti
     socket.emit('initDiagram', options)
     socket.emit('updateDiagram', getDataDiagram(interpreter))
   })
+  logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://localhost:${options.port}`)))
   repl.prompt()
 }
 
@@ -224,9 +225,11 @@ async function initializeClient(options: Options) {
   server.addListener('error', ({ port, code }: { port: string, code: string }) => {
     console.info('')
     if (code === 'EADDRINUSE') {
-      console.info(yellow(bold(`Ya tenés levantado un REPL en el puerto ${port}. Si querés levantar otra instancia, utilizá la opción '--new'.`)))
+      console.info(yellow(bold(`⚡ We couldn't start dynamic diagram at port ${port}, because it is already in use. ⚡`)))
+      // eslint-disable-next-line @typescript-eslint/quotes
+      console.info(yellow(`Please make sure you don't have another REPL session running in another terminal. \nIf you want to start another instance, you can use "--port xxxx" option, where xxxx should be any available port.`))
     } else {
-      console.info(yellow(bold(`No se pudo levantar el REPL en el puerto ${port}, por un código de error "${code}.`)))
+      console.info(yellow(bold(`⚡ REPL couldn't be started at port ${port}, error code ["${code}]. ⚡`)))
     }
     process.exit(1)
   })
@@ -234,16 +237,14 @@ async function initializeClient(options: Options) {
   const io = new Server(server)
 
   io.on('connection', socket => {
-    logger.info(successDescription('Connected to Dynamic diagram'))
-    socket.on('disconnect', () => { logger.info(failureDescription('Dynamic diagram closed')) })
+    logger.debug(successDescription('Connected to Dynamic diagram'))
+    socket.on('disconnect', () => { logger.debug(failureDescription('Dynamic diagram closed')) })
   })
   app.use(
     cors({ allowedHeaders: '*' }),
     express.static(publicPath('diagram'), { maxAge: '1d' }),
   )
   server.listen(parseInt(options.port), 'localhost')
-
-  logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://localhost:${options.port}`)))
   return io
 }
 
