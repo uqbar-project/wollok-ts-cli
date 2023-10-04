@@ -1,4 +1,4 @@
-import { bold } from 'chalk'
+import { bold, yellow } from 'chalk'
 import { Command } from 'commander'
 import cors from 'cors'
 import express from 'express'
@@ -67,11 +67,13 @@ export default async function (autoImportPath: string | undefined, options: Opti
     })
 
   io.on('connection', socket => {
+    logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://localhost:${options.port}`)))
+    repl.prompt()
+  })
+  io.on('connection', socket => {
     socket.emit('initDiagram', options)
     socket.emit('updateDiagram', getDataDiagram(interpreter))
   })
-
-  repl.prompt()
 }
 
 export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations }: Options): Promise<Interpreter> {
@@ -221,19 +223,30 @@ async function autocomplete(input: string): Promise<CompleterResult> {
 async function initializeClient(options: Options) {
   const app = express()
   const server = http.createServer(app)
+
+  server.addListener('error', ({ port, code }: { port: string, code: string }) => {
+    console.info('')
+    if (code === 'EADDRINUSE') {
+      console.info(yellow(bold(`⚡ We couldn't start dynamic diagram at port ${port}, because it is already in use. ⚡`)))
+      // eslint-disable-next-line @typescript-eslint/quotes
+      console.info(yellow(`Please make sure you don't have another REPL session running in another terminal. \nIf you want to start another instance, you can use "--port xxxx" option, where xxxx should be any available port.`))
+    } else {
+      console.info(yellow(bold(`⚡ REPL couldn't be started at port ${port}, error code ["${code}]. ⚡`)))
+    }
+    process.exit(1)
+  })
+
   const io = new Server(server)
 
   io.on('connection', socket => {
-    logger.info(successDescription('Connected to Dynamic diagram'))
-    socket.on('disconnect', () => { logger.info(failureDescription('Dynamic diagram closed')) })
+    logger.debug(successDescription('Connected to Dynamic diagram'))
+    socket.on('disconnect', () => { logger.debug(failureDescription('Dynamic diagram closed')) })
   })
   app.use(
     cors({ allowedHeaders: '*' }),
     express.static(publicPath('diagram'), { maxAge: '1d' }),
   )
   server.listen(parseInt(options.port), 'localhost')
-
-  logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://localhost:${options.port}`)))
   return io
 }
 
