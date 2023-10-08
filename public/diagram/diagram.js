@@ -119,6 +119,8 @@ function updateNodes(elements) {
     animate: false,
     nodeDimensionsIncludeLabels: true,
     fit: true,
+    nodeOverlap: 4,
+    randomize: false,
   })
 
   layout.run()
