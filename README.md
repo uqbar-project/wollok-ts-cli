@@ -33,8 +33,8 @@ Before anything else, you will need a *TypeScript* editor. We recomend [Visual S
 ### Node, npm, and dependencies
 
 #### For Linux, MacOS:
-  
-You need to install [nvm - Node Version Manager](https://github.com/nvm-sh/nvm). 
+
+You need to install [nvm - Node Version Manager](https://github.com/nvm-sh/nvm).
 
 Before anything make sure you'll use the right version of node by running this command:
 
@@ -62,12 +62,12 @@ nvm install <<version number>>
 nvm use <<version number>>
 # The version number is in the .nvmrc file (do not use codename version e.g. lts/gallium, in Windows you have to use the equivalent version number e.g. 16.15.0)
 ```
-  
+
 #### For all
- 
-In the previous step, `nvm use` also installs [NPM](https://www.npmjs.com/). If you are not familiar with *dependency manager tools*, you can think of this program as the entry point for all the important tasks development-related tasks, like installing dependencies and running tests. 
-  
-  
+
+In the previous step, `nvm use` also installs [NPM](https://www.npmjs.com/). If you are not familiar with *dependency manager tools*, you can think of this program as the entry point for all the important tasks development-related tasks, like installing dependencies and running tests.
+
+
 Expected output is the node version that will be used:
 ```bash
 node -v
@@ -84,10 +84,10 @@ npm install
 
 After that, you are ready to start working. You can build the project by running `npm run build`; this will compile all assets to the `/build` folder, leaving everything ready to run but, **if you are a developer, you will probably want to run `npm run watch` instead and leave it running in a separate window so it will update the `/build` folder whenever any code is changed** (notice that this only works for TS changes, to update any other kind of file you have to restart the watch).
 
-Once the code has been built, you can **run the CLI** by running `npm start`. Remember that, while running through npm, you will need to add a `--` before any non npm related flags. For example, to see the application manual you can run 
+Once the code has been built, you can **run the CLI** by running `npm start`. Remember that, while running through npm, you will need to add a `--` before any non npm related flags. For example, to see the application manual you can run
 
 ```bash
-npm start -- --help 
+npm start -- --help
 ```
 
 Another example, opening the repl on a certain file in a certain wollok project:
@@ -104,30 +104,6 @@ npm run pack
 
 And checking the `/dist` folder.
 
-### Releasing
+### Developer instructions
 
-To create a release follow this steps
-1. Create a drafted release. 
-2. Tag the commit you wish to release.
-
-This will trigger a pipeline which will upload the binaries to the drafted release.
-
-The _package.json_ version and _tag_ **must match**, otherwise the upload will be skipped. Taken from the [electron-build docs](https://www.electron.build/configuration/publish.html#recommended-github-releases-workflow)
-
-### Dependencies
-
-Dynamic diagram uses
-
-- [cytoscape](https://js.cytoscape.org/), 
-- and [socket.io](https://github.com/socketio/socket.io) 
-
-but in order to work offline, `preinstall` script downloads it inside this folder
-
-```bash
-- public
-  - diagram
-    - lib
-```
-
-So, if you do a `npm install` or `npm i` this process will occur automatically. For further explanation **or if you need to upgrade the current version of these libraries**, please see [download-libs.sh](./scripts/download-libs.sh).
-
+If you are interested in developing, please refer to our [wiki page](https://github.com/uqbar-project/wollok-ts-cli/wiki).
