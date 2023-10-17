@@ -26,10 +26,11 @@ export default async function (filter: string | undefined, { project, skipValida
     else if(problems.some(_ => _.level === 'error')) return logger.error(failureDescription('Aborting run due to validation errors!'))
   }
 
-  const targets = environment.descendants.filter(is(Test)).filter(test =>
-    (!filter || test.fullyQualifiedName.includes(filter)) &&
-    !test.siblings().some(sibling => sibling.is(Test) && sibling.isOnly)
-  )
+  const filterTest = filter?.replaceAll('"', '') ?? ''
+  const possibleTargets = environment.descendants.filter(is(Test))
+  const onlyTarget = possibleTargets.find(test => test.isOnly)
+  const testMatches = (filter: string) => (test: Test) => !filter || test.fullyQualifiedName.replaceAll('"', '').includes(filterTest)
+  const targets = onlyTarget ? [onlyTarget] : possibleTargets.filter(testMatches(filterTest))
 
   logger.info(`Running ${targets.length} tests...`)
 
