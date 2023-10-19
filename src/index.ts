@@ -4,11 +4,12 @@ import run from './commands/run'
 import test from './commands/test'
 import init from './commands/init'
 import logger from 'loglevel'
+import { version } from  '../package.json'
 
 const program = new Command()
   .name('wollok')
   .description('Wollok Language command line interpreter tool')
-  .version(process.env.npm_package_version ?? 'unkown')
+  .version(version)
   .hook('preAction', (thisCommand, actionCommand) =>  {
     actionCommand.opts().verbose ? logger.setLevel('DEBUG') : logger.setLevel('INFO')
   })
