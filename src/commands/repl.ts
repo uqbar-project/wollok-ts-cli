@@ -17,8 +17,6 @@ import { buildEnvironmentForProject, failureDescription, getFQN, problemDescript
 
 export const REPL = 'REPL'
 
-const replSentences: Sentence[] = []
-
 // TODO:
 // - autocomplete piola
 
@@ -256,7 +254,6 @@ async function initializeClient(options: Options) {
 function linkSentence<S extends Sentence>(newSentence: S, environment: Environment) {
   // This is a fake linking, TS should give us a better API
   const { scope } = replNode(environment)
-  replSentences.push(newSentence)
   newSentence.forEach(node => Object.assign(node, { scope, environment }))
   scope.register(...scopeContribution(newSentence))
 }
