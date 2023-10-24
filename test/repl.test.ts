@@ -55,6 +55,12 @@ describe('REPL', () => {
       result.should.includes(failureDescription('Evaluation Error!'))
     })
 
+    // TODO: Change the Runtime model
+    xit('const const', () => {
+      interprete(interpreter, 'const a = 1')
+      const result = interprete(interpreter, 'const a = 2')
+      result.should.includes(failureDescription('Evaluation Error!'))
+    })
   })
 
   describe('should print result', () => {
