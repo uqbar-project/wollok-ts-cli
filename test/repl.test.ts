@@ -48,6 +48,13 @@ describe('REPL', () => {
       const result = interprete(interpreter, 'fakeReference')
       result.should.be.equal(failureDescription(`Unknown reference ${valueDescription('fakeReference')}`))
     })
+
+    it('const assignment', () => {
+      interprete(interpreter, 'const a = 1')
+      const result = interprete(interpreter, 'a = 2')
+      result.should.includes(failureDescription('Evaluation Error!'))
+    })
+
   })
 
   describe('should print result', () => {

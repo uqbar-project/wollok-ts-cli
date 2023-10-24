@@ -6,14 +6,14 @@ import http from 'http'
 import logger from 'loglevel'
 import { CompleterResult, createInterface as Repl } from 'readline'
 import { Server } from 'socket.io'
-import { Body, Entity, Environment, Evaluation, Import, Package, parse, Program, Reference, Sentence, validate, WollokException } from 'wollok-ts'
-import { last, notEmpty } from 'wollok-ts/dist/extensions'
+import { Entity, Environment, Evaluation, Field, Import, Name, Node, Package, Parameter, Reference, Sentence, WollokException, parse, validate } from 'wollok-ts'
+import { List, notEmpty } from 'wollok-ts/dist/extensions'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
-import link, { LocalScope } from 'wollok-ts/dist/linker'
+import link from 'wollok-ts/dist/linker'
 import { ParseError } from 'wollok-ts/dist/parser'
 import natives from 'wollok-ts/dist/wre/wre.natives'
-import { buildEnvironmentForProject, failureDescription, getFQN, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
 import { getDataDiagram } from '../services/diagram-generator'
+import { buildEnvironmentForProject, failureDescription, getFQN, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
 
 export const REPL = 'REPL'
 
@@ -167,8 +167,8 @@ export function interprete(interpreter: Interpreter, line: string): string {
     if (error) throw error
 
     if (sentenceOrImport.is(Sentence)) {
-      const linkedSentence = newSentence(sentenceOrImport, interpreter.evaluation.environment)
-      const unlinkedNode = [linkedSentence, ...linkedSentence.descendants].find(_ => _.is(Reference) && !_.target)
+      linkSentence(sentenceOrImport, interpreter.evaluation.environment)
+      const unlinkedNode = [sentenceOrImport, ...sentenceOrImport.descendants].find(_ => _.is(Reference) && !_.target)
 
       if (unlinkedNode) {
         if (unlinkedNode.is(Reference)) {
@@ -177,7 +177,7 @@ export function interprete(interpreter: Interpreter, line: string): string {
         } else return failureDescription(`Unknown reference at ${unlinkedNode.sourceInfo}`)
       }
 
-      const result = interpreter.exec(linkedSentence)
+      const result = interpreter.exec(sentenceOrImport)
       const stringResult = result
         ? typeof result.innerValue === 'string'
           ? `"${result.innerValue}"`
@@ -240,22 +240,12 @@ async function initializeClient(options: Options) {
 }
 
 
-function newSentence<S extends Sentence>(sentence: S, environment: Environment): Sentence {
-  replSentences.push(sentence)
-  const program = new Program({ name: 'fakeRepl', body: new Body({ sentences: replSentences }) })
-  const newPackage = new Package({ name: 'fakePackage', members: [program] })
-  const fakeEnvironment = link([newPackage])
-  const linkedProgram = fakeEnvironment.getNodeByFQN<Program>('fakePackage.fakeRepl')
-  const replScope = replNode(environment).scope
-
-  linkedProgram.forEach(node => {
-    Object.assign(node, {
-      scope: new LocalScope(replScope),
-      // environment,
-    })
-  })
-
-  return linkedProgram.sentences()[linkedProgram.sentences().length - 1]
+function linkSentence<S extends Sentence>(newSentence: S, environment: Environment) {
+  // This is a fake linking, TS should give us a better API
+  const { scope } = replNode(environment)
+  replSentences.push(newSentence)
+  newSentence.forEach(node => Object.assign(node, { scope, environment }))
+  scope.register(...scopeContribution(newSentence))
 }
 
 function newImport(importNode: Import, environment: Environment) {
@@ -268,3 +258,14 @@ function newImport(importNode: Import, environment: Environment) {
 }
 
 export const replNode = (environment: Environment): Package => environment.getNodeByFQN<Package>(REPL)
+
+// Duplicated from TS
+const scopeContribution = (contributor: Node): List<[Name, Node]> => {
+  if (
+    contributor.is(Entity) ||
+    contributor.is(Field) ||
+    contributor.is(Parameter)
+  ) return contributor.name ? [[contributor.name, contributor]] : []
+
+  return []
+}
