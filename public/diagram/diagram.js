@@ -119,13 +119,15 @@ function updateNodes(elements) {
     animate: false,
     nodeDimensionsIncludeLabels: true,
     fit: true,
+    nodeOverlap: 4,
+    randomize: false,
   })
 
   layout.run()
 }
 
 function objectsPositionChanged() {
-  const newTitle = objectsKeepTheirPosition() ? 'ON -> objects will keep their positions' : 'OFF -> objects will be relocated to fit into the graph layout'
+  const newTitle = objectsKeepTheirPosition() ? 'ON -> objects will keep their positions (better performance when you have > 100 objects)' : 'OFF -> objects will be relocated to fit into the graph layout (graph is easier to read)'
   document.getElementById('toggle-pin').setAttribute('title', `Fix objects position: ${newTitle}`)
 }
 
