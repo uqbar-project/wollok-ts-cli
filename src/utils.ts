@@ -4,7 +4,8 @@ import { readFile } from 'fs/promises'
 import globby from 'globby'
 import logger from 'loglevel'
 import path, { join } from 'path'
-import { buildEnvironment, Environment, Problem, RuntimeObject } from 'wollok-ts'
+import { Environment, Problem, RuntimeObject, Variable, buildEnvironment } from 'wollok-ts'
+import { replNode } from './commands/repl'
 
 const { time, timeEnd } = console
 
@@ -33,15 +34,15 @@ export async function buildEnvironmentForProject(project: string, files: string[
 
   const paths = files.length ? files : await globby('**/*.@(wlk|wtest|wpgm)', { cwd: project })
 
-  if(debug) time('Reading project files')
+  if (debug) time('Reading project files')
   const environmentFiles = await Promise.all(paths.map(async name =>
     ({ name, content: await readFile(join(project, name), 'utf8') })
   ))
   if (debug) timeEnd('Reading project files')
 
-  if(debug) time('Building environment')
+  if (debug) time('Building environment')
   try { return buildEnvironment(environmentFiles) }
-  finally { if(debug) timeEnd('Building environment' ) }
+  finally { if (debug) timeEnd('Building environment') }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -92,5 +93,9 @@ export const isImageFile = (file: Dirent): boolean => imageExtensions.some(ext =
 
 
 export function isConstant(obj: RuntimeObject, localName: string): boolean {
-  return !!obj.module.allFields.find((field: { name: string }) => field.name === localName)?.isConstant
+  return obj.module.lookupField(localName)?.isConstant ?? false
+}
+
+export function isREPLConstant(environment: Environment, localName: string): boolean {
+  return replNode(environment).scope.resolve<Variable>(localName)?.isConstant ?? false
 }
