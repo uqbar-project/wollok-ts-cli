@@ -39,6 +39,22 @@ describe('REPL', () => {
       result.should.be.equal(successDescription(''))
     })
 
+    it('const sentences', () => {
+      const result = interprete(interpreter, 'const a = 1')
+      result.should.be.equal(successDescription(''))
+      const result2 = interprete(interpreter, 'a')
+      result2.should.be.equal(successDescription('1'))
+    })
+
+    it('var sentences', () => {
+      const result = interprete(interpreter, 'var a = 1')
+      result.should.be.equal(successDescription(''))
+      const result2 = interprete(interpreter, 'a = 2')
+      result2.should.be.equal(successDescription(''))
+      const result3 = interprete(interpreter, 'a')
+      result3.should.be.equal(successDescription('2'))
+    })
+
     it('not parsing strings', () => {
       const result = interprete(interpreter, '3kd3id9')
       result.should.includes('Syntax error')
