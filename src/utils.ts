@@ -117,11 +117,8 @@ export function linkSentence<S extends Sentence>(newSentence: S, environment: En
 }
 // Duplicated from TS
 const scopeContribution = (contributor: Node): List<[Name, Node]> => {
-  if (
-    contributor.is(Entity) ||
-    contributor.is(Field) ||
-    contributor.is(Parameter)
-  ) return contributor.name ? [[contributor.name, contributor]] : []
-
+  if (canBeReferenced(contributor))
+    return contributor.name ? [[contributor.name, contributor]] : []
   return []
 }
+const canBeReferenced = (node: Node): node is Entity | Field | Parameter => node.is(Entity) || node.is(Field) || node.is(Parameter)
