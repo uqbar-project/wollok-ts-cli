@@ -6,14 +6,14 @@ import http from 'http'
 import logger from 'loglevel'
 import { CompleterResult, createInterface as Repl } from 'readline'
 import { Server } from 'socket.io'
-import { Entity, Environment, Evaluation, Field, Import, Name, Node, Package, Parameter, Reference, Sentence, WollokException, parse, validate } from 'wollok-ts'
-import { List, notEmpty } from 'wollok-ts/dist/extensions'
+import { Entity, Environment, Evaluation, Import, Package, Reference, Sentence, WollokException, parse, validate } from 'wollok-ts'
+import { notEmpty } from 'wollok-ts/dist/extensions'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import link from 'wollok-ts/dist/linker'
 import { ParseError } from 'wollok-ts/dist/parser'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { getDataDiagram } from '../services/diagram-generator'
-import { buildEnvironmentForProject, failureDescription, getFQN, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
+import { buildEnvironmentForProject, failureDescription, getFQN, linkSentence, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
 
 export const REPL = 'REPL'
 
@@ -251,13 +251,6 @@ async function initializeClient(options: Options) {
 }
 
 
-function linkSentence<S extends Sentence>(newSentence: S, environment: Environment) {
-  // This is a fake linking, TS should give us a better API
-  const { scope } = replNode(environment)
-  newSentence.forEach(node => Object.assign(node, { scope, environment }))
-  scope.register(...scopeContribution(newSentence))
-}
-
 function newImport(importNode: Import, environment: Environment) {
   const node = replNode(environment)
   const imported = node.scope.resolve<Package | Entity>(importNode.entity.name)!
@@ -268,14 +261,3 @@ function newImport(importNode: Import, environment: Environment) {
 }
 
 export const replNode = (environment: Environment): Package => environment.getNodeByFQN<Package>(REPL)
-
-// Duplicated from TS
-const scopeContribution = (contributor: Node): List<[Name, Node]> => {
-  if (
-    contributor.is(Entity) ||
-    contributor.is(Field) ||
-    contributor.is(Parameter)
-  ) return contributor.name ? [[contributor.name, contributor]] : []
-
-  return []
-}

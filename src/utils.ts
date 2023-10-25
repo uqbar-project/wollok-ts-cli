@@ -4,7 +4,9 @@ import { readFile } from 'fs/promises'
 import globby from 'globby'
 import logger from 'loglevel'
 import path, { join } from 'path'
-import { Environment, Problem, RuntimeObject, Variable, WOLLOK_EXTRA_STACK_TRACE_HEADER, buildEnvironment } from 'wollok-ts'
+import { Entity, Environment, Field, Name, Node, Parameter, Problem, RuntimeObject, Sentence, Variable, WOLLOK_EXTRA_STACK_TRACE_HEADER, buildEnvironment } from 'wollok-ts'
+import { List } from 'wollok-ts/dist/extensions'
+import { LocalScope } from 'wollok-ts/dist/linker'
 import { replNode } from './commands/repl'
 
 const { time, timeEnd } = console
@@ -101,4 +103,25 @@ export function isConstant(obj: RuntimeObject, localName: string): boolean {
 
 export function isREPLConstant(environment: Environment, localName: string): boolean {
   return replNode(environment).scope.resolve<Variable>(localName)?.isConstant ?? false
+}
+
+// This is a fake linking, TS should give us a better API
+export function linkSentence<S extends Sentence>(newSentence: S, environment: Environment): void {
+  const { scope } = replNode(environment)
+  scope.register(...scopeContribution(newSentence))
+  newSentence.reduce((parentScope, node) => {
+    const localScope = new LocalScope(parentScope, ...scopeContribution(node))
+    Object.assign(node, { scope: localScope, environment })
+    return localScope
+  }, scope)
+}
+// Duplicated from TS
+const scopeContribution = (contributor: Node): List<[Name, Node]> => {
+  if (
+    contributor.is(Entity) ||
+    contributor.is(Field) ||
+    contributor.is(Parameter)
+  ) return contributor.name ? [[contributor.name, contributor]] : []
+
+  return []
 }
