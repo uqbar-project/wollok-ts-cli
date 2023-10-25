@@ -1,10 +1,9 @@
 import { should, use } from 'chai'
 import { join } from 'path'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
-import { initializeInterpreter } from '../src/commands/repl'
+import { initializeInterpreter, interprete } from '../src/commands/repl'
 import { getDataDiagram } from '../src/services/diagram-generator'
 import { diagramAssertions } from './assertions'
-import { Variable } from 'wollok-ts'
 
 use(diagramAssertions)
 should()
@@ -68,17 +67,22 @@ describe('Dynamic diagram', () => {
   })
 
   it('should include the REPL object', () => {
-    interpreter.exec(new Variable({ isConstant: false, name: 'x' }))
+    interprete(interpreter, 'var x')
     getDataDiagram(interpreter).should.include.nodeWith({ label: 'REPL', type: 'REPL' })
   })
 
   it('should include edges between REPL and WKOs', () => {
-    interpreter.exec(new Variable({ isConstant: false, name: 'x' }))
+    interprete(interpreter, 'var x')
     getDataDiagram(interpreter).should.connect('x', 'REPL', 'null')
   })
 
+  it('should include constant edges between REPL and WKOs', () => {
+    interprete(interpreter, 'const x = 7')
+    getDataDiagram(interpreter).should.connect('x🔒', 'REPL', '7')
+  })
+
   it('should have a specific type for null object', () => {
-    interpreter.exec(new Variable({ isConstant: false, name: 'x' }))
+    interprete(interpreter, 'var x')
     getDataDiagram(interpreter).should.include.nodeWith({ label: 'null', type: 'null' })
   })
 

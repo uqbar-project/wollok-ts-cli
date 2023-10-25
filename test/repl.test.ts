@@ -22,33 +22,70 @@ describe('REPL', () => {
     interpreter = await initializeInterpreter(undefined, options)
   )
 
-  describe('should accept', () => {
-
-    it('value expressions', () => {
-      const result = interprete(interpreter, '1 + 2')
-      result.should.be.equal(successDescription('3'))
-    })
-
-    it('void expressions', () => {
-      const result = interprete(interpreter, '[].add(1)')
-      result.should.be.equal(successDescription(''))
-    })
-
-    it('import sentences', () => {
-      const result = interprete(interpreter, 'import wollok.game.*')
-      result.should.be.equal(successDescription(''))
-    })
-
-    it('not parsing strings', () => {
-      const result = interprete(interpreter, '3kd3id9')
-      result.should.includes('Syntax error')
-    })
-
-    it('failure expressions', () => {
-      const result = interprete(interpreter, 'fakeReference')
-      result.should.be.equal(failureDescription(`Unknown reference ${valueDescription('fakeReference')}`))
-    })
+  it('value expressions', () => {
+    const result = interprete(interpreter, '1 + 2')
+    result.should.be.equal(successDescription('3'))
   })
+
+  it('void expressions', () => {
+    const result = interprete(interpreter, '[].add(1)')
+    result.should.be.equal(successDescription(''))
+  })
+
+  it('import sentences', () => {
+    const result = interprete(interpreter, 'import wollok.game.*')
+    result.should.be.equal(successDescription(''))
+  })
+
+  it('const sentences', () => {
+    const result = interprete(interpreter, 'const a = 1')
+    result.should.be.equal(successDescription(''))
+    const result2 = interprete(interpreter, 'a')
+    result2.should.be.equal(successDescription('1'))
+  })
+
+  it('var sentences', () => {
+    const result = interprete(interpreter, 'var a = 1')
+    result.should.be.equal(successDescription(''))
+    const result2 = interprete(interpreter, 'a = 2')
+    result2.should.be.equal(successDescription(''))
+    const result3 = interprete(interpreter, 'a')
+    result3.should.be.equal(successDescription('2'))
+  })
+
+  it('block without parameters', () => {
+    const result = interprete(interpreter, '{ 1 }.apply()')
+    result.should.be.equal(successDescription('1'))
+  })
+
+  it('block with parameters', () => {
+    const result = interprete(interpreter, '{ x => x + 1 }.apply(1)')
+    result.should.be.equal(successDescription('2'))
+  })
+
+  it('not parsing strings', () => {
+    const result = interprete(interpreter, '3kd3id9')
+    result.should.includes('Syntax error')
+  })
+
+  it('failure expressions', () => {
+    const result = interprete(interpreter, 'fakeReference')
+    result.should.be.equal(failureDescription(`Unknown reference ${valueDescription('fakeReference')}`))
+  })
+
+  it('const assignment', () => {
+    interprete(interpreter, 'const a = 1')
+    const result = interprete(interpreter, 'a = 2')
+    result.should.includes(failureDescription('Evaluation Error!'))
+  })
+
+  // TODO: Change the Runtime model
+  xit('const const', () => {
+    interprete(interpreter, 'const a = 1')
+    const result = interprete(interpreter, 'const a = 2')
+    result.should.includes(failureDescription('Evaluation Error!'))
+  })
+
 
   describe('should print result', () => {
 

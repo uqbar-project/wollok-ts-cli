@@ -6,14 +6,14 @@ import http from 'http'
 import logger from 'loglevel'
 import { CompleterResult, createInterface as Repl } from 'readline'
 import { Server } from 'socket.io'
-import { Entity, Environment, Evaluation, Import, Package, parse, Reference, Sentence, validate, WollokException } from 'wollok-ts'
+import { Entity, Environment, Evaluation, Import, Package, Reference, Sentence, WollokException, parse, validate } from 'wollok-ts'
 import { notEmpty } from 'wollok-ts/dist/extensions'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
-import link, { LocalScope } from 'wollok-ts/dist/linker'
+import link from 'wollok-ts/dist/linker'
 import { ParseError } from 'wollok-ts/dist/parser'
 import natives from 'wollok-ts/dist/wre/wre.natives'
-import { buildEnvironmentForProject, failureDescription, getFQN, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
 import { getDataDiagram } from '../services/diagram-generator'
+import { buildEnvironmentForProject, failureDescription, getFQN, linkSentence, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
 
 export const REPL = 'REPL'
 
@@ -66,7 +66,7 @@ export default async function (autoImportPath: string | undefined, options: Opti
       repl.prompt()
     })
 
-  io.on('connection', socket => {
+  io.on('connection', _socket => {
     logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://localhost:${options.port}`)))
     repl.prompt()
   })
@@ -167,8 +167,8 @@ export function interprete(interpreter: Interpreter, line: string): string {
     if (error) throw error
 
     if (sentenceOrImport.is(Sentence)) {
-      const linkedSentence = newSentence(sentenceOrImport, interpreter.evaluation.environment)
-      const unlinkedNode = [linkedSentence, ...linkedSentence.descendants].find(_ => _.is(Reference) && !_.target)
+      linkSentence(sentenceOrImport, interpreter.evaluation.environment)
+      const unlinkedNode = [sentenceOrImport, ...sentenceOrImport.descendants].find(_ => _.is(Reference) && !_.target)
 
       if (unlinkedNode) {
         if (unlinkedNode.is(Reference)) {
@@ -177,7 +177,7 @@ export function interprete(interpreter: Interpreter, line: string): string {
         } else return failureDescription(`Unknown reference at ${unlinkedNode.sourceInfo}`)
       }
 
-      const result = interpreter.exec(linkedSentence)
+      const result = interpreter.exec(sentenceOrImport)
       const stringResult = result
         ? typeof result.innerValue === 'string'
           ? `"${result.innerValue}"`
@@ -250,19 +250,6 @@ async function initializeClient(options: Options) {
   return io
 }
 
-
-function newSentence<S extends Sentence>(sentence: S, environment: Environment): S {
-  const replScope = replNode(environment).scope
-
-  sentence.forEach(node => {
-    Object.assign(node, {
-      scope: new LocalScope(replScope),
-      environment,
-    })
-  })
-
-  return sentence
-}
 
 function newImport(importNode: Import, environment: Environment) {
   const node = replNode(environment)

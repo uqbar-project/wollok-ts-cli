@@ -4,7 +4,10 @@ import { readFile } from 'fs/promises'
 import globby from 'globby'
 import logger from 'loglevel'
 import path, { join } from 'path'
-import { Environment, Problem, RuntimeObject, WOLLOK_EXTRA_STACK_TRACE_HEADER, buildEnvironment } from 'wollok-ts'
+import { Entity, Environment, Field, Name, Node, Parameter, Problem, RuntimeObject, Sentence, Variable, WOLLOK_EXTRA_STACK_TRACE_HEADER, buildEnvironment } from 'wollok-ts'
+import { List } from 'wollok-ts/dist/extensions'
+import { LocalScope } from 'wollok-ts/dist/linker'
+import { replNode } from './commands/repl'
 
 const { time, timeEnd } = console
 
@@ -33,15 +36,15 @@ export async function buildEnvironmentForProject(project: string, files: string[
 
   const paths = files.length ? files : await globby('**/*.@(wlk|wtest|wpgm)', { cwd: project })
 
-  if(debug) time('Reading project files')
+  if (debug) time('Reading project files')
   const environmentFiles = await Promise.all(paths.map(async name =>
     ({ name, content: await readFile(join(project, name), 'utf8') })
   ))
   if (debug) timeEnd('Reading project files')
 
-  if(debug) time('Building environment')
+  if (debug) time('Building environment')
   try { return buildEnvironment(environmentFiles) }
-  finally { if(debug) timeEnd('Building environment' ) }
+  finally { if (debug) timeEnd('Building environment') }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -95,5 +98,27 @@ export const isImageFile = (file: Dirent): boolean => imageExtensions.some(ext =
 
 
 export function isConstant(obj: RuntimeObject, localName: string): boolean {
-  return !!obj.module.allFields.find((field: { name: string }) => field.name === localName)?.isConstant
+  return obj.module.lookupField(localName)?.isConstant ?? false
 }
+
+export function isREPLConstant(environment: Environment, localName: string): boolean {
+  return replNode(environment).scope.resolve<Variable>(localName)?.isConstant ?? false
+}
+
+// This is a fake linking, TS should give us a better API
+export function linkSentence<S extends Sentence>(newSentence: S, environment: Environment): void {
+  const { scope } = replNode(environment)
+  scope.register(...scopeContribution(newSentence))
+  newSentence.reduce((parentScope, node) => {
+    const localScope = new LocalScope(parentScope, ...scopeContribution(node))
+    Object.assign(node, { scope: localScope, environment })
+    return localScope
+  }, scope)
+}
+// Duplicated from TS
+const scopeContribution = (contributor: Node): List<[Name, Node]> => {
+  if (canBeReferenced(contributor))
+    return contributor.name ? [[contributor.name, contributor]] : []
+  return []
+}
+const canBeReferenced = (node: Node): node is Entity | Field | Parameter => node.is(Entity) || node.is(Field) || node.is(Parameter)

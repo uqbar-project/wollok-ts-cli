@@ -2,7 +2,7 @@ import { ElementDefinition } from 'cytoscape'
 import { Entity, Import, InnerValue, Package, RuntimeObject } from 'wollok-ts'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import { REPL, replNode } from '../commands/repl'
-import { isConstant } from '../utils'
+import { isConstant, isREPLConstant } from '../utils'
 
 type objectType = 'literal' | 'object' | 'null'
 
@@ -75,10 +75,8 @@ function buildReplElement(obj: RuntimeObject, name: string) {
         id: `${REPL}_${Math.random() * 100000000}`,
         source: replId,
         target: obj.id,
-        // No funciona sacar la constante
-        // label: `${name}${isConstant(obj, name) ? '🔒' : ''}`,
         width: 1.5,
-        label: name,
+        label: `${name}${isREPLConstant(obj.module.environment, name) ? '🔒' : ''}`,
         style: 'solid',
         fontsize: getFontSize(name),
       },
