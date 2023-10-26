@@ -5,11 +5,13 @@ import test from './commands/test'
 import init from './commands/init'
 import logger from 'loglevel'
 import { version } from  '../package.json'
+import { cyan } from 'chalk'
+
 
 const program = new Command()
   .name('wollok')
   .description('Wollok Language command line interpreter tool')
-  .version(version)
+  .version(cyan(version))
   .hook('preAction', (thisCommand, actionCommand) =>  {
     actionCommand.opts().verbose ? logger.setLevel('DEBUG') : logger.setLevel('INFO')
   })
