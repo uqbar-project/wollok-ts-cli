@@ -4,6 +4,8 @@
 
 Wollok Command Line Interface
 
+![demo](./images/wollok-ts-cli.gif)
+
 ## 🔧 Available Commands
 
 Wollok Command Line Interface should be run **inside a Wollok project folder**. This folder is considered as the wollok target project.
@@ -15,11 +17,15 @@ This is the list of the currently available commands:
 - **test \[filter\]**: Runs Wollok tests on the target project.
 - **repl <auto-import>**: Opens the Wollok REPL on the target project importing the auto-import path (if any).
 
+## 💻 Installation instructions
+
+Go to [latest release](https://github.com/uqbar-project/wollok-ts-cli/releases/latest), download the executable based on your operating system and add it to the PATH (here are instructions to do so in [Mac](https://apple.stackexchange.com/questions/41542/adding-a-new-executable-to-the-path-environment-variable), [Windows](https://medium.com/@kevinmarkvi/how-to-add-executables-to-your-path-in-windows-5ffa4ce61a53) and [Linux](https://unix.stackexchange.com/questions/183295/adding-programs-to-path)).
+
 ## Contributing
 
 All contributions are welcome! Feel free to report issues on [the project's issue tracker](https://github.com/uqbar-project/wollok-ts-cli/issues), or fork the project and [create a *Pull Request*](https://help.github.com/articles/creating-a-pull-request-from-a-fork/). If you've never collaborated with an open source project before, you might want to read [this guide](https://akrabat.com/the-beginners-guide-to-contributing-to-a-github-project/).
 
-If you plan to contribute with code, here are some hints to help you start:
+If you want to contribute with code, please take a look at the [wiki](https://github.com/uqbar-project/wollok-ts-cli/wiki).
 
 
 ### Working Environment
@@ -106,6 +112,3 @@ npm run pack
 
 And checking the `/dist` folder.
 
-### Developer instructions
-
-If you are interested in developing, please refer to our [wiki page](https://github.com/uqbar-project/wollok-ts-cli/wiki).
