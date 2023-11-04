@@ -24,11 +24,13 @@ jobs:
         files: ./coverage/coverage-final.json
         verbose: true
     - name: Build & Pack
+      if: github.ref == 'refs/heads/master'
       run: |
         npm run build && npm run pack
         chmod a+x ./dist/*
         ls -la ./dist
     - name: Add distribution to the latest release
+      if: github.ref == 'refs/heads/master'
       uses: "marvinpinto/action-automatic-releases@latest"
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
