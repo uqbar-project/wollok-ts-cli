@@ -37,7 +37,7 @@ jobs:
         title: "Draft"
         # doesn't work with wildcards 🤷🏼
         files: |
-          ./dist/wollok-ts-cli-linux-64
+          ./dist/wollok-ts-cli-linux-x64
           ./dist/wollok-ts-cli-macos-arm64
           ./dist/wollok-ts-cli-macos-x64
           ./dist/wollok-ts-cli-win-x64.exe
