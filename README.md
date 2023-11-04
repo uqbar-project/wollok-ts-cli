@@ -2,7 +2,7 @@
 
 [![Build CI](https://github.com/uqbar-project/wollok-ts-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/uqbar-project/wollok-ts-cli/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/uqbar-project/wollok-ts-cli/graph/badge.svg?token=rpJA6VlVJo)](https://codecov.io/gh/uqbar-project/wollok-ts-cli) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-Wollok Command Line Interface
+🖖 Welcome to the Wollok Command Line Interface!
 
 ![demo](./images/wollok-ts-cli.gif)
 
@@ -12,103 +12,21 @@ Wollok Command Line Interface should be run **inside a Wollok project folder**. 
 
 This is the list of the currently available commands:
 
-- **--help**: Shows the manual with all the options
-- **run <program>**: Runs a Wollok program on the target project.
-- **test \[filter\]**: Runs Wollok tests on the target project.
-- **repl <auto-import>**: Opens the Wollok REPL on the target project importing the auto-import path (if any).
+- **`--help`**: Shows the manual with all the options
+- **`run <program>`**: Runs a Wollok program on the target project.
+- **`test \[filter\]`**: Runs Wollok tests on the target project.
+- **`repl <auto-import>`**: Opens the Wollok REPL on the target project importing the auto-import path (if any).
+- **`init <name>`**: Creates a new Wollok project
+- **`-V`**: Shows the current version
 
 ## 💻 Installation instructions
 
 Go to [latest release](https://github.com/uqbar-project/wollok-ts-cli/releases/latest), download the executable based on your operating system and add it to the PATH (here are instructions to do so in [Mac](https://apple.stackexchange.com/questions/41542/adding-a-new-executable-to-the-path-environment-variable), [Windows](https://medium.com/@kevinmarkvi/how-to-add-executables-to-your-path-in-windows-5ffa4ce61a53) and [Linux](https://unix.stackexchange.com/questions/183295/adding-programs-to-path)).
 
-## Contributing
+## 👩‍💻 Contributing
 
 All contributions are welcome! Feel free to report issues on [the project's issue tracker](https://github.com/uqbar-project/wollok-ts-cli/issues), or fork the project and [create a *Pull Request*](https://help.github.com/articles/creating-a-pull-request-from-a-fork/). If you've never collaborated with an open source project before, you might want to read [this guide](https://akrabat.com/the-beginners-guide-to-contributing-to-a-github-project/).
 
 If you want to contribute with code, please take a look at the [wiki](https://github.com/uqbar-project/wollok-ts-cli/wiki).
 
-
-### Working Environment
-
-Before anything else, you will need a *TypeScript* editor. We recomend [Visual Studio Code](https://code.visualstudio.com/) along with the following plugins:
-
-- [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
-- [TypeScript Importer](https://marketplace.visualstudio.com/items?itemName=pmneo.tsimporter)
-- [Move TS](https://marketplace.visualstudio.com/items?itemName=stringham.move-ts)
-- [Wollok Highlight](https://marketplace.visualstudio.com/items?itemName=uqbar.wollok-highlight)
-- [Git Lens](https://marketplace.visualstudio.com/items?itemName=eamodio.gitlens)
-
-### Node, npm, and dependencies
-
-#### For Linux, MacOS:
-
-You need to install [nvm - Node Version Manager](https://github.com/nvm-sh/nvm).
-
-Before anything make sure you'll use the right version of node by running this command:
-
-```bash
-nvm use
-```
-
-Expected output is the node version that will be used, for example:
-
-```bash
-Found '/home/you/wollok-ts-cli/.nvmrc' with version <lts/gallium>
-Now using node v16.15.0 (npm v8.5.5)
-```
-
-#### For Windows
-
-You need to install the [NVM- for Windows](https://github.com/coreybutler/nvm-windows).
-
-Run the installer `nvm-setup.exe` as Administrator.
-
-Open an elevated Command Prompt or Git Bash in the project folder (with Administrator privileges) and run:
-
-```bash
-nvm install <<version number>>
-nvm use <<version number>>
-# The version number is in the .nvmrc file (do not use codename version e.g. lts/gallium, in Windows you have to use the equivalent version number e.g. 16.15.0)
-```
-
-#### For all
-
-In the previous step, `nvm use` also installs [NPM](https://www.npmjs.com/). If you are not familiar with *dependency manager tools*, you can think of this program as the entry point for all the important tasks development-related tasks, like installing dependencies and running tests.
-
-
-Expected output is the node version that will be used:
-```bash
-node -v
-```
-So now you need to use npm to install dependencies:
-
-```bash
-# This will install all the project dependencies. Give it some time.
-npm install
-```
-
-
-### Running and testing
-
-After that, you are ready to start working. You can build the project by running `npm run build`; this will compile all assets to the `/build` folder, leaving everything ready to run but, **if you are a developer, you will probably want to run `npm run watch` instead and leave it running in a separate window so it will update the `/build` folder whenever any code is changed** (notice that this only works for TS changes, to update any other kind of file you have to restart the watch).
-
-Once the code has been built, you can **run the CLI** by running `npm start`. Remember that, while running through npm, you will need to add a `--` before any non npm related flags. For example, to see the application manual you can run
-
-```bash
-npm start -- --help
-```
-
-Another example, opening the repl on a certain file in a certain wollok project:
-
-```bash
-npm start -- repl /home/you/myWollokProject/birds.wlk -p /home/you/myWollokProject/
-```
-
-Finally, you can generate wollok-cli **executable binaries** (a.k.a. the distributable user-ready program) by running:
-
-```bash
-npm run pack
-```
-
-And checking the `/dist` folder.
-
+#### Powered by [Uqbar](https://uqbar.org/)
