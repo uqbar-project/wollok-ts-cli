@@ -25,6 +25,9 @@ Go to [latest release](https://github.com/uqbar-project/wollok-ts-cli/releases/l
 
 Feel free to report issues on [the project's issue tracker](https://github.com/uqbar-project/wollok-ts-cli/issues).
 
+This component is part of the [Wollok language project](https://github.com/uqbar-project/wollok-language) where you can have an overall picture of our roadmap.
+
+
 ## 👩‍💻 Contributing
 
 All contributions are welcome!
