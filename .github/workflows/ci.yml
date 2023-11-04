@@ -26,6 +26,7 @@ jobs:
     - name: Build & Pack
       run: |
         npm run build && npm run pack
+        chmod a+x ./dist/*
         ls -la ./dist
     - name: Add distribution to the latest release
       uses: "marvinpinto/action-automatic-releases@latest"
@@ -34,5 +35,9 @@ jobs:
         automatic_release_tag: "draft"
         prerelease: true
         title: "Draft"
+        # doesn't work with wildcards 🤷🏼
         files: |
-          ./dist/wollok-ts-cli**.**
+          ./dist/wollok-ts-cli-linux-64
+          ./dist/wollok-ts-cli-macos-arm64
+          ./dist/wollok-ts-cli-macos-x64
+          ./dist/wollok-ts-cli-win-x64.exe
