@@ -1,10 +1,10 @@
 # Wollok-TS-CLI
 
-[![Build CI](https://github.com/uqbar-project/wollok-ts-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/uqbar-project/wollok-ts-cli/actions/workflows/ci.yml)
+[![Build CI](https://github.com/uqbar-project/wollok-ts-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/uqbar-project/wollok-ts-cli/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/uqbar-project/wollok-ts-cli/graph/badge.svg?token=rpJA6VlVJo)](https://codecov.io/gh/uqbar-project/wollok-ts-cli) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 Wollok Command Line Interface
 
-## Available Commands
+## 🔧 Available Commands
 
 Wollok Command Line Interface should be run **inside a Wollok project folder**. This folder is considered as the wollok target project.
 
