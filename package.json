@@ -8,7 +8,7 @@
     "name": "Uqbar Foundation",
     "email": "org.uqbar@gmail.com"
   },
-  "main": "./build/index.js",
+  "main": "./build/src/index.js",
   "scripts": {
     "preinstall": "sh scripts/download-libs.sh",
     "start": "node ./build/index.js",
@@ -22,7 +22,7 @@
     "pack": "pkg ."
   },
   "bin": {
-    "wollok": "./build/index.js"
+    "wollok": "./build/src/index.js"
   },
   "pkg": {
     "scripts": "build/**/*.js",
