@@ -23,3 +23,14 @@ jobs:
       with:
         files: ./coverage/coverage-final.json
         verbose: true
+    - name: Build & Pack
+      run: npm run build && npm run pack
+    - name: Add distribution to the latest release
+      uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "draft"
+        prerelease: true
+        title: "Draft"
+        files: |
+          ./dist/wollok-ts-cli*.*
