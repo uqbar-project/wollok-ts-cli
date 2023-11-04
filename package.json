@@ -13,6 +13,7 @@
     "preinstall": "sh scripts/download-libs.sh",
     "start": "node ./build/index.js",
     "test": "npm run lint && npm run test:unit",
+    "test-with-coverage": "npm run lint && nyc --reporter=json --lines 70 npm run test:unit",
     "lint": "eslint . ",
     "lint:fix": "eslint . --fix",
     "test:unit": "mocha --parallel -r ts-node/register/transpile-only test/**/*.test.ts",
@@ -61,6 +62,7 @@
     "chai": "^4.3.7",
     "eslint": "^8.3.0",
     "mocha": "^10.2.0",
+    "nyc": "^15.1.0",
     "shx": "^0.3.4",
     "ts-node": "10.4.0",
     "typescript": "^4.9.5"

@@ -1,5 +1,7 @@
 # Wollok-TS-CLI
 
+[![Build CI](https://github.com/uqbar-project/wollok-ts-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/uqbar-project/wollok-ts-cli/actions/workflows/ci.yml)
+
 Wollok Command Line Interface
 
 ## Available Commands
