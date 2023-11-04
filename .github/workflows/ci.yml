@@ -24,7 +24,9 @@ jobs:
         files: ./coverage/coverage-final.json
         verbose: true
     - name: Build & Pack
-      run: npm run build && npm run pack
+      run: |
+        npm run build && npm run pack
+        ls -la ./dist
     - name: Add distribution to the latest release
       uses: "marvinpinto/action-automatic-releases@latest"
       with:
@@ -33,4 +35,4 @@ jobs:
         prerelease: true
         title: "Draft"
         files: |
-          ./dist/wollok-ts-cli*.*
+          ./dist/wollok-ts-cli**.**
