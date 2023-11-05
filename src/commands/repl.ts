@@ -6,14 +6,14 @@ import http from 'http'
 import logger from 'loglevel'
 import { CompleterResult, createInterface as Repl } from 'readline'
 import { Server } from 'socket.io'
-import { Entity, Environment, Evaluation, Import, Package, Reference, Sentence, WollokException, parse, validate } from 'wollok-ts'
+import { Entity, Environment, Evaluation, Import, Package, Reference, Sentence, WollokException, parse } from 'wollok-ts'
 import { notEmpty } from 'wollok-ts/dist/extensions'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import link from 'wollok-ts/dist/linker'
 import { ParseError } from 'wollok-ts/dist/parser'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { getDataDiagram } from '../services/diagram-generator'
-import { buildEnvironmentForProject, failureDescription, getFQN, linkSentence, problemDescription, publicPath, successDescription, valueDescription } from '../utils'
+import { buildEnvironmentForProject, failureDescription, getFQN, linkSentence, publicPath, successDescription, valueDescription, validateEnvironment } from '../utils'
 
 export const REPL = 'REPL'
 
@@ -82,12 +82,7 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
   try {
     environment = await buildEnvironmentForProject(project)
 
-    if (!skipValidations) {
-      const problems = validate(environment)
-      problems.forEach(problem => logger.info(problemDescription(problem)))
-      if (!problems.length) logger.info(successDescription('No problems found building the environment!'))
-      else if (problems.some(_ => _.level === 'error')) throw problems.find(_ => _.level === 'error')
-    }
+    validateEnvironment(environment, skipValidations)
 
     if (autoImportPath) {
       const fqn = getFQN(project, autoImportPath)

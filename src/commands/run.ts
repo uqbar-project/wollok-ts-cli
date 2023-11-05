@@ -9,7 +9,7 @@ import { Server } from 'socket.io'
 import { link, Name, parse, RuntimeObject, validate, WollokException } from 'wollok-ts'
 import interpret, { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
-import { buildEnvironmentForProject, failureDescription, isImageFile, problemDescription, publicPath, readPackageProperties, successDescription, valueDescription } from '../utils'
+import { buildEnvironmentForProject, failureDescription, isImageFile, problemDescription, publicPath, readPackageProperties, successDescription, validateEnvironment, valueDescription } from '../utils'
 import { buildKeyPressEvent, canvasResolution, Image, queueEvent, visualState, VisualState, wKeyCode } from './extrasGame'
 
 const { time, timeEnd } = console
@@ -24,7 +24,7 @@ let interp: Interpreter
 let io: Server
 let projectPath: string
 let assetsPath: string | undefined
-let timmer = 0
+let timer = 0
 
 export default async function (programFQN: Name, { project, assets, skipValidations, port }: Options): Promise<void> {
   logger.info(`Running ${valueDescription(programFQN)} on ${valueDescription(project)}`)
@@ -37,12 +37,7 @@ export default async function (programFQN: Name, { project, assets, skipValidati
   let environment = await buildEnvironmentForProject(project)
   environment = link([parse.File('draw').tryParse('object drawer{ method apply() native }')], environment)
 
-  if (!skipValidations) {
-    const problems = validate(environment)
-    problems.forEach(problem => logger.info(problemDescription(problem)))
-    if (!problems.length) logger.info(successDescription('No problems found building the environment!'))
-    else if (problems.some(_ => _.level === 'error')) return logger.error(failureDescription('Aborting run due to validation errors!'))
-  }
+  validateEnvironment(environment, skipValidations)
 
   logger.info(`Running ${valueDescription(programFQN)}...\n`)
 
@@ -123,8 +118,8 @@ export default async function (programFQN: Name, { project, assets, skipValidati
       const game = interp?.object('wollok.game.game')
       socket.emit('cellPixelSize', game.get('cellSize')!.innerNumber!)
       try {
-        interp.send('flushEvents', game, interp.reify(timmer))
-        timmer += 300
+        interp.send('flushEvents', game, interp.reify(timer))
+        timer += 300
         if (!game.get('running')) { clearInterval(id) }
       } catch (e: any) {
         interp.send('stop', game)
@@ -157,7 +152,7 @@ function getVisuals(game: RuntimeObject) {
     const { image, position, message } = visualState(interp, visual)
     const messageTime = Number(visual.get('messageTime')?.innerValue)
 
-    if (message != undefined && messageTime > timmer) {
+    if (message != undefined && messageTime > timer) {
       visuals.push({ 'image': image, 'position': position, 'message': message })
     } else {
       visuals.push({ 'image': image, 'position': position, 'message': undefined })

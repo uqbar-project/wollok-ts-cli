@@ -1,11 +1,11 @@
+import { bold } from 'chalk'
 import { time, timeEnd } from 'console'
-import { Entity, Node, Test, validate } from 'wollok-ts'
+import logger from 'loglevel'
+import { Entity, Node, Test } from 'wollok-ts'
+import { is, match, when } from 'wollok-ts/dist/extensions'
 import interpret from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
-import { buildEnvironmentForProject, failureDescription, problemDescription, successDescription, valueDescription } from '../utils'
-import { bold } from 'chalk'
-import  logger  from  'loglevel'
-import { is, match, when } from 'wollok-ts/dist/extensions'
+import { buildEnvironmentForProject, failureDescription, successDescription, valueDescription, validateEnvironment } from '../utils'
 
 const { log } = console
 
@@ -19,12 +19,7 @@ export default async function (filter: string | undefined, { project, skipValida
 
   const environment = await buildEnvironmentForProject(project)
 
-  if(!skipValidations) {
-    const problems = validate(environment)
-    problems.forEach(problem => logger.info(problemDescription(problem)))
-    if(!problems.length) logger.info(successDescription('No problems found building the environment!'))
-    else if(problems.some(_ => _.level === 'error')) return logger.error(failureDescription('Aborting run due to validation errors!'))
-  }
+  validateEnvironment(environment, skipValidations)
 
   const filterTest = filter?.replaceAll('"', '') ?? ''
   const possibleTargets = environment.descendants.filter(is(Test))
@@ -79,4 +74,8 @@ export default async function (filter: string | undefined, { project, skipValida
     failures.length ? failureDescription(`${failures.length} failing`) : '',
     '\n'
   )
+
+  if (failures.length) {
+    process.exit(2)
+  }
 }
