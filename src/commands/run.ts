@@ -6,10 +6,10 @@ import http from 'http'
 import logger from 'loglevel'
 import path from 'path'
 import { Server } from 'socket.io'
-import { link, Name, parse, RuntimeObject, validate, WollokException } from 'wollok-ts'
+import { link, Name, parse, RuntimeObject, WollokException } from 'wollok-ts'
 import interpret, { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
-import { buildEnvironmentForProject, failureDescription, isImageFile, problemDescription, publicPath, readPackageProperties, successDescription, validateEnvironment, valueDescription } from '../utils'
+import { buildEnvironmentForProject, failureDescription, isImageFile, publicPath, readPackageProperties, successDescription, validateEnvironment, valueDescription } from '../utils'
 import { buildKeyPressEvent, canvasResolution, Image, queueEvent, visualState, VisualState, wKeyCode } from './extrasGame'
 
 const { time, timeEnd } = console
