@@ -53,7 +53,7 @@ export async function buildEnvironmentForProject(project: string, files: string[
 }
 
 export const validateEnvironment = (environment: Environment, skipValidations: boolean = false): void => {
-  if(!skipValidations) {
+  if (!skipValidations) {
     try {
       const problems = validate(environment)
       problems.forEach(problem => logger.info(problemDescription(problem)))
