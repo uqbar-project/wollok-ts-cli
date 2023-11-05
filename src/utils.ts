@@ -1,4 +1,4 @@
-import { blue, bold, green, italic, red, redBright, yellowBright } from 'chalk'
+import { blue, bold, green, italic, red, yellowBright } from 'chalk'
 import fs, { Dirent } from 'fs'
 import { readFile } from 'fs/promises'
 import globby from 'globby'
@@ -66,8 +66,8 @@ export const validateEnvironment = (environment: Environment, skipValidations: b
 }
 
 export const handleError = (error: any): void => {
-  logger.error(redBright('💥 Uh-oh... Unexpected Error!'))
-  logger.error(redBright(error.message))
+  logger.error(red(bold('💥 Uh-oh... Unexpected Error!')))
+  logger.error(red(error.message))
   logger.debug(failureDescription('ℹ️ Stack trace:', error))
 }
 
