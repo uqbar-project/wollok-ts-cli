@@ -4,7 +4,7 @@ import { readFile } from 'fs/promises'
 import globby from 'globby'
 import logger from 'loglevel'
 import path, { join } from 'path'
-import { Entity, Environment, Field, Name, Node, Parameter, Problem, RuntimeObject, Sentence, Variable, WOLLOK_EXTRA_STACK_TRACE_HEADER, buildEnvironment } from 'wollok-ts'
+import { Entity, Environment, Field, Name, Node, Parameter, Problem, RuntimeObject, Sentence, Variable, WOLLOK_EXTRA_STACK_TRACE_HEADER, buildEnvironment, validate } from 'wollok-ts'
 import { List } from 'wollok-ts/dist/extensions'
 import { LocalScope } from 'wollok-ts/dist/linker'
 import { replNode } from './commands/repl'
@@ -44,9 +44,33 @@ export async function buildEnvironmentForProject(project: string, files: string[
 
   if (debug) time('Building environment')
   try { return buildEnvironment(environmentFiles) }
+  catch (error: any) {
+    logger.error(failureDescription(`Fatal error while building the environment. ${error.message}`))
+    logger.debug(error)
+    return process.exit(10)
+  }
   finally { if (debug) timeEnd('Building environment') }
 }
 
+export const validateEnvironment = (environment: Environment, skipValidations: boolean = false): void => {
+  if(!skipValidations) {
+    try {
+      const problems = validate(environment)
+      problems.forEach(problem => logger.info(problemDescription(problem)))
+      if(!problems.length) {
+        logger.info(successDescription('No problems found building the environment!'))
+      }
+      else if(problems.some(_ => _.level === 'error')) {
+        logger.error(failureDescription('Aborting run due to validation errors!'))
+        process.exit(1)
+      }
+    } catch (error: any) {
+      logger.error(failureDescription(`Fatal error while building the environment. ${error.message}`))
+      logger.debug(error)
+      process.exit(2)
+    }
+  }
+}
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // PRINTING
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
