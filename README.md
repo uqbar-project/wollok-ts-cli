@@ -4,7 +4,7 @@
 
 🖖 Welcome to the Wollok Command Line Interface!
 
-![demo](./images/wollok-ts-cli.gif)
+![demo](./images/demo.gif)
 
 ## 🔧 Available Commands
 
