@@ -13,7 +13,7 @@ import link from 'wollok-ts/dist/linker'
 import { ParseError } from 'wollok-ts/dist/parser'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { getDataDiagram } from '../services/diagram-generator'
-import { buildEnvironmentForProject, failureDescription, getFQN, linkSentence, publicPath, successDescription, valueDescription, validateEnvironment } from '../utils'
+import { buildEnvironmentForProject, failureDescription, getFQN, linkSentence, publicPath, successDescription, valueDescription, validateEnvironment, handleError } from '../utils'
 
 export const REPL = 'REPL'
 
@@ -94,17 +94,11 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
       const replPackage = new Package({ name: REPL })
       environment = link([replPackage], environment)
     }
+    return new Interpreter(Evaluation.build(environment, natives))
   } catch (error: any) {
-    if (error.level === 'error') {
-      logger.error(failureDescription('Exiting REPL due to validation errors!'))
-    } else {
-      logger.error(failureDescription('Uh-oh... Unexpected Error!'))
-      logger.debug(failureDescription('Stack trace:', error))
-    }
-    process.exit()
+    handleError(error)
+    return process.exit(1)
   }
-
-  return new Interpreter(Evaluation.build(environment, natives))
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════

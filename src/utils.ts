@@ -1,4 +1,4 @@
-import { blue, bold, green, italic, red, yellowBright } from 'chalk'
+import { blue, bold, green, italic, red, redBright, yellowBright } from 'chalk'
 import fs, { Dirent } from 'fs'
 import { readFile } from 'fs/promises'
 import globby from 'globby'
@@ -44,11 +44,6 @@ export async function buildEnvironmentForProject(project: string, files: string[
 
   if (debug) time('Building environment')
   try { return buildEnvironment(environmentFiles) }
-  catch (error: any) {
-    logger.error(failureDescription(`Fatal error while building the environment. ${error.message}`))
-    logger.debug(error)
-    return process.exit(10)
-  }
   finally { if (debug) timeEnd('Building environment') }
 }
 
@@ -61,16 +56,21 @@ export const validateEnvironment = (environment: Environment, skipValidations: b
         logger.info(successDescription('No problems found building the environment!'))
       }
       else if(problems.some(_ => _.level === 'error')) {
-        logger.error(failureDescription('Aborting run due to validation errors!'))
-        process.exit(1)
+        throw new Error('Aborting run due to validation errors!')
       }
     } catch (error: any) {
-      logger.error(failureDescription(`Fatal error while building the environment. ${error.message}`))
       logger.debug(error)
-      process.exit(2)
+      throw new Error(`Fatal error while building the environment. ${error.message}`)
     }
   }
 }
+
+export const handleError = (error: any): void => {
+  logger.error(redBright('💥 Uh-oh... Unexpected Error!'))
+  logger.error(redBright(error.message))
+  logger.debug(failureDescription('ℹ️ Stack trace:', error))
+}
+
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // PRINTING
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
