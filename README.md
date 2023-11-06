@@ -4,7 +4,7 @@
 
 🖖 Welcome to the Wollok Command Line Interface!
 
-![demo](./images/demo.gif)
+![demo](./images/demo_ok.gif)
 
 ## 🔧 Available Commands
 
