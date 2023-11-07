@@ -1,6 +1,6 @@
 {
   "name": "wollok-ts-cli",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Wollok Command Line Interface",
   "repository": "https://github.com/uqbar-project/wollok-ts-cli",
   "license": "MIT",
@@ -8,11 +8,12 @@
     "name": "Uqbar Foundation",
     "email": "org.uqbar@gmail.com"
   },
-  "main": "./build/index.js",
+  "main": "./build/src/index.js",
   "scripts": {
     "preinstall": "sh scripts/download-libs.sh",
-    "start": "node ./build/index.js",
+    "start": "node ./build/src/index.js",
     "test": "npm run lint && npm run test:unit",
+    "test-with-coverage": "npm run lint && nyc --reporter=json --lines 70 npm run test:unit",
     "lint": "eslint . ",
     "lint:fix": "eslint . --fix",
     "test:unit": "mocha --parallel -r ts-node/register/transpile-only test/**/*.test.ts",
@@ -21,15 +22,15 @@
     "pack": "pkg ."
   },
   "bin": {
-    "wollok": "./build/index.js"
+    "wollok": "./build/src/index.js"
   },
   "pkg": {
-    "scripts": "build/**/*.js",
+    "scripts": "build/src/**/*.js",
     "targets": [
-      "node16-linux-x64",
-      "node16-macos-x64",
-      "node16-macos-arm64",
-      "node16-win-x64"
+      "node18-linux-x64",
+      "node18-macos-x64",
+      "node18-macos-arm64",
+      "node18-win-x64"
     ],
     "assets": [
       "public/**/*"
@@ -38,31 +39,32 @@
   },
   "dependencies": {
     "chalk": "^4.1.2",
-    "commander": "^9.2.0",
+    "commander": "^11.1.0",
     "cors": "^2.8.5",
     "cytoscape": "^3.15.2",
     "express": "^4.18.1",
     "globby": "^11.0.4",
-    "loglevel": "^1.8.0",
-    "p5": "^1.4.2",
+    "loglevel": "^1.8.1",
+    "p5": "^1.8.0",
     "pkg": "^5.8.1",
     "socket.io": "^4.5.1",
     "wollok-ts": "4.0.5"
   },
   "devDependencies": {
-    "@types/chai": "^4.3.4",
+    "@types/chai": "^4.3.9",
     "@types/cytoscape": "^3.19.7",
-    "@types/express": "^4.17.13",
-    "@types/mocha": "^10.0.1",
+    "@types/express": "^4.17.20",
+    "@types/mocha": "^10.0.3",
     "@types/node": "^18.14.5",
-    "@types/p5": "^1.4.2",
-    "@typescript-eslint/eslint-plugin": "^5.4.0",
-    "@typescript-eslint/parser": "^5.4.0",
+    "@types/p5": "^1.7.1",
+    "@typescript-eslint/eslint-plugin": "^6.9.1",
+    "@typescript-eslint/parser": "^6.9.1",
     "chai": "^4.3.7",
-    "eslint": "^8.3.0",
+    "eslint": "^8.52.0",
     "mocha": "^10.2.0",
+    "nyc": "^15.1.0",
     "shx": "^0.3.4",
-    "ts-node": "10.4.0",
+    "ts-node": "10.9.1",
     "typescript": "^4.9.5"
   }
 }
