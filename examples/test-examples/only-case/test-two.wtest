@@ -1,0 +1,20 @@
+describe "second describe" {
+
+  test "second test" {
+    assert.that(true)
+  }
+
+  test "another second test" {
+    assert.equals(3, 3)
+  }
+
+}
+
+describe "third describe" {
+
+  test "just a test" {
+    const a = 1
+    assert.equals(a + 1, 2)
+  }
+
+}
