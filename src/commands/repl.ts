@@ -196,9 +196,9 @@ export function interprete(interpreter: Interpreter, line: string): string {
   } catch (error: any) {
     return (
       error.type === 'ParsimmonError' ? failureDescription(`Syntax error:\n${error.message.split('\n').filter(notEmpty).slice(1).join('\n')}`) :
-        error instanceof WollokException ? failureDescription('Evaluation Error!', error) :
-          error instanceof ParseError ? failureDescription(`Syntax Error at offset ${error.sourceMap.start.offset}: ${line.slice(error.sourceMap.start.offset, error.sourceMap.end.offset)}`) :
-            failureDescription('Uh-oh... Unexpected TypeScript Error!', error)
+      error instanceof WollokException ? failureDescription('Evaluation Error!', error) :
+      error instanceof ParseError ? failureDescription(`Syntax Error at offset ${error.sourceMap.start.offset}: ${line.slice(error.sourceMap.start.offset, error.sourceMap.end.offset)}`) :
+      failureDescription('Uh-oh... Unexpected TypeScript Error!', error)
     )
   }
 }
