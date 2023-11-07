@@ -43,11 +43,9 @@ export const diagramAssertions: Chai.ChaiPlugin = (chai) => {
 
 
 // TODO: refactor
-export const spyCalledWithSubstring = (spy: sinon.SinonStub, value: string) => {
-  console.info('value', value)
+export const spyCalledWithSubstring = (spy: sinon.SinonStub, value: string): boolean => {
   for (let i = 0; i < spy.callCount; i++) {
     const call = spy.getCall(i)
-    console.info(i, call.args)
     for (let j = 0; j < call.args.length; j++) {
       if (call.args[j].includes(value)) return true
     }
