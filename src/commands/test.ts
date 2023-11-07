@@ -1,7 +1,7 @@
 import { bold } from 'chalk'
 import { time, timeEnd } from 'console'
 import logger from 'loglevel'
-import { Entity, Node, Test } from 'wollok-ts'
+import { Entity, Environment, Node, Test } from 'wollok-ts'
 import { is, match, when } from 'wollok-ts/dist/extensions'
 import interpret from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
@@ -9,25 +9,48 @@ import { buildEnvironmentForProject, failureDescription, successDescription, val
 
 const { log } = console
 
-type Options = {
+export type Options = {
+  file: string | undefined,
+  describe: string | undefined,
+  test: string | undefined,
   project: string
   skipValidations: boolean
 }
 
-export default async function (filter: string | undefined, { project, skipValidations }: Options): Promise<void> {
-  try {
+export const ENTER = '\n'
 
+export function validateParameters(filter: string | undefined, { file, describe, test }: Options): void {
+  if (filter && (file || describe || test)) throw new Error('You should either use filter by full name or file/describe/test.')
+}
+
+export function sanitize(value?: string): string | undefined {
+  return value?.replaceAll('"', '')
+}
+
+export function getTarget(environment: Environment, filter: string | undefined, { file, describe, test }: Options): Test[] {
+  const fqnByOptionalParameters = [file, describe, test].filter(Boolean).join('.')
+  const filterTest = sanitize(filter) ?? fqnByOptionalParameters ?? ''
+  const possibleTargets = environment.descendants.filter(is(Test))
+  const onlyTarget = possibleTargets.find(test => test.isOnly)
+  const testMatches = (filter: string) => (test: Test) => !filter || sanitize(test.fullyQualifiedName)!.includes(filter)
+  return onlyTarget ? [onlyTarget] : possibleTargets.filter(testMatches(filterTest))
+}
+
+export function tabulationForNode(node: { fullyQualifiedName: string }): string {
+  return '  '.repeat(node.fullyQualifiedName.split('.').length - 1)
+}
+
+export default async function (filter: string | undefined, options: Options): Promise<void> {
+  try {
+    validateParameters(filter, options)
+
+    const { project, skipValidations } = options
     logger.info(`Running all tests ${filter ? `matching ${valueDescription(filter)} ` : ''}on ${valueDescription(project)}`)
 
     const environment = await buildEnvironmentForProject(project)
-
     validateEnvironment(environment, skipValidations)
 
-    const filterTest = filter?.replaceAll('"', '') ?? ''
-    const possibleTargets = environment.descendants.filter(is(Test))
-    const onlyTarget = possibleTargets.find(test => test.isOnly)
-    const testMatches = (filter: string) => (test: Test) => !filter || test.fullyQualifiedName.replaceAll('"', '').includes(filterTest)
-    const targets = onlyTarget ? [onlyTarget] : possibleTargets.filter(testMatches(filterTest))
+    const targets = getTarget(environment, filter, options)
 
     logger.info(`Running ${targets.length} tests...`)
 
@@ -40,7 +63,7 @@ export default async function (filter: string | undefined, { project, skipValida
     environment.forEach(node => match(node)(
       when(Test)(node => {
         if (targets.includes(node)) {
-          const tabulation = '  '.repeat(node.fullyQualifiedName.split('.').length - 1)
+          const tabulation = tabulationForNode(node)
           try {
             interpreter.fork().exec(node)
             logger.info(tabulation, successDescription(node.name))
@@ -53,7 +76,7 @@ export default async function (filter: string | undefined, { project, skipValida
       }),
 
       when(Entity)(node => {
-        const tabulation = '  '.repeat(node.fullyQualifiedName.split('.').length - 1)
+        const tabulation = tabulationForNode(node)
         if(targets.some(target => node.descendants.includes(target))){
           logger.info(tabulation, node.name)
         }
@@ -71,10 +94,10 @@ export default async function (filter: string | undefined, { project, skipValida
     })
 
     logger.info(
-      '\n',
+      ENTER,
       successDescription(`${successes} passing`),
       failures.length ? failureDescription(`${failures.length} failing`) : '',
-      '\n'
+      ENTER
     )
 
     if (failures.length) {

@@ -1,0 +1,15 @@
+describe "only describe" {
+
+  test "some test" {
+    assert.that(true)
+  }
+
+  only test "this is the one" {
+    assert.equals(1, 1)
+  }
+
+  test "last test" {
+    assert.that(0, [].size())
+  }
+
+}
