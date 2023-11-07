@@ -284,17 +284,31 @@ describe('Test', () => {
       expect(spyCalledWithSubstring(loggerInfoSpy, '2 passing')).to.be.true
     })
 
-    it('if one or more tests fail returns exit code 2', async () => {
+    it('returns exit code 2 if one or more tests fail', async () => {
       await test(undefined, emptyOptions)
-
-      for (let i = 0; i < loggerInfoSpy.callCount; i++) {
-        console.info(`${i} - ${loggerInfoSpy.getCall(i).args}`)
-      }
 
       expect(processExitSpy.calledWith(2)).to.be.true
       expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 5 tests')).to.be.true
       expect(spyCalledWithSubstring(loggerInfoSpy, '4 passing')).to.be.true
       expect(spyCalledWithSubstring(loggerInfoSpy, '1 failing')).to.be.true
+    })
+
+    it('returns exit code 2 if one or more tests fail', async () => {
+      await test(undefined, emptyOptions)
+
+      expect(processExitSpy.calledWith(2)).to.be.true
+      expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 5 tests')).to.be.true
+      expect(spyCalledWithSubstring(loggerInfoSpy, '4 passing')).to.be.true
+      expect(spyCalledWithSubstring(loggerInfoSpy, '1 failing')).to.be.true
+    })
+
+    it('returns exit code 1 if tests throw an error', async () => {
+      await test(undefined, {
+        ...emptyOptions,
+        project: join('examples', 'test-examples', 'failing-case'),
+      })
+
+      expect(processExitSpy.calledWith(1)).to.be.true
     })
 
   })
