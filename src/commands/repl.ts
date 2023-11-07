@@ -26,17 +26,18 @@ type Options = {
   project: string
   skipValidations: boolean,
   darkMode: boolean,
-  port: string
+  port: string,
+  noDiagram: boolean,
 }
 
 export default async function (autoImportPath: string | undefined, options: Options): Promise<void> {
   logger.info(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
 
   let interpreter = await initializeInterpreter(autoImportPath, options)
-  const io: Server = await initializeClient(options)
+  const io: Server | undefined = options.noDiagram ? undefined : await initializeClient(options)
 
   const commandHandler = defineCommands(autoImportPath, options, () => {
-    io.emit('updateDiagram', getDataDiagram(interpreter))
+    io?.emit('updateDiagram', getDataDiagram(interpreter))
   }, (newInterpreter: Interpreter) => {
     interpreter = newInterpreter
     repl.prompt()
@@ -66,14 +67,15 @@ export default async function (autoImportPath: string | undefined, options: Opti
       repl.prompt()
     })
 
-  io.on('connection', _socket => {
+  io?.on('connection', _socket => {
     logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://localhost:${options.port}`)))
     repl.prompt()
   })
-  io.on('connection', socket => {
+  io?.on('connection', socket => {
     socket.emit('initDiagram', options)
     socket.emit('updateDiagram', getDataDiagram(interpreter))
   })
+  repl.prompt()
 }
 
 export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations }: Options): Promise<Interpreter> {
@@ -238,7 +240,6 @@ async function initializeClient(options: Options) {
   server.listen(parseInt(options.port), 'localhost')
   return io
 }
-
 
 function newImport(importNode: Import, environment: Environment) {
   const node = replNode(environment)
