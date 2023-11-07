@@ -80,7 +80,7 @@ export const problemDescription = (problem: Problem): string => {
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
 export const publicPath = (...paths: string[]): string => {
-  return path.join(__dirname, '../..', 'public', ...paths)
+  return path.join(__dirname, '..', '..', 'public', ...paths)
 }
 
 export const readPackageProperties = (pathProject: string): any | undefined => {
