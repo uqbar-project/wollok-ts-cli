@@ -34,7 +34,10 @@ export default async function (autoImportPath: string | undefined, options: Opti
   logger.info(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
 
   let interpreter = await initializeInterpreter(autoImportPath, options)
-  const io: Server | undefined = options.noDiagram ? undefined : await initializeClient(options)
+  const _ = options.noDiagram ? undefined : await initializeClient(options)
+
+  const io = _?.io
+  const server = _?.server
 
   const commandHandler = defineCommands(autoImportPath, options, () => {
     io?.emit('updateDiagram', getDataDiagram(interpreter))
@@ -67,10 +70,11 @@ export default async function (autoImportPath: string | undefined, options: Opti
       repl.prompt()
     })
 
-  io?.on('connection', _socket => {
+  server?.addListener('listening', () => {
     logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://localhost:${options.port}`)))
     repl.prompt()
   })
+
   io?.on('connection', socket => {
     socket.emit('initDiagram', options)
     socket.emit('updateDiagram', getDataDiagram(interpreter))
@@ -238,7 +242,7 @@ async function initializeClient(options: Options) {
     express.static(publicPath('diagram'), { maxAge: '1d' }),
   )
   server.listen(parseInt(options.port), 'localhost')
-  return io
+  return { server, io }
 }
 
 function newImport(importNode: Import, environment: Environment) {

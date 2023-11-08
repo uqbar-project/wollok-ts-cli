@@ -282,6 +282,7 @@ describe('Test', () => {
       expect(processExitSpy.callCount).to.equal(0)
       expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 2 tests')).to.be.true
       expect(spyCalledWithSubstring(loggerInfoSpy, '2 passing')).to.be.true
+      expect(spyCalledWithSubstring(loggerInfoSpy, '0 failing')).to.be.false // old version
     })
 
     it('returns exit code 2 if one or more tests fail', async () => {
