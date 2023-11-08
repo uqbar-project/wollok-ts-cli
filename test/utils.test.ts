@@ -2,7 +2,7 @@ import { bold, red, yellowBright } from 'chalk'
 import logger from 'loglevel'
 import sinon from 'sinon'
 import path, { join } from 'path'
-import { buildEnvironmentForProject, failureDescription, getFQN, handleError, problemDescription, validateEnvironment } from '../src/utils'
+import { buildEnvironmentForProject, failureDescription, getFQN, handleError, problemDescription, readPackageProperties, validateEnvironment } from '../src/utils'
 import chaiAsPromised from 'chai-as-promised'
 import chai from 'chai'
 import { spyCalledWithSubstring } from './assertions'
@@ -56,6 +56,17 @@ describe('resources', () => {
 
   it('returns the right FQN for an element inside the project - using path join', () => {
     chai.expect(getFQN(path.join('usr', 'alf', 'workspace', 'test-project'), path.join('usr', 'alf', 'workspace', 'test-project', 'example', 'aves.wlk'))).to.equal('example.aves')
+  })
+
+  it('returns package.json content for a valid project', () => {
+    const packageData = readPackageProperties(join('examples', 'package-examples', 'good-project'))
+    chai.expect(packageData.name).to.equal('parcialBiblioteca')
+    chai.expect(packageData.wollokVersion).to.equal('4.0.0')
+  })
+
+  it('returns undefined for an invalid project (no package.json)', () => {
+    const packageData = readPackageProperties(join('examples', 'package-examples', 'bad-project'))
+    chai.expect(packageData).to.be.undefined
   })
 
 })
