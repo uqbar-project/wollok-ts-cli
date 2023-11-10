@@ -4,7 +4,7 @@ import cors from 'cors'
 import express from 'express'
 import http from 'http'
 import logger from 'loglevel'
-import { CompleterResult, createInterface as Repl } from 'readline'
+import { CompleterResult, Interface, createInterface as Repl } from 'readline'
 import { Server } from 'socket.io'
 import { Entity, Environment, Evaluation, Import, Package, Reference, Sentence, WollokException, parse } from 'wollok-ts'
 import { notEmpty } from 'wollok-ts/dist/extensions'
@@ -30,22 +30,15 @@ type Options = {
   noDiagram: boolean,
 }
 
+type DynamicDiagramClient = {
+  onReload: () => void,
+  enabled: boolean,
+}
+
 export default async function (autoImportPath: string | undefined, options: Options): Promise<void> {
   logger.info(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
 
   let interpreter = await initializeInterpreter(autoImportPath, options)
-  const _ = options.noDiagram ? undefined : await initializeClient(options)
-
-  const io = _?.io
-  const server = _?.server
-
-  const commandHandler = defineCommands(autoImportPath, options, () => {
-    io?.emit('updateDiagram', getDataDiagram(interpreter))
-  }, (newInterpreter: Interpreter) => {
-    interpreter = newInterpreter
-    repl.prompt()
-  })
-
   const autoImportName = autoImportPath && replNode(interpreter.evaluation.environment).name
   const repl = Repl({
     input: process.stdin,
@@ -56,6 +49,22 @@ export default async function (autoImportPath: string | undefined, options: Opti
     prompt: bold(`wollok${autoImportName ? ':' + autoImportName : ''}> `),
     completer: autocomplete,
   })
+  let dynamicDiagramClient = await initializeClient(options, repl, interpreter)
+
+  const commandHandler = defineCommands(autoImportPath, options, async (activateDiagram: boolean) => {
+    if (activateDiagram && !dynamicDiagramClient.enabled) {
+      options.noDiagram = !activateDiagram
+      dynamicDiagramClient = await initializeClient(options, repl, interpreter)
+    } else {
+      dynamicDiagramClient.onReload()
+      logger.info(successDescription('Dynamic diagram reloaded'))
+    }
+  }, (newInterpreter: Interpreter) => {
+    interpreter = newInterpreter
+    repl.prompt()
+  })
+
+  repl
     .on('close', () => log(''))
     .on('line', line => {
       line = line.trim()
@@ -64,21 +73,12 @@ export default async function (autoImportPath: string | undefined, options: Opti
         if (line.startsWith(':')) commandHandler.parse(line.split(' '), { from: 'user' })
         else {
           log(interprete(interpreter, line))
-          io?.emit('updateDiagram', getDataDiagram(interpreter))
+          dynamicDiagramClient.onReload()
         }
       }
       repl.prompt()
     })
 
-  server?.addListener('listening', () => {
-    logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://localhost:${options.port}`)))
-    repl.prompt()
-  })
-
-  io?.on('connection', socket => {
-    socket.emit('initDiagram', options)
-    socket.emit('updateDiagram', getDataDiagram(interpreter))
-  })
   repl.prompt()
 }
 
@@ -87,7 +87,6 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
 
   try {
     environment = await buildEnvironmentForProject(project)
-
     validateEnvironment(environment, skipValidations)
 
     if (autoImportPath) {
@@ -110,7 +109,7 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // COMMANDS
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-function defineCommands(autoImportPath: string | undefined, options: Options, reloadIo: () => void, setInterpreter: (interpreter: Interpreter) => void): Command {
+function defineCommands(autoImportPath: string | undefined, options: Options, reloadClient: (activateDiagram: boolean) => Promise<void>, setInterpreter: (interpreter: Interpreter) => void): Command {
   const commandHandler = new Command('Write a Wollok sentence or command to evaluate')
     .usage(' ')
     .allowUnknownOption()
@@ -132,7 +131,7 @@ function defineCommands(autoImportPath: string | undefined, options: Options, re
     .action(async () => {
       const interpreter = await initializeInterpreter(autoImportPath, options)
       setInterpreter(interpreter)
-      reloadIo()
+      reloadClient(options.noDiagram)
     })
 
   commandHandler.command(':diagram')
@@ -140,7 +139,7 @@ function defineCommands(autoImportPath: string | undefined, options: Options, re
     .description('Opens Dynamic Diagram')
     .allowUnknownOption()
     .action(async () => {
-      logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://localhost:${options.port}`)))
+      reloadClient(true)
     })
 
   commandHandler.command(':help')
@@ -215,7 +214,10 @@ async function autocomplete(input: string): Promise<CompleterResult> {
 // SERVER/CLIENT
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-async function initializeClient(options: Options) {
+async function initializeClient(options: Options, repl: Interface, interpreter: Interpreter): Promise<DynamicDiagramClient> {
+  if (options.noDiagram) {
+    return { onReload: () => {}, enabled: false }
+  }
   const app = express()
   const server = http.createServer(app)
 
@@ -237,12 +239,27 @@ async function initializeClient(options: Options) {
     logger.debug(successDescription('Connected to Dynamic diagram'))
     socket.on('disconnect', () => { logger.debug(failureDescription('Dynamic diagram closed')) })
   })
+  io.on('connection', socket => {
+    socket.emit('initDiagram', options)
+    socket.emit('updateDiagram', getDataDiagram(interpreter))
+  })
+
   app.use(
     cors({ allowedHeaders: '*' }),
     express.static(publicPath('diagram'), { maxAge: '1d' }),
   )
   server.listen(parseInt(options.port), 'localhost')
-  return { server, io }
+  server.addListener('listening', () => {
+    logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://localhost:${options.port}`)))
+    repl.prompt()
+  })
+
+  return {
+    onReload: () => {
+      io.emit('updateDiagram', getDataDiagram(interpreter))
+    },
+    enabled: true,
+  }
 }
 
 function newImport(importNode: Import, environment: Environment) {
