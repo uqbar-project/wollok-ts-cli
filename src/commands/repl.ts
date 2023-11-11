@@ -1,7 +1,7 @@
 import { bold, yellow } from 'chalk'
 import { Command } from 'commander'
 import cors from 'cors'
-import express from 'express'
+import express, { Express } from 'express'
 import http from 'http'
 import logger from 'loglevel'
 import { CompleterResult, Interface, createInterface as Repl } from 'readline'
@@ -33,6 +33,7 @@ type Options = {
 type DynamicDiagramClient = {
   onReload: () => void,
   enabled: boolean,
+  app?: Express, // only for testing purposes
 }
 
 export default async function (autoImportPath: string | undefined, options: Options): Promise<void> {
@@ -214,7 +215,7 @@ async function autocomplete(input: string): Promise<CompleterResult> {
 // SERVER/CLIENT
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-async function initializeClient(options: Options, repl: Interface, interpreter: Interpreter): Promise<DynamicDiagramClient> {
+export async function initializeClient(options: Options, repl: Interface, interpreter: Interpreter): Promise<DynamicDiagramClient> {
   if (options.noDiagram) {
     return { onReload: () => {}, enabled: false }
   }
@@ -244,6 +245,8 @@ async function initializeClient(options: Options, repl: Interface, interpreter: 
     socket.emit('updateDiagram', getDataDiagram(interpreter))
   })
 
+  console.info('PATTTTTTTTTTHHHHHHHHHHH', publicPath('diagram'), options.port)
+
   app.use(
     cors({ allowedHeaders: '*' }),
     express.static(publicPath('diagram'), { maxAge: '1d' }),
@@ -259,6 +262,7 @@ async function initializeClient(options: Options, repl: Interface, interpreter: 
       io.emit('updateDiagram', getDataDiagram(interpreter))
     },
     enabled: true,
+    app,
   }
 }
 

@@ -63,6 +63,7 @@
     "@typescript-eslint/parser": "^6.9.1",
     "chai": "^4.3.7",
     "chai-as-promised": "^7.1.1",
+    "chai-http": "^4.4.0",
     "eslint": "^8.52.0",
     "mocha": "^10.2.0",
     "nyc": "^15.1.0",
