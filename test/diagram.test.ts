@@ -8,7 +8,6 @@ import { diagramAssertions } from './assertions'
 use(diagramAssertions)
 should()
 
-
 const projectPath = join('examples', 'diagram-examples')
 const simpleFile = join(projectPath, 'fish.wlk')
 const fileWithImports = join(projectPath, 'using-imports', 'base.wlk')

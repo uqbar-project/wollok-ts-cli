@@ -103,25 +103,8 @@ export const problemDescription = (problem: Problem): string => {
 // RESOURCES
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-
-// NONONONONONO
-
-
-// HAY QUE VER ESTO...
-
-
-
-export const publicPath = (...paths: string[]): string => {
-  console.info('donde estoy', path.join(__dirname))
-  return path.join(__dirname, '..', 'public', ...paths)
-}
-
-// no va el '..' extra... hay que corregir el build
-
-
-
-
-
+export const publicPath = (...paths: string[]): string =>
+  path.join(__dirname, '..', 'public', ...paths)
 
 export const readPackageProperties = (pathProject: string): any | undefined => {
   const packagePath = path.join(pathProject, 'package.json')

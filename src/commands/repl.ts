@@ -245,8 +245,6 @@ export async function initializeClient(options: Options, repl: Interface, interp
     socket.emit('updateDiagram', getDataDiagram(interpreter))
   })
 
-  console.info('PATTTTTTTTTTHHHHHHHHHHH', publicPath('diagram'), options.port)
-
   app.use(
     cors({ allowedHeaders: '*' }),
     express.static(publicPath('diagram'), { maxAge: '1d' }),

@@ -37,7 +37,6 @@ describe('dynamic diagram client', () => {
     const { enabled, app } = await initializeClient(options, repl, interpreter)
     expect(enabled).to.be.true
     const result = await chai.request(app).get('/index.html')
-    console.info('result', result)
     expect(result).to.have.status(200)
   })
 
