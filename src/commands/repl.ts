@@ -34,6 +34,7 @@ type DynamicDiagramClient = {
   onReload: () => void,
   enabled: boolean,
   app?: Express, // only for testing purposes
+  server?: http.Server, // only for testing purposes
 }
 
 export default async function (autoImportPath: string | undefined, options: Options): Promise<void> {
@@ -223,13 +224,13 @@ export async function initializeClient(options: Options, repl: Interface, interp
   const server = http.createServer(app)
 
   server.addListener('error', ({ port, code }: { port: string, code: string }) => {
-    console.info('')
+    logger.info('')
     if (code === 'EADDRINUSE') {
-      console.info(yellow(bold(`⚡ We couldn't start dynamic diagram at port ${port}, because it is already in use. ⚡`)))
+      logger.info(yellow(bold(`⚡ We couldn't start dynamic diagram at port ${port}, because it is already in use. ⚡`)))
       // eslint-disable-next-line @typescript-eslint/quotes
-      console.info(yellow(`Please make sure you don't have another REPL session running in another terminal. \nIf you want to start another instance, you can use "--port xxxx" option, where xxxx should be any available port.`))
+      logger.info(yellow(`Please make sure you don't have another REPL session running in another terminal. \nIf you want to start another instance, you can use "--port xxxx" option, where xxxx should be any available port.`))
     } else {
-      console.info(yellow(bold(`⚡ REPL couldn't be started at port ${port}, error code ["${code}]. ⚡`)))
+      logger.info(yellow(bold(`⚡ REPL couldn't be started at port ${port}, error code ["${code}]. ⚡`)))
     }
     process.exit(1)
   })
@@ -261,6 +262,7 @@ export async function initializeClient(options: Options, repl: Interface, interp
     },
     enabled: true,
     app,
+    server,
   }
 }
 

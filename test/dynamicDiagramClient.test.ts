@@ -34,10 +34,23 @@ describe('dynamic diagram client', () => {
   })
 
   it('should work for root path', async () => {
-    const { enabled, app } = await initializeClient(options, repl, interpreter)
+    const { enabled, app, server } = await initializeClient(options, repl, interpreter)
     expect(enabled).to.be.true
     const result = await chai.request(app).get('/index.html')
     expect(result).to.have.status(200)
+    server!.close()
   })
+
+  it('should return a fake client if noDiagram is set', async () => {
+    const noDiagramOptions = {
+      ...options,
+      noDiagram: true,
+    }
+    const { enabled, app } = await initializeClient(noDiagramOptions, repl, interpreter)
+    expect(enabled).to.be.false
+    expect(app).to.be.undefined
+  })
+
+  // testing failure cases are extremely complicated due to server listeners and async notifications
 
 })
