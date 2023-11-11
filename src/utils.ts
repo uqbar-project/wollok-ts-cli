@@ -113,7 +113,7 @@ export const problemDescription = (problem: Problem): string => {
 
 export const publicPath = (...paths: string[]): string => {
   console.info('donde estoy', path.join(__dirname))
-  return path.join(__dirname, '..', '..', 'public', ...paths)
+  return path.join(__dirname, '..', 'public', ...paths)
 }
 
 // no va el '..' extra... hay que corregir el build
