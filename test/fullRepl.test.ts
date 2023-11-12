@@ -82,8 +82,12 @@ describe('REPL integration test for invalid project', () => {
     await expect(callRepl('fileWithValidationErrors.wlk', buildOptionsFor('validation-errors'))).to.eventually.be.rejectedWith(/exit with 1 error code/)
   })
 
-  it('should return exit code 1 if file does not exist', async () => {
+  it('should return exit code 1 if file does not exist - no validation', async () => {
     await expect(callRepl('noFile.wlk', buildOptionsFor('validation-errors', true))).to.eventually.be.rejectedWith(/exit with 1 error code/)
+  })
+
+  it('should return exit code 1 if file does not exist - with validation', async () => {
+    await expect(callRepl('noFile.wlk', buildOptionsFor('missing-files'))).to.eventually.be.rejectedWith(/exit with 1 error code/)
   })
 
 })
