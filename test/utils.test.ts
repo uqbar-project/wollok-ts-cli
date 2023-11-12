@@ -16,16 +16,16 @@ describe('build & validating environment', () => {
   it('should throw an exception if parsing fails', async () => {
     chai.use(chaiAsPromised)
     const expect = chai.expect
-    await expect(buildEnvironmentForProject(badProjectPath, ['fileWithParseErrors.wlk'])).to.eventually.be.rejectedWith(/Failed to parse fileWithParseErrors.wlk/)
+    await expect(buildEnvironmentForProject(join(badProjectPath, 'parse-errors'), ['fileWithParseErrors.wlk'])).to.eventually.be.rejectedWith(/Failed to parse fileWithParseErrors.wlk/)
   })
 
   it('should throw an exception if validation fails', async () => {
-    const environment = await buildEnvironmentForProject(badProjectPath, ['fileWithValidationErrors.wlk'])
+    const environment = await buildEnvironmentForProject(join(badProjectPath, 'validation-errors'), ['fileWithValidationErrors.wlk'])
     chai.expect(() => { validateEnvironment(environment, false) }).to.throw(/Fatal error while building the environment/)
   })
 
   it('should not throw an exception if validation fails but you want to skip validation', async () => {
-    const environment = await buildEnvironmentForProject(badProjectPath, ['fileWithValidationErrors.wlk'])
+    const environment = await buildEnvironmentForProject(join(badProjectPath, 'validation-errors'), ['fileWithValidationErrors.wlk'])
     chai.expect(() => { validateEnvironment(environment, true) }).to.not.throw()
   })
 

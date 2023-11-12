@@ -22,7 +22,7 @@ export const REPL = 'REPL'
 
 const { log } = console
 
-type Options = {
+export type Options = {
   project: string
   skipValidations: boolean,
   darkMode: boolean,
@@ -37,7 +37,11 @@ type DynamicDiagramClient = {
   server?: http.Server, // only for testing purposes
 }
 
-export default async function (autoImportPath: string | undefined, options: Options): Promise<Interface> {
+export default async function (autoImportPath: string | undefined, options: Options): Promise<void> {
+  replFn(autoImportPath, options)
+}
+
+export async function replFn(autoImportPath: string | undefined, options: Options): Promise<Interface> {
   logger.info(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
 
   let interpreter = await initializeInterpreter(autoImportPath, options)
@@ -96,7 +100,7 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
       const fqn = getFQN(project, autoImportPath)
       const entity = environment.getNodeOrUndefinedByFQN<Entity>(fqn)
       if (entity && entity.is(Package)) environment.scope.register([REPL, entity]) // Register the auto-imported package as REPL package
-      else log(failureDescription(`File ${valueDescription(autoImportPath)} doesn't exist or is outside of project!`))
+      else log(failureDescription(`File ${valueDescription(autoImportPath)} doesn't exist or is outside of project ${project}!`))
     } else {
       // Create a new REPL package
       const replPackage = new Package({ name: REPL })
