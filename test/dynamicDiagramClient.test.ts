@@ -46,9 +46,10 @@ describe('dynamic diagram client', () => {
       ...options,
       noDiagram: true,
     }
-    const { enabled, app } = await initializeClient(noDiagramOptions, repl, interpreter)
+    const { enabled, app, server } = await initializeClient(noDiagramOptions, repl, interpreter)
     expect(enabled).to.be.false
     expect(app).to.be.undefined
+    expect(server).to.be.undefined
   })
 
   // testing failure cases are extremely complicated due to server listeners and async notifications

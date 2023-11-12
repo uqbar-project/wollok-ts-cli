@@ -37,7 +37,7 @@ type DynamicDiagramClient = {
   server?: http.Server, // only for testing purposes
 }
 
-export default async function (autoImportPath: string | undefined, options: Options): Promise<void> {
+export default async function (autoImportPath: string | undefined, options: Options): Promise<Interface> {
   logger.info(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
 
   let interpreter = await initializeInterpreter(autoImportPath, options)
@@ -82,6 +82,7 @@ export default async function (autoImportPath: string | undefined, options: Opti
     })
 
   repl.prompt()
+  return repl
 }
 
 export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations }: Options): Promise<Interpreter> {
@@ -124,7 +125,7 @@ function defineCommands(autoImportPath: string | undefined, options: Options, re
     .alias(':exit')
     .description('Quit Wollok REPL')
     .allowUnknownOption()
-    .action(() => process.exit())
+    .action(() => process.exit(0))
 
   commandHandler.command(':reload')
     .alias(':r')
