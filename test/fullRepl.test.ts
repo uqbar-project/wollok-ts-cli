@@ -54,7 +54,6 @@ describe('REPL integration test for valid project', () => {
     expect(processExitSpy.calledWith(0)).to.be.true
   })
 
-  // TODO: check for flakyness
   it('should quit successfully if project has validation errors but skip validation config is passed', async () => {
     const repl = await callRepl('fileWithValidationErrors.wlk', buildOptionsFor('validation-errors', true))
     repl.emit('line', ':q')
@@ -81,6 +80,10 @@ describe('REPL integration test for invalid project', () => {
 
   it('should return exit code 1 if project has validation errors', async () => {
     await expect(callRepl('fileWithValidationErrors.wlk', buildOptionsFor('validation-errors'))).to.eventually.be.rejectedWith(/exit with 1 error code/)
+  })
+
+  it('should return exit code 1 if file does not exist', async () => {
+    await expect(callRepl('noFile.wlk', buildOptionsFor('validation-errors'))).to.eventually.be.rejectedWith(/exit with 1 error code/)
   })
 
 })

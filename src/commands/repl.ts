@@ -99,8 +99,12 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
     if (autoImportPath) {
       const fqn = getFQN(project, autoImportPath)
       const entity = environment.getNodeOrUndefinedByFQN<Entity>(fqn)
-      if (entity && entity.is(Package)) environment.scope.register([REPL, entity]) // Register the auto-imported package as REPL package
-      else log(failureDescription(`File ${valueDescription(autoImportPath)} doesn't exist or is outside of project ${project}!`))
+      if (entity && entity.is(Package)) {
+        environment.scope.register([REPL, entity]) // Register the auto-imported package as REPL package
+      } else {
+        log(failureDescription(`File ${valueDescription(autoImportPath)} doesn't exist or is outside of project ${project}!`))
+        process.exit(1)
+      }
     } else {
       // Create a new REPL package
       const replPackage = new Package({ name: REPL })
