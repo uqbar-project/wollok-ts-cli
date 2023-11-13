@@ -72,9 +72,9 @@ export async function replFn(autoImportPath: string | undefined, options: Option
 
   const onReloadInterpreter = (newInterpreter: Interpreter, rerun: boolean) => {
     interpreter = newInterpreter
+    const previousCommands = [...commands]
+    commands.length = 0
     if (rerun) {
-      const previousCommands = [...commands]
-      commands.length = 0
       previousCommands.forEach(command => {
         repl.prompt()
         repl.write(command + ENTER)
