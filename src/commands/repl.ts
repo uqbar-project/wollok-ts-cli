@@ -5,7 +5,7 @@ import express, { Express } from 'express'
 import http from 'http'
 import logger from 'loglevel'
 import { CompleterResult, Interface, createInterface as Repl } from 'readline'
-import { Server } from 'socket.io'
+import { Server, Socket } from 'socket.io'
 import { Entity, Environment, Evaluation, Import, Package, Reference, Sentence, WollokException, parse } from 'wollok-ts'
 import { notEmpty } from 'wollok-ts/dist/extensions'
 import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
@@ -13,7 +13,7 @@ import link from 'wollok-ts/dist/linker'
 import { ParseError } from 'wollok-ts/dist/parser'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { getDataDiagram } from '../services/diagram-generator'
-import { buildEnvironmentForProject, failureDescription, getFQN, linkSentence, publicPath, successDescription, valueDescription, validateEnvironment, handleError } from '../utils'
+import { buildEnvironmentForProject, failureDescription, getFQN, linkSentence, publicPath, successDescription, valueDescription, validateEnvironment, handleError, ENTER } from '../utils'
 
 export const REPL = 'REPL'
 
@@ -31,7 +31,7 @@ export type Options = {
 }
 
 type DynamicDiagramClient = {
-  onReload: () => void,
+  onReload: (interpreter: Interpreter) => void,
   enabled: boolean,
   app?: Express, // only for testing purposes
   server?: http.Server, // only for testing purposes
@@ -40,6 +40,8 @@ type DynamicDiagramClient = {
 export default async function (autoImportPath: string | undefined, options: Options): Promise<void> {
   replFn(autoImportPath, options)
 }
+
+const commands: string[] = []
 
 export async function replFn(autoImportPath: string | undefined, options: Options): Promise<Interface> {
   logger.info(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
@@ -57,18 +59,32 @@ export async function replFn(autoImportPath: string | undefined, options: Option
   })
   let dynamicDiagramClient = await initializeClient(options, repl, interpreter)
 
-  const commandHandler = defineCommands(autoImportPath, options, async (activateDiagram: boolean) => {
+  const onReloadClient = async (activateDiagram: boolean, newInterpreter?: Interpreter) => {
+    const selectedInterpreter = newInterpreter ?? interpreter
     if (activateDiagram && !dynamicDiagramClient.enabled) {
       options.noDiagram = !activateDiagram
-      dynamicDiagramClient = await initializeClient(options, repl, interpreter)
+      dynamicDiagramClient = await initializeClient(options, repl, selectedInterpreter)
     } else {
-      dynamicDiagramClient.onReload()
+      dynamicDiagramClient.onReload(selectedInterpreter)
       logger.info(successDescription('Dynamic diagram reloaded'))
+      repl.prompt()
     }
-  }, (newInterpreter: Interpreter) => {
+  }
+
+  const onReloadInterpreter = (newInterpreter: Interpreter, rerun: boolean) => {
     interpreter = newInterpreter
+    if (rerun) {
+      const previousCommands = [...commands]
+      commands.length = 0
+      previousCommands.forEach(command => {
+        repl.prompt()
+        repl.write(command + ENTER)
+      })
+    }
     repl.prompt()
-  })
+  }
+
+  const commandHandler = defineCommands(autoImportPath, options, onReloadClient, onReloadInterpreter)
 
   repl
     .on('close', () => log(''))
@@ -78,8 +94,9 @@ export async function replFn(autoImportPath: string | undefined, options: Option
       if (line.length) {
         if (line.startsWith(':')) commandHandler.parse(line.split(' '), { from: 'user' })
         else {
+          commands.push(line)
           log(interprete(interpreter, line))
-          dynamicDiagramClient.onReload()
+          dynamicDiagramClient.onReload(interpreter)
         }
       }
       repl.prompt()
@@ -120,7 +137,14 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // COMMANDS
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-function defineCommands(autoImportPath: string | undefined, options: Options, reloadClient: (activateDiagram: boolean) => Promise<void>, setInterpreter: (interpreter: Interpreter) => void): Command {
+function defineCommands(autoImportPath: string | undefined, options: Options, reloadClient: (activateDiagram: boolean, interpreter?: Interpreter) => Promise<void>, setInterpreter: (interpreter: Interpreter, rerun: boolean) => void): Command {
+  const reload = (rerun = false) => async () => {
+    logger.info(successDescription('Reloading environment'))
+    const interpreter = await initializeInterpreter(autoImportPath, options)
+    setInterpreter(interpreter, rerun)
+    reloadClient(options.noDiagram, interpreter)
+  }
+
   const commandHandler = new Command('Write a Wollok sentence or command to evaluate')
     .usage(' ')
     .allowUnknownOption()
@@ -139,11 +163,13 @@ function defineCommands(autoImportPath: string | undefined, options: Options, re
     .alias(':r')
     .description('Reloads all currently imported packages and resets evaluation state')
     .allowUnknownOption()
-    .action(async () => {
-      const interpreter = await initializeInterpreter(autoImportPath, options)
-      setInterpreter(interpreter)
-      reloadClient(options.noDiagram)
-    })
+    .action(reload())
+
+  commandHandler.command(':rerun')
+    .alias(':rr')
+    .description('Same as "reload" but additionaly reruns all commands written since last reload')
+    .allowUnknownOption()
+    .action(reload(true))
 
   commandHandler.command(':diagram')
     .alias(':d')
@@ -227,7 +253,7 @@ async function autocomplete(input: string): Promise<CompleterResult> {
 
 export async function initializeClient(options: Options, repl: Interface, interpreter: Interpreter): Promise<DynamicDiagramClient> {
   if (options.noDiagram) {
-    return { onReload: () => {}, enabled: false }
+    return { onReload: (_interpreter: Interpreter) => {}, enabled: false }
   }
   const app = express()
   const server = http.createServer(app)
@@ -246,14 +272,16 @@ export async function initializeClient(options: Options, repl: Interface, interp
 
   const io = new Server(server)
 
-  io.on('connection', socket => {
+  io.on('connection', (socket: Socket) => {
     logger.debug(successDescription('Connected to Dynamic diagram'))
     socket.on('disconnect', () => { logger.debug(failureDescription('Dynamic diagram closed')) })
   })
-  io.on('connection', socket => {
+  const connectionListener = (interpreter: Interpreter) => (socket: Socket) => {
     socket.emit('initDiagram', options)
     socket.emit('updateDiagram', getDataDiagram(interpreter))
-  })
+  }
+  let currentConnectionListener = connectionListener(interpreter)
+  io.on('connection', currentConnectionListener)
 
   app.use(
     cors({ allowedHeaders: '*' }),
@@ -266,7 +294,11 @@ export async function initializeClient(options: Options, repl: Interface, interp
   })
 
   return {
-    onReload: () => {
+    onReload: (interpreter: Interpreter) => {
+      io.off('connection', currentConnectionListener)
+      currentConnectionListener = connectionListener(interpreter)
+      io.on('connection', currentConnectionListener)
+
       io.emit('updateDiagram', getDataDiagram(interpreter))
     },
     enabled: true,

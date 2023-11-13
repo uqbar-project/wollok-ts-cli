@@ -11,6 +11,7 @@ import { replNode } from './commands/repl'
 
 const { time, timeEnd } = console
 
+export const ENTER = '\n'
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // FILE / PATH HANDLING

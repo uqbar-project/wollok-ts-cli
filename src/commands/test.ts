@@ -5,7 +5,7 @@ import { Entity, Environment, Node, Test } from 'wollok-ts'
 import { is, match, when } from 'wollok-ts/dist/extensions'
 import interpret from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
-import { buildEnvironmentForProject, failureDescription, successDescription, valueDescription, validateEnvironment, handleError } from '../utils'
+import { buildEnvironmentForProject, failureDescription, successDescription, valueDescription, validateEnvironment, handleError, ENTER } from '../utils'
 
 const { log } = console
 
@@ -16,8 +16,6 @@ export type Options = {
   project: string
   skipValidations: boolean
 }
-
-export const ENTER = '\n'
 
 export function validateParameters(filter: string | undefined, { file, describe, test }: Options): void {
   if (filter && (file || describe || test)) throw new Error('You should either use filter by full name or file/describe/test.')
