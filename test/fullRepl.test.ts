@@ -5,6 +5,8 @@ import chaiAsPromised from 'chai-as-promised'
 import { Options, replFn } from '../src/commands/repl'
 import { Interface } from 'readline'
 import sinon from 'sinon'
+import { ENTER } from '../src/utils'
+import { spyCalledWithSubstring } from './assertions'
 
 chai.should()
 chai.use(chaiHttp)
@@ -38,10 +40,12 @@ describe('REPL integration test for valid project', () => {
     noDiagram: false,
   }
   let processExitSpy: sinon.SinonStub
+  let consoleLogSpy: sinon.SinonStub
   let repl: Interface
 
   beforeEach(async () => {
     processExitSpy = sinon.stub(process, 'exit')
+    consoleLogSpy = sinon.stub(console, 'log')
     repl = await replFn(undefined, options)
   })
 
@@ -49,7 +53,11 @@ describe('REPL integration test for valid project', () => {
     sinon.restore()
   })
 
-  it('should quit successfully', async () => {
+  it('should process values & quit successfully', async () => {
+    repl.write('const a = 1' + ENTER)
+    repl.write('const b = a + 5' + ENTER)
+    repl.write('b' + ENTER)
+    expect(spyCalledWithSubstring(consoleLogSpy, '6')).to.be.true
     repl.emit('line', ':q')
     expect(processExitSpy.calledWith(0)).to.be.true
   })

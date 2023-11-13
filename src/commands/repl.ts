@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { bold, yellow } from 'chalk'
 import { Command } from 'commander'
 import cors from 'cors'
@@ -19,8 +20,6 @@ export const REPL = 'REPL'
 
 // TODO:
 // - autocomplete piola
-
-const { log } = console
 
 export type Options = {
   project: string
@@ -87,7 +86,7 @@ export async function replFn(autoImportPath: string | undefined, options: Option
   const commandHandler = defineCommands(autoImportPath, options, onReloadClient, onReloadInterpreter)
 
   repl
-    .on('close', () => log(''))
+    .on('close', () => console.log(''))
     .on('line', line => {
       line = line.trim()
 
@@ -95,7 +94,7 @@ export async function replFn(autoImportPath: string | undefined, options: Option
         if (line.startsWith(':')) commandHandler.parse(line.split(' '), { from: 'user' })
         else {
           commands.push(line)
-          log(interprete(interpreter, line))
+          console.log(interprete(interpreter, line))
           dynamicDiagramClient.onReload(interpreter)
         }
       }
@@ -119,7 +118,7 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
       if (entity && entity.is(Package)) {
         environment.scope.register([REPL, entity]) // Register the auto-imported package as REPL package
       } else {
-        log(failureDescription(`File ${valueDescription(autoImportPath)} doesn't exist or is outside of project ${project}!`))
+        console.log(failureDescription(`File ${valueDescription(autoImportPath)} doesn't exist or is outside of project ${project}!`))
         process.exit(1)
       }
     } else {
