@@ -1,5 +1,5 @@
 import { blue, bold, green, italic, red, yellowBright } from 'chalk'
-import fs, { Dirent } from 'fs'
+import fs, { Dirent, existsSync, mkdirSync } from 'fs'
 import { readFile } from 'fs/promises'
 import globby from 'globby'
 import logger from 'loglevel'
@@ -27,6 +27,12 @@ export function getFQN(project: string, filePath: string): string {
 export type FileContent = {
   name: string,
   content: string,
+}
+
+export const createFolderIfNotExists = (folder: string): void => {
+  if (!existsSync(folder)) {
+    mkdirSync(folder)
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
