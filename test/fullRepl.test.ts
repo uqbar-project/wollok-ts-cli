@@ -60,6 +60,8 @@ describe('REPL integration test for valid project', () => {
     expect(spyCalledWithSubstring(consoleLogSpy, '6')).to.be.true
     repl.emit('line', ':q')
     expect(processExitSpy.calledWith(0)).to.be.true
+    // if we try to create a second test using the repl
+    // it will fail throwing an exit code 1 (it could be an out of memory issue but also an internal error)
   })
 
   it('should quit successfully if project has validation errors but skip validation config is passed', async () => {
