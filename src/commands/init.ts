@@ -5,9 +5,9 @@ import { join } from 'node:path'
 import { userInfo } from 'os'
 import { createFolderIfNotExists } from '../utils'
 
-type Options = {
+export type Options = {
   project: string,
-  name: string | undefined,
+  name?: string | undefined,
   noTest: boolean,
   noCI: boolean,
   game: boolean,
@@ -74,13 +74,17 @@ const wlkDefinition = `object pepita {
   var energy = 100
 
   method energy() = energy
+
+  method fly(minutes) {
+    energy = energy - minutes * 3
+  }
 }`
 
 const testDefinition = (exampleName: string) => `import ${exampleName}.pepita
 
 describe "group of tests for pepita" {
 
-  test "pepita has an initial energy" {
+  test "pepita has initial energy" {
     assert.equals(100, pepita.energy())
   }
 
