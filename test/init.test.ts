@@ -38,6 +38,7 @@ describe('testing init', () => {
     expect(existsSync(join(project, 'package.json'))).to.be.true
     expect(existsSync(join(project, GITHUB_FOLDER, 'ci.yml'))).to.be.true
     expect(existsSync(join(project, 'mainExample.wpgm'))).to.be.false
+    expect(getResourceFolder()).to.be.undefined
   })
 
   it('should create files successfully for game project with ci & custom example name', () => {
@@ -52,9 +53,7 @@ describe('testing init', () => {
     expect(existsSync(join(project, 'mainPepita.wpgm'))).to.be.true
     expect(existsSync(join(project, 'package.json'))).to.be.true
     expect(existsSync(join(project, GITHUB_FOLDER, 'ci.yml'))).to.be.true
-    const packageJson = readFileSync(join(project, 'package.json'),  'utf8')
-    const { resourceFolder } = JSON.parse(packageJson)
-    expect(resourceFolder).to.be.equal('assets')
+    expect(getResourceFolder()).to.be.equal('assets')
   })
 
   it('should create files successfully for game project with no ci & no test custom example name', async () => {
@@ -83,3 +82,9 @@ describe('testing init', () => {
 
 
 })
+
+const getResourceFolder = () => {
+  const packageJson = readFileSync(join(project, 'package.json'),  'utf8')
+  const { resourceFolder } = JSON.parse(packageJson)
+  return resourceFolder
+}
