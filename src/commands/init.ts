@@ -1,7 +1,7 @@
 import { bold, cyan, yellow, green } from 'chalk'
 import logger from 'loglevel'
 import { existsSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 import { userInfo } from 'os'
 import { createFolderIfNotExists } from '../utils'
 
@@ -111,9 +111,9 @@ program PepitaGame {
 `
 
 const packageJsonDefinition = (projectName: string, game: boolean) => `{
-  "name": "${projectName}",
+  "name": "${basename(projectName)}",
   "version": "1.0.0",
-  "sourceFolders": [${game ? '"assets"' : ''}],
+  ${game ? '"resourceFolder": "assets",' : ''}
   "wollokVersion": "4.0.0",
   "author": "${userInfo().username}",
   "license": "ISC"
