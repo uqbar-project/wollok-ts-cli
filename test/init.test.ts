@@ -1,8 +1,9 @@
 import chai from 'chai'
 import { join } from 'path'
-import init, { Options } from '../src/commands/init'
 import { existsSync, readFileSync, rmSync } from 'fs'
 import sinon from 'sinon'
+import init, { Options } from '../src/commands/init'
+import test from '../src/commands/test'
 
 chai.should()
 const expect = chai.expect
@@ -30,7 +31,7 @@ describe('testing init', () => {
     sinon.restore()
   })
 
-  it('should create files successfully for default values: ci, no game & example name', () => {
+  it('should create files successfully for default values: ci, no game & example name', async () => {
     init(baseOptions)
 
     expect(existsSync(join(project, 'example.wlk'))).to.be.true
@@ -39,6 +40,15 @@ describe('testing init', () => {
     expect(existsSync(join(project, GITHUB_FOLDER, 'ci.yml'))).to.be.true
     expect(existsSync(join(project, 'mainExample.wpgm'))).to.be.false
     expect(getResourceFolder()).to.be.undefined
+
+    await test(undefined, {
+      project,
+      skipValidations: false,
+      file: undefined,
+      describe: undefined,
+      test: undefined,
+    })
+    expect(processExitSpy.callCount).to.equal(0)
   })
 
   it('should create files successfully for game project with ci & custom example name', () => {
