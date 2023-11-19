@@ -54,6 +54,8 @@ export default function ({ project, name, noTest = false, noCI = false, game = f
     writeFileSync(join(project, '.github', 'workflows', 'ci.yml'), ymlForCI)
   }
 
+  writeFileSync(join(project, 'README.md'), readme(exampleName))
+
   // Finish
   logger.info(green('✨ Project succesfully created. Happy coding!'))
 }
@@ -134,4 +136,12 @@ jobs:
           chmod a+x ./wollok-ts-cli
           ./wollok-ts-cli test --skipValidations -p ./
         shell: bash
+`
+
+const readme = (exampleName: string) => `
+
+## ${exampleName}
+
+TODO
+
 `
