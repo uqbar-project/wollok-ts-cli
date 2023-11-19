@@ -54,6 +54,7 @@ export default function ({ project, name, noTest = false, noCI = false, game = f
     writeFileSync(join(project, '.github', 'workflows', 'ci.yml'), ymlForCI)
   }
 
+  logger.info('Creating README')
   writeFileSync(join(project, 'README.md'), readme(exampleName))
 
   // Finish
