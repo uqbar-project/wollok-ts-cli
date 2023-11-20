@@ -16,7 +16,7 @@ const expect = chai.expect
 const baseOptions = {
   darkMode: true,
   port: '8080',
-  noDiagram: true,
+  skipDiagram: true,
 }
 
 const buildOptionsFor = (path: string, skipValidations = false) => ({
@@ -37,7 +37,7 @@ describe('REPL integration test for valid project', () => {
     skipValidations: false,
     darkMode: true,
     port: '8080',
-    noDiagram: false,
+    skipDiagram: false,
   }
   let processExitSpy: sinon.SinonStub
   let consoleLogSpy: sinon.SinonStub

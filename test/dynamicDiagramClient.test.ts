@@ -19,7 +19,7 @@ describe('dynamic diagram client', () => {
     skipValidations: false,
     darkMode: true,
     port: '8080',
-    noDiagram: false,
+    skipDiagram: false,
   }
   let interpreter: Interpreter
   let repl: Interface
@@ -41,12 +41,12 @@ describe('dynamic diagram client', () => {
     server!.close()
   })
 
-  it('should return a fake client if noDiagram is set', async () => {
-    const noDiagramOptions = {
+  it('should return a fake client if skipDiagram is set', async () => {
+    const skipDiagramOptions = {
       ...options,
-      noDiagram: true,
+      skipDiagram: true,
     }
-    const { enabled, app, server } = await initializeClient(noDiagramOptions, repl, interpreter)
+    const { enabled, app, server } = await initializeClient(skipDiagramOptions, repl, interpreter)
     expect(enabled).to.be.false
     expect(app).to.be.undefined
     expect(server).to.be.undefined

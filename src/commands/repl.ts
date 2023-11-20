@@ -26,7 +26,7 @@ export type Options = {
   skipValidations: boolean,
   darkMode: boolean,
   port: string,
-  noDiagram: boolean,
+  skipDiagram: boolean,
 }
 
 type DynamicDiagramClient = {
@@ -61,7 +61,7 @@ export async function replFn(autoImportPath: string | undefined, options: Option
   const onReloadClient = async (activateDiagram: boolean, newInterpreter?: Interpreter) => {
     const selectedInterpreter = newInterpreter ?? interpreter
     if (activateDiagram && !dynamicDiagramClient.enabled) {
-      options.noDiagram = !activateDiagram
+      options.skipDiagram = !activateDiagram
       dynamicDiagramClient = await initializeClient(options, repl, selectedInterpreter)
     } else {
       dynamicDiagramClient.onReload(selectedInterpreter)
@@ -141,7 +141,7 @@ function defineCommands(autoImportPath: string | undefined, options: Options, re
     logger.info(successDescription('Reloading environment'))
     const interpreter = await initializeInterpreter(autoImportPath, options)
     setInterpreter(interpreter, rerun)
-    reloadClient(options.noDiagram, interpreter)
+    reloadClient(options.skipDiagram, interpreter)
   }
 
   const commandHandler = new Command('Write a Wollok sentence or command to evaluate')
@@ -251,7 +251,7 @@ async function autocomplete(input: string): Promise<CompleterResult> {
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
 export async function initializeClient(options: Options, repl: Interface, interpreter: Interpreter): Promise<DynamicDiagramClient> {
-  if (options.noDiagram) {
+  if (options.skipDiagram) {
     return { onReload: (_interpreter: Interpreter) => {}, enabled: false }
   }
   const app = express()

@@ -15,7 +15,7 @@ describe('REPL', () => {
     skipValidations: false,
     darkMode: true,
     port: '8080',
-    noDiagram: false,
+    skipDiagram: false,
   }
   let interpreter: Interpreter
 

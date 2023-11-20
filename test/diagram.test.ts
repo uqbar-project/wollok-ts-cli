@@ -18,7 +18,7 @@ describe('Dynamic diagram', () => {
     skipValidations: true,
     port: '8080',
     darkMode: true,
-    noDiagram: false,
+    skipDiagram: false,
   }
   let interpreter: Interpreter
 
