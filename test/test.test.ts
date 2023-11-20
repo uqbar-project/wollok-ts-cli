@@ -294,15 +294,6 @@ describe('Test', () => {
       expect(spyCalledWithSubstring(loggerInfoSpy, '1 failing')).to.be.true
     })
 
-    it('returns exit code 2 if one or more tests fail', async () => {
-      await test(undefined, emptyOptions)
-
-      expect(processExitSpy.calledWith(2)).to.be.true
-      expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 5 tests')).to.be.true
-      expect(spyCalledWithSubstring(loggerInfoSpy, '4 passing')).to.be.true
-      expect(spyCalledWithSubstring(loggerInfoSpy, '1 failing')).to.be.true
-    })
-
     it('returns exit code 1 if tests throw an error', async () => {
       await test(undefined, {
         ...emptyOptions,
