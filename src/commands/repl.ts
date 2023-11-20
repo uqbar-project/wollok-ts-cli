@@ -40,7 +40,7 @@ export default async function (autoImportPath: string | undefined, options: Opti
   replFn(autoImportPath, options)
 }
 
-const commands: string[] = []
+const history: string[] = []
 
 export async function replFn(autoImportPath: string | undefined, options: Options): Promise<Interface> {
   logger.info(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
@@ -72,8 +72,8 @@ export async function replFn(autoImportPath: string | undefined, options: Option
 
   const onReloadInterpreter = (newInterpreter: Interpreter, rerun: boolean) => {
     interpreter = newInterpreter
-    const previousCommands = [...commands]
-    commands.length = 0
+    const previousCommands = [...history]
+    history.length = 0
     if (rerun) {
       previousCommands.forEach(command => {
         repl.prompt()
@@ -93,7 +93,7 @@ export async function replFn(autoImportPath: string | undefined, options: Option
       if (line.length) {
         if (line.startsWith(':')) commandHandler.parse(line.split(' '), { from: 'user' })
         else {
-          commands.push(line)
+          history.push(line)
           console.log(interprete(interpreter, line))
           dynamicDiagramClient.onReload(interpreter)
         }
