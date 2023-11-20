@@ -67,7 +67,7 @@ export const validateEnvironment = (environment: Environment, skipValidations: b
       }
     } catch (error: any) {
       logger.debug(error)
-      throw new Error(`Fatal error while building the environment. ${error.message}`)
+      throw new Error(`Fatal error while running validations. ${error.message}`)
     }
   }
 }
