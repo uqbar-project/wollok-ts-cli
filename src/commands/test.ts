@@ -34,8 +34,8 @@ export function getTarget(environment: Environment, filter: string | undefined, 
   return onlyTarget ? [onlyTarget] : possibleTargets.filter(testMatches(filterTest))
 }
 
-export function tabulationForNode(node: { fullyQualifiedName: string }): string {
-  return '  '.repeat(node.fullyQualifiedName.split('.').length - 1)
+export function tabulationForNode({ fullyQualifiedName }: { fullyQualifiedName: string }): string {
+  return '  '.repeat(fullyQualifiedName.split('.').length - 1)
 }
 
 export default async function (filter: string | undefined, options: Options): Promise<void> {
