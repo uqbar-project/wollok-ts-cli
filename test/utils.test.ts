@@ -21,7 +21,7 @@ describe('build & validating environment', () => {
 
   it('should throw an exception if validation fails', async () => {
     const environment = await buildEnvironmentForProject(join(badProjectPath, 'validation-errors'), ['fileWithValidationErrors.wlk'])
-    chai.expect(() => { validateEnvironment(environment, false) }).to.throw(/Fatal error while building the environment/)
+    chai.expect(() => { validateEnvironment(environment, false) }).to.throw(/Fatal error while running validations/)
   })
 
   it('should not throw an exception if validation fails but you want to skip validation', async () => {
