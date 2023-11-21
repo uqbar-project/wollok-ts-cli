@@ -179,9 +179,9 @@ export const folderSound = (projectPath: string, assetsPath: string | undefined)
   return folder ? join(pathDirname, folder) : pathDirname
 }
 
-export const getAssetsPath = (projectPath: string, assetsFromPackage: string | undefined): string => {
+export const getAssetsPath = (projectPath: string, assetsOptions: string | undefined): string => {
   const packageProperties = readPackageProperties(projectPath)
-  return assetsFromPackage ? join(projectPath, assetsFromPackage) : packageProperties?.assets as string
+  return join(projectPath, assetsOptions ?? packageProperties?.resourceFolder)
 }
 
 const drawDefinition = () => parse.File('draw').tryParse('object drawer{ method apply() native }')
