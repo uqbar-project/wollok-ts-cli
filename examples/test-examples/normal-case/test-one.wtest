@@ -1,0 +1,12 @@
+describe "this describe" {
+
+  test "a test" {
+    assert.equals(2, 2)
+  }
+
+  test "another test" {
+    const a = 2
+    assert.equals(2, a)
+  }
+
+}

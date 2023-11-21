@@ -40,3 +40,18 @@ export const diagramAssertions: Chai.ChaiPlugin = (chai) => {
     new Assertion(this._obj).to.include.nodeWith({ label, source: sourceId, target: targetId })
   })
 }
+
+
+// TODO: refactor
+export const spyCalledWithSubstring = (spy: sinon.SinonStub, value: string, debug = false): boolean => {
+  if (debug) console.info(`Checking for value [${value}] in spy`)
+  for (let i = 0; i < spy.callCount; i++) {
+    const call = spy.getCall(i)
+    if (debug) console.info(` ${i}: `)
+    for (let j = 0; j < call.args.length; j++) {
+      if (debug) console.info(`   ${j}: ${call.args[j]}`)
+      if (call.args[j].includes(value)) return true
+    }
+  }
+  return false
+}

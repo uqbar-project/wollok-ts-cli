@@ -16,7 +16,7 @@
     "test-with-coverage": "npm run lint && nyc --reporter=json --lines 70 npm run test:unit",
     "lint": "eslint . ",
     "lint:fix": "eslint . --fix",
-    "test:unit": "mocha --parallel -r ts-node/register/transpile-only test/**/*.test.ts",
+    "test:unit": "mocha --parallel -r ts-node/register/transpile-only test/**/*.test.ts --timeout 7000",
     "build": "shx rm -rf build && shx mkdir ./build && shx cp -r ./public ./build/public && tsc -p ./tsconfig.build.json",
     "watch": "npm run build -- -w",
     "pack": "pkg ."
@@ -25,7 +25,7 @@
     "wollok": "./build/src/index.js"
   },
   "pkg": {
-    "scripts": "build/src/**/*.js",
+    "scripts": "build/**/*.js",
     "targets": [
       "node18-linux-x64",
       "node18-macos-x64",
@@ -33,7 +33,7 @@
       "node18-win-x64"
     ],
     "assets": [
-      "public/**/*"
+      "./build/public/**/*"
     ],
     "outputPath": "dist"
   },
@@ -52,18 +52,23 @@
   },
   "devDependencies": {
     "@types/chai": "^4.3.9",
+    "@types/chai-as-promised": "^7.1.7",
     "@types/cytoscape": "^3.19.7",
     "@types/express": "^4.17.20",
     "@types/mocha": "^10.0.3",
     "@types/node": "^18.14.5",
     "@types/p5": "^1.7.1",
+    "@types/sinon": "^17.0.0",
     "@typescript-eslint/eslint-plugin": "^6.9.1",
     "@typescript-eslint/parser": "^6.9.1",
     "chai": "^4.3.7",
+    "chai-as-promised": "^7.1.1",
+    "chai-http": "^4.4.0",
     "eslint": "^8.52.0",
     "mocha": "^10.2.0",
     "nyc": "^15.1.0",
     "shx": "^0.3.4",
+    "sinon": "^17.0.1",
     "ts-node": "10.9.1",
     "typescript": "^4.9.5"
   }

@@ -1,16 +1,17 @@
 import { blue, bold, green, italic, red, yellowBright } from 'chalk'
-import fs, { Dirent } from 'fs'
+import fs, { Dirent, existsSync, mkdirSync } from 'fs'
 import { readFile } from 'fs/promises'
 import globby from 'globby'
 import logger from 'loglevel'
 import path, { join } from 'path'
-import { Entity, Environment, Field, Name, Node, Parameter, Problem, RuntimeObject, Sentence, Variable, WOLLOK_EXTRA_STACK_TRACE_HEADER, buildEnvironment } from 'wollok-ts'
+import { Entity, Environment, Field, Name, Node, Parameter, Problem, RuntimeObject, Sentence, Variable, WOLLOK_EXTRA_STACK_TRACE_HEADER, buildEnvironment, validate } from 'wollok-ts'
 import { List } from 'wollok-ts/dist/extensions'
 import { LocalScope } from 'wollok-ts/dist/linker'
 import { replNode } from './commands/repl'
 
 const { time, timeEnd } = console
 
+export const ENTER = '\n'
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // FILE / PATH HANDLING
@@ -26,6 +27,12 @@ export function getFQN(project: string, filePath: string): string {
 export type FileContent = {
   name: string,
   content: string,
+}
+
+export const createFolderIfNotExists = (folder: string): void => {
+  if (!existsSync(folder)) {
+    mkdirSync(folder)
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -45,6 +52,30 @@ export async function buildEnvironmentForProject(project: string, files: string[
   if (debug) time('Building environment')
   try { return buildEnvironment(environmentFiles) }
   finally { if (debug) timeEnd('Building environment') }
+}
+
+export const validateEnvironment = (environment: Environment, skipValidations: boolean = false): void => {
+  if (!skipValidations) {
+    try {
+      const problems = validate(environment)
+      problems.forEach(problem => logger.info(problemDescription(problem)))
+      if(!problems.length) {
+        logger.info(successDescription('No problems found building the environment!'))
+      }
+      else if(problems.some(_ => _.level === 'error')) {
+        throw new Error('Aborting run due to validation errors!')
+      }
+    } catch (error: any) {
+      logger.debug(error)
+      throw new Error(`Fatal error while running validations. ${error.message}`)
+    }
+  }
+}
+
+export const handleError = (error: any): void => {
+  logger.error(red(bold('💥 Uh-oh... Unexpected Error!')))
+  logger.error(red(error.message))
+  logger.debug(failureDescription('ℹ️ Stack trace:', error))
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -79,9 +110,8 @@ export const problemDescription = (problem: Problem): string => {
 // RESOURCES
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-export const publicPath = (...paths: string[]): string => {
-  return path.join(__dirname, '..', '..', 'public', ...paths)
-}
+export const publicPath = (...paths: string[]): string =>
+  path.join(__dirname, '..', 'public', ...paths)
 
 export const readPackageProperties = (pathProject: string): any | undefined => {
   const packagePath = path.join(pathProject, 'package.json')
