@@ -23,7 +23,6 @@ type Options = {
 }
 
 // TODO: Decouple io from getInterpreter
-let io: Server
 let timer = 0
 
 export default async function (programFQN: Name, { project, assets, skipValidations, port, game }: Options): Promise<void> {
@@ -43,15 +42,20 @@ export default async function (programFQN: Name, { project, assets, skipValidati
     const debug = logger.getLevel() <= logger.levels.DEBUG
     if (debug) time(successDescription('Run finalized successfully'))
 
-    const interpreter = game ? getGameInterpreter(environment, { project, assetsPath }, io) : interpret(environment, { ...natives })
+    let io: Server | undefined = undefined
+    if (game) {
+      io = initializeGameClient({ project, assetsPath, port })
+    }
+    const interpreter = game ? getGameInterpreter(environment, { project, assetsPath }, io!) : interpret(environment, { ...natives })
 
     interpreter.run(programFQN)
 
+    if (game) {
+      eventsFor(io!, interpreter, { project, assetsPath })
+    }
+
     if (debug) timeEnd(successDescription('Run finalized successfully'))
 
-    if (game) {
-      io = initializeGameClient(interpreter, { project, assetsPath, port })
-    }
   } catch (error: any) {
     handleError(error)
     if (!game) process.exit(1)
@@ -100,8 +104,7 @@ export const getGameInterpreter = (environment: Environment, { project, assetsPa
   return interpreter
 }
 
-export const initializeGameClient = (interpreter: Interpreter, { project, port, assetsPath }: { project: string, assetsPath: string, port: string }): Server => {
-  const sizeCanvas = canvasResolution(interpreter)
+export const initializeGameClient = ({ project, assetsPath, port }: { project: string, assetsPath: string, port: string }): Server => {
   const app = express()
   const server = http.createServer(app)
   const io = new Server(server)
@@ -113,7 +116,12 @@ export const initializeGameClient = (interpreter: Interpreter, { project, port, 
   server.listen(parseInt(port), 'localhost')
 
   logger.info(successDescription('Game available at: ' + bold(`http://localhost:${port}`)))
+  server.listen(3000)
+  return io
+}
 
+export const eventsFor = (io: Server, interpreter: Interpreter, { project, assetsPath }: { project: string, assetsPath: string }): void => {
+  const sizeCanvas = canvasResolution(interpreter)
   io.on('connection', socket => {
     logger.info(successDescription('Running game!'))
     socket.on('disconnect', () => { logger.info(successDescription('Game finished')) })
@@ -139,8 +147,6 @@ export const initializeGameClient = (interpreter: Interpreter, { project, port, 
       }
     }, 100)
   })
-  server.listen(3000)
-  return io
 }
 
 export const getImages = (projectPath: string, assetsPath: string | undefined): Image[] => {
