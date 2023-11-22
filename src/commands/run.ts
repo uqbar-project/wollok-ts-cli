@@ -4,7 +4,7 @@ import express from 'express'
 import fs, { Dirent } from 'fs'
 import http from 'http'
 import logger from 'loglevel'
-import { dirname, join, relative } from 'path'
+import { join, relative } from 'path'
 import { Server } from 'socket.io'
 import { Environment, link, Name, parse, RuntimeObject, WollokException } from 'wollok-ts'
 import interpret, { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
@@ -28,10 +28,10 @@ let timer = 0
 export default async function (programFQN: Name, { project, assets, skipValidations, port, game }: Options): Promise<void> {
   try {
     logger.info(`Running ${valueDescription(programFQN)} ${game ? 'as a game' : 'as a program'} on ${valueDescription(project)}`)
-    const assetsPath = game ? getAssetsPath(project, assets) : ''
+    const assetsFolder = game ? getAssetsFolder(project, assets) : ''
 
     if (game) {
-      logger.info(`Assets folder ${assetsPath}`)
+      logger.info(`Assets folder ${join(project, assetsFolder)}`)
     }
 
     const environment = link([drawDefinition()], await buildEnvironmentForProject(project))
@@ -44,25 +44,25 @@ export default async function (programFQN: Name, { project, assets, skipValidati
 
     let io: Server | undefined = undefined
     if (game) {
-      io = initializeGameClient({ project, assetsPath, port })
+      io = initializeGameClient({ project, assetsFolder, port })
     }
-    const interpreter = game ? getGameInterpreter(environment, { project, assetsPath }, io!) : interpret(environment, { ...natives })
+    const interpreter = game ? getGameInterpreter(environment, { project, assetsFolder }, io!) : interpret(environment, { ...natives })
 
     interpreter.run(programFQN)
 
     if (game) {
-      eventsFor(io!, interpreter, { project, assetsPath })
+      eventsFor(io!, interpreter, { project, assetsFolder })
     }
 
     if (debug) timeEnd(successDescription('Run finalized successfully'))
 
   } catch (error: any) {
     handleError(error)
-    if (!game) process.exit(1)
+    if (!game) process.exit(21)
   }
 }
 
-export const getGameInterpreter = (environment: Environment, { project, assetsPath }: { project: string, assetsPath: string }, io: Server): Interpreter => {
+export const getGameInterpreter = (environment: Environment, { project, assetsFolder }: { project: string, assetsFolder: string }, io: Server): Interpreter => {
   const nativesAndDraw = {
     ...natives,
     draw: {
@@ -84,7 +84,7 @@ export const getGameInterpreter = (environment: Environment, { project, assetsPa
                 sound.get('volume')!.innerNumber!,
                 sound.get('loop')!.innerBoolean!,
               ])
-            io.emit('updateSound', { path: folderSound(project, assetsPath), soundInstances: mappedSounds })
+            io.emit('updateSound', { path: getSoundsFolder(project, assetsFolder), soundInstances: mappedSounds })
           } catch (error: any) {
             if (error instanceof WollokException) logger.error(failureDescription(error.message))
             // TODO: si no es WollokException igual deberíamos loguear un error más general
@@ -104,7 +104,7 @@ export const getGameInterpreter = (environment: Environment, { project, assetsPa
   return interpreter
 }
 
-export const initializeGameClient = ({ project, assetsPath, port }: { project: string, assetsPath: string, port: string }): Server => {
+export const initializeGameClient = ({ project, assetsFolder, port }: { project: string, assetsFolder: string, port: string }): Server => {
   const app = express()
   const server = http.createServer(app)
   const io = new Server(server)
@@ -112,7 +112,7 @@ export const initializeGameClient = ({ project, assetsPath, port }: { project: s
   app.use(
     cors({ allowedHeaders: '*' }),
     express.static(publicPath('game'), { maxAge: '1d' }),
-    express.static(assetsPath ?? project, { maxAge: '1d' }))
+    express.static(assetsFolder ?? project, { maxAge: '1d' }))
   server.listen(parseInt(port), 'localhost')
 
   logger.info(successDescription('Game available at: ' + bold(`http://localhost:${port}`)))
@@ -120,7 +120,7 @@ export const initializeGameClient = ({ project, assetsPath, port }: { project: s
   return io
 }
 
-export const eventsFor = (io: Server, interpreter: Interpreter, { project, assetsPath }: { project: string, assetsPath: string }): void => {
+export const eventsFor = (io: Server, interpreter: Interpreter, { project, assetsFolder }: { project: string, assetsFolder: string }): void => {
   const sizeCanvas = canvasResolution(interpreter)
   io.on('connection', socket => {
     logger.info(successDescription('Running game!'))
@@ -129,8 +129,8 @@ export const eventsFor = (io: Server, interpreter: Interpreter, { project, asset
       queueEvent(interpreter, buildKeyPressEvent(interpreter, wKeyCode(key.key, key.keyCode)), buildKeyPressEvent(interpreter, 'ANY'))
     })
 
-    if (!assetsPath) logger.warn(failureDescription('Folder for assets not found!'))
-    socket.emit('images', getImages(project, assetsPath))
+    if (!assetsFolder) logger.warn(failureDescription('Folder for assets not found!'))
+    socket.emit('images', getImages(project, assetsFolder))
     socket.emit('sizeCanvasInic', [sizeCanvas.width, sizeCanvas.height])
 
     const id = setInterval(() => {
@@ -149,9 +149,9 @@ export const eventsFor = (io: Server, interpreter: Interpreter, { project, asset
   })
 }
 
-export const getImages = (projectPath: string, assetsPath: string | undefined): Image[] => {
+export const getImages = (projectPath: string, assetsFolder: string | undefined): Image[] => {
   const images: Image[] = []
-  const baseFolder = assetsPath ?? projectPath
+  const baseFolder = assetsFolder ?? projectPath
   const loadImagesIn = (basePath: string) => fs.readdirSync(basePath, { withFileTypes: true })
     .forEach((file: Dirent) => {
       if (file.isDirectory()) loadImagesIn(join(basePath, file.name))
@@ -173,15 +173,13 @@ export const getVisuals = (game: RuntimeObject, interpreter: Interpreter): Visua
   })
 
 
-export const folderSound = (projectPath: string, assetsPath: string | undefined): string => {
-  const pathDirname = dirname(projectPath)
-  const folder = fs.readdirSync(pathDirname).includes('sounds') ? 'sounds' : assetsPath
-  return folder ? join(pathDirname, folder) : pathDirname
-}
+export const getSoundsFolder = (projectPath: string, assetsOptions: string | undefined): string =>
+  fs.readdirSync(projectPath).includes('sounds') ? 'sounds' : assetsOptions ?? 'assets'
 
-export const getAssetsPath = (projectPath: string, assetsOptions: string | undefined): string => {
+
+export const getAssetsFolder = (projectPath: string, assetsOptions: string | undefined): string => {
   const packageProperties = readPackageProperties(projectPath)
-  return join(projectPath, assetsOptions ?? packageProperties?.resourceFolder)
+  return assetsOptions ?? packageProperties?.resourceFolder
 }
 
 const drawDefinition = () => parse.File('draw').tryParse('object drawer{ method apply() native }')

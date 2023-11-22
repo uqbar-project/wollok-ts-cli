@@ -1,12 +1,12 @@
 import chai from 'chai'
 import { join } from 'path'
-import { getAssetsPath } from '../src/commands/run'
+import { getSoundsFolder, getAssetsFolder } from '../src/commands/run'
+import { mkdirSync, rmdirSync } from 'fs'
 
 chai.should()
 const expect = chai.expect
 
 const project = join('examples', 'run-examples', 'basic-example')
-// const GITHUB_FOLDER = join('.github', 'workflows')
 
 // const baseOptions: Options = {
 //   project,
@@ -30,11 +30,39 @@ describe('testing run', () => {
 
   describe('getAssetsPath', () => {
     it('should return assets folder from options if it exists', () => {
-      expect(getAssetsPath(project, 'myAssets')).to.equal(join(project, 'myAssets'))
+      expect(getAssetsFolder(project, 'myAssets')).to.equal('myAssets')
     })
 
     it('should return assets folder from package if options is not set', () => {
-      expect(getAssetsPath(project, undefined)).to.equal(join(project, 'specialAssets'))
+      expect(getAssetsFolder(project, undefined)).to.equal('specialAssets')
+    })
+
+  })
+
+
+  describe('getSoundsFolder - project with sounds folder', () => {
+
+    beforeEach(() => {
+      mkdirSync(join(project, 'sounds'))
+    })
+
+    it('should return sounds folder from if it exists', () => {
+      expect(getSoundsFolder(project, 'assets')).to.equal('sounds')
+    })
+
+    afterEach(() => {
+      rmdirSync(join(project, 'sounds'))
+    })
+  })
+
+  describe('getSoundsFolder - project without sounds folder', () => {
+
+    it('should return assets option folder if present', () => {
+      expect(getSoundsFolder(project, 'myAssets')).to.equal('myAssets')
+    })
+
+    it('should return assets folder if assets options not sent', () => {
+      expect(getSoundsFolder(project, undefined)).to.equal('assets')
     })
 
   })
