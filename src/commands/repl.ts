@@ -119,7 +119,7 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
         environment.scope.register([REPL, entity]) // Register the auto-imported package as REPL package
       } else {
         console.log(failureDescription(`File ${valueDescription(autoImportPath)} doesn't exist or is outside of project ${project}!`))
-        process.exit(1)
+        process.exit(11)
       }
     } else {
       // Create a new REPL package
@@ -129,7 +129,7 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
     return new Interpreter(Evaluation.build(environment, natives))
   } catch (error: any) {
     handleError(error)
-    return process.exit(1)
+    return process.exit(12)
   }
 }
 
@@ -266,7 +266,7 @@ export async function initializeClient(options: Options, repl: Interface, interp
     } else {
       logger.info(yellow(bold(`⚡ REPL couldn't be started at port ${port}, error code ["${code}]. ⚡`)))
     }
-    process.exit(1)
+    process.exit(13)
   })
 
   const io = new Server(server)
