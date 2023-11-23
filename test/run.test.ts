@@ -1,32 +1,16 @@
 import chai from 'chai'
 import { join } from 'path'
-import { getSoundsFolder, getAssetsFolder } from '../src/commands/run'
+import run, { getSoundsFolder, getAssetsFolder } from '../src/commands/run'
 import { mkdirSync, rmdirSync } from 'fs'
+import sinon from 'sinon'
+import { spyCalledWithSubstring } from './assertions'
 
 chai.should()
 const expect = chai.expect
 
 const project = join('examples', 'run-examples', 'basic-example')
 
-// const baseOptions: Options = {
-//   project,
-//   noCI: false,
-//   noTest: false,
-//   game: false,
-// }
-
 describe('testing run', () => {
-
-  // let processExitSpy: sinon.SinonStub
-
-  // beforeEach(() => {
-  //   processExitSpy = sinon.stub(process, 'exit')
-  // })
-
-  // afterEach(() => {
-  //   rmSync(project, { recursive: true, force: true })
-  //   sinon.restore()
-  // })
 
   describe('getAssetsPath', () => {
     it('should return assets folder from options if it exists', () => {
@@ -65,6 +49,36 @@ describe('testing run', () => {
       expect(getSoundsFolder(project, undefined)).to.equal('assets')
     })
 
+  })
+
+  describe('run a simple program', () => {
+
+    let processExitSpy: sinon.SinonStub
+    let consoleLogSpy: sinon.SinonStub
+
+    beforeEach(() => {
+      processExitSpy = sinon.stub(process, 'exit')
+      consoleLogSpy = sinon.stub(console, 'log')
+    })
+
+    afterEach(() => {
+      sinon.restore()
+    })
+
+
+    it ('should work if program has no errors', async () => {
+      await run('mainExample.PepitaProgram', {
+        project: join('examples', 'run-examples', 'basic-example'),
+        skipValidations: false,
+        game: false,
+      })
+      expect(spyCalledWithSubstring(consoleLogSpy, 'Pepita empieza con 70')).to.be.true
+      expect(spyCalledWithSubstring(consoleLogSpy, 'Vuela')).to.be.true
+      expect(spyCalledWithSubstring(consoleLogSpy, '40')).to.be.true
+      expect(spyCalledWithSubstring(consoleLogSpy, 'Come')).to.be.true
+      expect(spyCalledWithSubstring(consoleLogSpy, '290')).to.be.true
+      expect(processExitSpy.calledWith(0)).to.be.true
+    })
   })
 
 })

@@ -3,7 +3,12 @@ object pepita {
 
   method energy() = energy
 
+  method eat(grams) {
+    energy = energy + grams * 10
+  }
+
   method fly(minutes) {
     energy = energy - minutes * 3
   }
+
 }

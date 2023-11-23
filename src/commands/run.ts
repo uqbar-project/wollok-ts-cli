@@ -16,14 +16,16 @@ const { time, timeEnd } = console
 
 type Options = {
   project: string
-  assets: string | undefined
+  assets?: string
   skipValidations: boolean
-  port: string
+  port?: string
   game: boolean
 }
 
 // TODO: Decouple io from getInterpreter
 let timer = 0
+
+const DEFAULT_PORT = '3000'
 
 export default async function (programFQN: Name, { project, assets, skipValidations, port, game }: Options): Promise<void> {
   try {
@@ -34,17 +36,21 @@ export default async function (programFQN: Name, { project, assets, skipValidati
       logger.info(`Assets folder ${join(project, assetsFolder)}`)
     }
 
-    const environment = link([drawDefinition()], await buildEnvironmentForProject(project))
+    let environment = await buildEnvironmentForProject(project)
+    if (game) {
+      environment = link([drawDefinition()], environment)
+    }
     validateEnvironment(environment, skipValidations)
 
     logger.info(`Running ${valueDescription(programFQN)}...${ENTER}`)
 
     const debug = logger.getLevel() <= logger.levels.DEBUG
+    // ??? -> no es otra la descripción
     if (debug) time(successDescription('Run finalized successfully'))
 
     let io: Server | undefined = undefined
     if (game) {
-      io = initializeGameClient({ project, assetsFolder, port })
+      io = initializeGameClient({ project, assetsFolder, port: port ?? DEFAULT_PORT })
     }
     const interpreter = game ? getGameInterpreter(environment, io!) : interpret(environment, { ...natives })
 
@@ -56,6 +62,7 @@ export default async function (programFQN: Name, { project, assets, skipValidati
 
     if (debug) timeEnd(successDescription('Run finalized successfully'))
 
+    if (!game) process.exit(0)
   } catch (error: any) {
     handleError(error)
     if (!game) process.exit(21)
@@ -86,8 +93,9 @@ export const getGameInterpreter = (environment: Environment, io: Server): Interp
               ])
             io.emit('updateSound', { soundInstances: mappedSounds })
           } catch (error: any) {
-            if (error instanceof WollokException) logger.error(failureDescription(error.message))
-            // TODO: si no es WollokException igual deberíamos loguear un error más general
+            logger.error(failureDescription(error instanceof WollokException ? error.message : 'Exception while executing the program'))
+            const debug = logger.getLevel() <= logger.levels.DEBUG
+            if (debug) logger.error(error)
             interpreter.send('stop', gameSingleton)
           }
         },
@@ -115,7 +123,6 @@ export const initializeGameClient = ({ project, assetsFolder, port }: { project:
     express.static(assetsFolder ?? project, { maxAge: '1d' }))
 
   const soundsFolder = getSoundsFolder(project, assetsFolder)
-  // TODO: testear que no esté pisando
   if (soundsFolder !== assetsFolder) {
     app.use(cors({ allowedHeaders: '*' }), express.static(soundsFolder, { maxAge: '1d' }))
   }
