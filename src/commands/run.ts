@@ -46,7 +46,7 @@ export default async function (programFQN: Name, { project, assets, skipValidati
     if (game) {
       io = initializeGameClient({ project, assetsFolder, port })
     }
-    const interpreter = game ? getGameInterpreter(environment, { project, assetsFolder }, io!) : interpret(environment, { ...natives })
+    const interpreter = game ? getGameInterpreter(environment, io!) : interpret(environment, { ...natives })
 
     interpreter.run(programFQN)
 
@@ -62,7 +62,7 @@ export default async function (programFQN: Name, { project, assets, skipValidati
   }
 }
 
-export const getGameInterpreter = (environment: Environment, { project, assetsFolder }: { project: string, assetsFolder: string }, io: Server): Interpreter => {
+export const getGameInterpreter = (environment: Environment, io: Server): Interpreter => {
   const nativesAndDraw = {
     ...natives,
     draw: {
@@ -84,7 +84,7 @@ export const getGameInterpreter = (environment: Environment, { project, assetsFo
                 sound.get('volume')!.innerNumber!,
                 sound.get('loop')!.innerBoolean!,
               ])
-            io.emit('updateSound', { path: getSoundsFolder(project, assetsFolder), soundInstances: mappedSounds })
+            io.emit('updateSound', { soundInstances: mappedSounds })
           } catch (error: any) {
             if (error instanceof WollokException) logger.error(failureDescription(error.message))
             // TODO: si no es WollokException igual deberíamos loguear un error más general
@@ -113,6 +113,13 @@ export const initializeGameClient = ({ project, assetsFolder, port }: { project:
     cors({ allowedHeaders: '*' }),
     express.static(publicPath('game'), { maxAge: '1d' }),
     express.static(assetsFolder ?? project, { maxAge: '1d' }))
+
+  const soundsFolder = getSoundsFolder(project, assetsFolder)
+  // TODO: testear que no esté pisando
+  if (soundsFolder !== assetsFolder) {
+    app.use(cors({ allowedHeaders: '*' }), express.static(soundsFolder, { maxAge: '1d' }))
+  }
+
   server.listen(parseInt(port), 'localhost')
 
   logger.info(successDescription('Game available at: ' + bold(`http://localhost:${port}`)))
