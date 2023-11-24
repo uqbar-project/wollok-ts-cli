@@ -1,5 +1,6 @@
 let cy
 let currentElements = []
+let layout
 
 function initializeCytoscape(container) {
   const fontFace = {
@@ -107,14 +108,8 @@ function initializeCytoscape(container) {
       },
     ],
   })
-}
 
-function updateLayout() {
-  updateNodes(cy.elements())
-}
-
-function updateNodes(elements) {
-  const layout = elements.layout({
+  layout = cy.layout({
     name: "cose",
     animate: false,
     nodeDimensionsIncludeLabels: true,
@@ -122,8 +117,6 @@ function updateNodes(elements) {
     nodeOverlap: 4,
     randomize: false,
   })
-
-  layout.run()
 }
 
 function objectsPositionChanged() {
@@ -142,13 +135,8 @@ function reloadDiagram(elements) {
   cy.filter((element) => !ids.includes(element.id())).remove()
   const newElements = elements.filter((element) => !cy.hasElementWithId(element.data.id))
   if (newElements.length) {
-    const shouldUpdateLayout = !objectsKeepTheirPosition() || cy.elements().length === 0
-    const addedNodes = cy.add(newElements)
-    if (shouldUpdateLayout) {
-      updateLayout()
-    } else {
-      updateNodes(readyForLayoutElems(addedNodes))
-    }
+    cy.add(newElements)
+    layout.run()
   }
 }
 
