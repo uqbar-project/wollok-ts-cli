@@ -29,6 +29,10 @@ let timer = 0
 
 const DEFAULT_PORT = '4200'
 
+type DynamicDiagramClient = {
+  onReload: () => void,
+}
+
 export default async function (programFQN: Name, options: Options): Promise<void> {
   const { project, game } = options
   try {
@@ -46,10 +50,11 @@ export default async function (programFQN: Name, options: Options): Promise<void
     const ioGame: Server | undefined = initializeGameClient(options)
     const interpreter = game ? getGameInterpreter(environment, ioGame!) : interpret(environment, { ...natives })
     const programPackage = environment.getNodeByFQN<Package>(programFQN).parent as Package
-    await initializeDynamicDiagram(programPackage, options, interpreter)
+    const dynamicDiagramClient = await initializeDynamicDiagram(programPackage, options, interpreter)
 
     interpreter.run(programFQN)
-    eventsFor(ioGame!, interpreter, options)
+
+    eventsFor(ioGame!, interpreter, dynamicDiagramClient, options)
 
     if (debug) timeEnd(successDescription('Run finalized successfully'))
 
@@ -129,8 +134,8 @@ export const initializeGameClient = ({ project, assets, port, game }: Options): 
 }
 
 // TODO: change to an object with a reload function
-export async function initializeDynamicDiagram(programPackage: Package, options: Options, interpreter: Interpreter): Promise<void> {
-  if (!options.startDiagram) return
+export async function initializeDynamicDiagram(programPackage: Package, options: Options, interpreter: Interpreter): Promise<DynamicDiagramClient> {
+  if (!options.startDiagram) return { onReload: () => {} }
 
   const app = express()
   const server = http.createServer(app)
@@ -160,22 +165,15 @@ export async function initializeDynamicDiagram(programPackage: Package, options:
     logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://localhost:${currentPort}`)))
   })
 
-  // return {
-  //   onReload: (interpreter: Interpreter) => {
-  //     io.off('connection', currentConnectionListener)
-  //     currentConnectionListener = connectionListener(interpreter)
-  //     io.on('connection', currentConnectionListener)
-
-  //     io.emit('updateDiagram', getDataDiagram(interpreter))
-  //   },
-  //   enabled: true,
-  //   app,
-  //   server,
-  // }
+  return {
+    onReload: () => {
+      io.emit('updateDiagram', getDataDiagram(interpreter, programPackage))
+    },
+  }
 }
 
 
-export const eventsFor = (io: Server, interpreter: Interpreter, { game, project, assets }: Options): void => {
+export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramClient: DynamicDiagramClient, { game, project, assets }: Options): void => {
   if (!game) return
   const sizeCanvas = canvasResolution(interpreter)
   io.on('connection', socket => {
@@ -195,6 +193,8 @@ export const eventsFor = (io: Server, interpreter: Interpreter, { game, project,
       try {
         interpreter.send('flushEvents', game, interpreter.reify(timer))
         timer += 300
+        // We can pass the interpreter but a program does not change its interpreter
+        dynamicDiagramClient.onReload()
         if (!game.get('running')) { clearInterval(id) }
       } catch (error: any) {
         interpreter.send('stop', game)
