@@ -25,7 +25,7 @@ program.command('run')
   .option('--port', 'port to run the server', '3000')
   .option('-g, --game', 'sets the program as a game', false)
   .option('-v, --verbose', 'print debugging information', false)
-  .option('-d, --startDiagram', 'activate the dynamic diagram', false)
+  .option('-d, --startDiagram', 'activate the dynamic diagram (only for games)', false)
   .action(run)
 
 program.command('test')

@@ -135,7 +135,7 @@ export const initializeGameClient = ({ project, assets, port, game }: Options): 
 
 // TODO: change to an object with a reload function
 export async function initializeDynamicDiagram(programPackage: Package, options: Options, interpreter: Interpreter): Promise<DynamicDiagramClient> {
-  if (!options.startDiagram) return { onReload: () => {} }
+  if (!options.startDiagram || !options.game) return { onReload: () => {} }
 
   const app = express()
   const server = http.createServer(app)
