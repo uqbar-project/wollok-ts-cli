@@ -6,7 +6,7 @@ import http from 'http'
 import logger from 'loglevel'
 import { join, relative } from 'path'
 import { Server, Socket } from 'socket.io'
-import { Environment, link, Name, parse, RuntimeObject, WollokException } from 'wollok-ts'
+import { Environment, link, Name, Package, parse, RuntimeObject, WollokException } from 'wollok-ts'
 import interpret, { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { ENTER, buildEnvironmentForProject, failureDescription, handleError, isImageFile, publicPath, readPackageProperties, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
@@ -32,7 +32,6 @@ const DEFAULT_PORT = '4200'
 export default async function (programFQN: Name, options: Options): Promise<void> {
   const { project, game } = options
   try {
-    // TODO: validate port if game if set
     logger.info(`Running ${valueDescription(programFQN)} ${runner(game)} on ${valueDescription(project)}`)
     options.assets = game ? getAssetsFolder(options) : ''
     if (game) {
@@ -46,7 +45,8 @@ export default async function (programFQN: Name, options: Options): Promise<void
 
     const ioGame: Server | undefined = initializeGameClient(options)
     const interpreter = game ? getGameInterpreter(environment, ioGame!) : interpret(environment, { ...natives })
-    await initializeDynamicDiagram(options, interpreter)
+    const programPackage = environment.getNodeByFQN<Package>(programFQN).parent as Package
+    await initializeDynamicDiagram(programPackage, options, interpreter)
 
     interpreter.run(programFQN)
     eventsFor(ioGame!, interpreter, options)
@@ -128,7 +128,8 @@ export const initializeGameClient = ({ project, assets, port, game }: Options): 
   return io
 }
 
-export async function initializeDynamicDiagram(options: Options, interpreter: Interpreter): Promise<void> {
+// TODO: change to an object with a reload function
+export async function initializeDynamicDiagram(programPackage: Package, options: Options, interpreter: Interpreter): Promise<void> {
   if (!options.startDiagram) return
 
   const app = express()
@@ -144,7 +145,7 @@ export async function initializeDynamicDiagram(options: Options, interpreter: In
   })
   const connectionListener = (interpreter: Interpreter) => (socket: Socket) => {
     socket.emit('initDiagram', options)
-    socket.emit('updateDiagram', getDataDiagram(interpreter))
+    socket.emit('updateDiagram', getDataDiagram(interpreter, programPackage))
   }
   const currentConnectionListener = connectionListener(interpreter)
   io.on('connection', currentConnectionListener)
@@ -158,6 +159,19 @@ export async function initializeDynamicDiagram(options: Options, interpreter: In
   server.addListener('listening', () => {
     logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://localhost:${currentPort}`)))
   })
+
+  // return {
+  //   onReload: (interpreter: Interpreter) => {
+  //     io.off('connection', currentConnectionListener)
+  //     currentConnectionListener = connectionListener(interpreter)
+  //     io.on('connection', currentConnectionListener)
+
+  //     io.emit('updateDiagram', getDataDiagram(interpreter))
+  //   },
+  //   enabled: true,
+  //   app,
+  //   server,
+  // }
 }
 
 

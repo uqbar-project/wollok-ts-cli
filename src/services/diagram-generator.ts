@@ -12,11 +12,12 @@ const WOLLOK_BASE_MODULES = 'wollok.'
 
 const SELF = 'self'
 
-function getImportedDefinitionsFromConsole(interpreter: Interpreter): Entity[] {
-  const replPackage = replNode(interpreter.evaluation.environment)
+function getImportedDefinitions(interpreter: Interpreter, rootFQN?: Package): Entity[] {
+  const environment = interpreter.evaluation.environment
+  const importedPackage = rootFQN ?? replNode(environment)
   return [
-    ...replPackage.members,
-    ...replPackage.imports.flatMap(resolveImport),
+    ...importedPackage.members,
+    ...importedPackage.imports.flatMap(resolveImport),
   ]
 }
 
@@ -27,8 +28,8 @@ function resolveImport(imp: Import): Entity[] {
     : [importedEntity]
 }
 
-export function getDataDiagram(interpreter: Interpreter): ElementDefinition[] {
-  const importedFromConsole = getImportedDefinitionsFromConsole(interpreter)
+export function getDataDiagram(interpreter: Interpreter, rootFQN?: Package): ElementDefinition[] {
+  const importedFromConsole = getImportedDefinitions(interpreter, rootFQN)
   const currentFrame = interpreter.evaluation.currentFrame
   const objects = new Map(Array.from(currentFrame.locals.keys()).map((name) => [name, currentFrame.get(name)]))
 
