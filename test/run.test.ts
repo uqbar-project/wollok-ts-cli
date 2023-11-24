@@ -12,13 +12,25 @@ const project = join('examples', 'run-examples', 'basic-example')
 
 describe('testing run', () => {
 
+  const buildOptions = (game: boolean, assets: string | undefined) => ({
+    game,
+    project,
+    assets,
+    skipValidations: false,
+    startDiagram: false,
+  })
+
   describe('getAssetsPath', () => {
     it('should return assets folder from options if it exists', () => {
-      expect(getAssetsFolder(project, 'myAssets')).to.equal('myAssets')
+      expect(getAssetsFolder(buildOptions(true, 'myAssets'))).to.equal('myAssets')
     })
 
     it('should return assets folder from package if options is not set', () => {
-      expect(getAssetsFolder(project, undefined)).to.equal('specialAssets')
+      expect(getAssetsFolder(buildOptions(true, undefined))).to.equal('specialAssets')
+    })
+
+    it('should return undefined if game is not set', () => {
+      expect(getAssetsFolder(buildOptions(false, 'myAssets'))).to.equal('')
     })
 
   })
@@ -71,6 +83,7 @@ describe('testing run', () => {
         project: join('examples', 'run-examples', 'basic-example'),
         skipValidations: false,
         game: false,
+        startDiagram: false,
       })
       expect(spyCalledWithSubstring(consoleLogSpy, 'Pepita empieza con 70')).to.be.true
       expect(spyCalledWithSubstring(consoleLogSpy, 'Vuela')).to.be.true

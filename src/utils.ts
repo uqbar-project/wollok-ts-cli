@@ -1,4 +1,4 @@
-import { blue, bold, green, italic, red, yellowBright } from 'chalk'
+import { blue, bold, green, italic, red, yellow, yellowBright } from 'chalk'
 import fs, { Dirent, existsSync, mkdirSync } from 'fs'
 import { readFile } from 'fs/promises'
 import globby from 'globby'
@@ -126,7 +126,6 @@ export const isImageFile = (file: Dirent): boolean => imageExtensions.some(ext =
 // WOLLOK AST
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-
 export function isConstant(obj: RuntimeObject, localName: string): boolean {
   return obj.module.lookupField(localName)?.isConstant ?? false
 }
@@ -152,3 +151,19 @@ const scopeContribution = (contributor: Node): List<[Name, Node]> => {
   return []
 }
 const canBeReferenced = (node: Node): node is Entity | Field | Parameter => node.is(Entity) || node.is(Field) || node.is(Parameter)
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// WOLLOK AST
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+export const serverError = ({ port, code }: { port: string, code: string }): void => {
+  logger.info('')
+  if (code === 'EADDRINUSE') {
+    logger.info(yellow(bold(`⚡ We couldn't start dynamic diagram at port ${port}, because it is already in use. ⚡`)))
+    // eslint-disable-next-line @typescript-eslint/quotes
+    logger.info(yellow(`Please make sure you don't have another REPL session running in another terminal. \nIf you want to start another instance, you can use "--port xxxx" option, where xxxx should be any available port.`))
+  } else {
+    logger.info(yellow(bold(`⚡ REPL couldn't be started at port ${port}, error code ["${code}]. ⚡`)))
+  }
+  process.exit(13)
+}

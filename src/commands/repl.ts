@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { bold, yellow } from 'chalk'
+import { bold } from 'chalk'
 import { Command } from 'commander'
 import cors from 'cors'
 import express, { Express } from 'express'
@@ -14,7 +14,7 @@ import link from 'wollok-ts/dist/linker'
 import { ParseError } from 'wollok-ts/dist/parser'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { getDataDiagram } from '../services/diagram-generator'
-import { buildEnvironmentForProject, failureDescription, getFQN, linkSentence, publicPath, successDescription, valueDescription, validateEnvironment, handleError, ENTER } from '../utils'
+import { buildEnvironmentForProject, failureDescription, getFQN, linkSentence, publicPath, successDescription, valueDescription, validateEnvironment, handleError, ENTER, serverError } from '../utils'
 
 export const REPL = 'REPL'
 
@@ -257,17 +257,7 @@ export async function initializeClient(options: Options, repl: Interface, interp
   const app = express()
   const server = http.createServer(app)
 
-  server.addListener('error', ({ port, code }: { port: string, code: string }) => {
-    logger.info('')
-    if (code === 'EADDRINUSE') {
-      logger.info(yellow(bold(`⚡ We couldn't start dynamic diagram at port ${port}, because it is already in use. ⚡`)))
-      // eslint-disable-next-line @typescript-eslint/quotes
-      logger.info(yellow(`Please make sure you don't have another REPL session running in another terminal. \nIf you want to start another instance, you can use "--port xxxx" option, where xxxx should be any available port.`))
-    } else {
-      logger.info(yellow(bold(`⚡ REPL couldn't be started at port ${port}, error code ["${code}]. ⚡`)))
-    }
-    process.exit(13)
-  })
+  server.addListener('error', serverError)
 
   const io = new Server(server)
 

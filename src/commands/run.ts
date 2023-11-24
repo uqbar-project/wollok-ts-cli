@@ -5,12 +5,13 @@ import fs, { Dirent } from 'fs'
 import http from 'http'
 import logger from 'loglevel'
 import { join, relative } from 'path'
-import { Server } from 'socket.io'
+import { Server, Socket } from 'socket.io'
 import { Environment, link, Name, parse, RuntimeObject, WollokException } from 'wollok-ts'
 import interpret, { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
-import { ENTER, buildEnvironmentForProject, failureDescription, handleError, isImageFile, publicPath, readPackageProperties, successDescription, validateEnvironment, valueDescription } from '../utils'
+import { ENTER, buildEnvironmentForProject, failureDescription, handleError, isImageFile, publicPath, readPackageProperties, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
 import { buildKeyPressEvent, canvasResolution, Image, queueEvent, visualState, VisualState, wKeyCode } from './extrasGame'
+import { getDataDiagram } from '../services/diagram-generator'
 
 const { time, timeEnd } = console
 
@@ -19,46 +20,36 @@ type Options = {
   assets?: string
   skipValidations: boolean
   port?: string
-  game: boolean
+  game: boolean,
+  startDiagram: boolean
 }
 
 // TODO: Decouple io from getInterpreter
 let timer = 0
 
-const DEFAULT_PORT = '3000'
+const DEFAULT_PORT = '4200'
 
-export default async function (programFQN: Name, { project, assets, skipValidations, port, game }: Options): Promise<void> {
+export default async function (programFQN: Name, options: Options): Promise<void> {
+  const { project, game } = options
   try {
-    logger.info(`Running ${valueDescription(programFQN)} ${game ? 'as a game' : 'as a program'} on ${valueDescription(project)}`)
-    const assetsFolder = game ? getAssetsFolder(project, assets) : ''
-
+    // TODO: validate port if game if set
+    logger.info(`Running ${valueDescription(programFQN)} ${runner(game)} on ${valueDescription(project)}`)
+    options.assets = game ? getAssetsFolder(options) : ''
     if (game) {
-      logger.info(`Assets folder ${join(project, assetsFolder)}`)
+      logger.info(`Assets folder ${join(project, options.assets)}`)
     }
 
-    let environment = await buildEnvironmentForProject(project)
-    if (game) {
-      environment = link([drawDefinition()], environment)
-    }
-    validateEnvironment(environment, skipValidations)
-
-    logger.info(`Running ${valueDescription(programFQN)}...${ENTER}`)
-
+    logger.info(`Building environment for ${valueDescription(programFQN)}...${ENTER}`)
+    const environment = await buildEnvironmentForProgram(options)
     const debug = logger.getLevel() <= logger.levels.DEBUG
-    // ??? -> no es otra la descripción
-    if (debug) time(successDescription('Run finalized successfully'))
+    if (debug) time(successDescription('Run initiated successfully'))
 
-    let io: Server | undefined = undefined
-    if (game) {
-      io = initializeGameClient({ project, assetsFolder, port: port ?? DEFAULT_PORT })
-    }
-    const interpreter = game ? getGameInterpreter(environment, io!) : interpret(environment, { ...natives })
+    const ioGame: Server | undefined = initializeGameClient(options)
+    const interpreter = game ? getGameInterpreter(environment, ioGame!) : interpret(environment, { ...natives })
+    await initializeDynamicDiagram(options, interpreter)
 
     interpreter.run(programFQN)
-
-    if (game) {
-      eventsFor(io!, interpreter, { project, assetsFolder })
-    }
+    eventsFor(ioGame!, interpreter, options)
 
     if (debug) timeEnd(successDescription('Run finalized successfully'))
 
@@ -112,7 +103,9 @@ export const getGameInterpreter = (environment: Environment, io: Server): Interp
   return interpreter
 }
 
-export const initializeGameClient = ({ project, assetsFolder, port }: { project: string, assetsFolder: string, port: string }): Server => {
+export const initializeGameClient = ({ project, assets, port, game }: Options): Server | undefined => {
+  if (!game) return undefined
+
   const app = express()
   const server = http.createServer(app)
   const io = new Server(server)
@@ -120,21 +113,56 @@ export const initializeGameClient = ({ project, assetsFolder, port }: { project:
   app.use(
     cors({ allowedHeaders: '*' }),
     express.static(publicPath('game'), { maxAge: '1d' }),
-    express.static(assetsFolder ?? project, { maxAge: '1d' }))
+    express.static(assets ?? project, { maxAge: '1d' }))
 
-  const soundsFolder = getSoundsFolder(project, assetsFolder)
-  if (soundsFolder !== assetsFolder) {
+  const soundsFolder = getSoundsFolder(project, assets)
+  if (soundsFolder !== assets) {
     app.use(cors({ allowedHeaders: '*' }), express.static(soundsFolder, { maxAge: '1d' }))
   }
 
-  server.listen(parseInt(port), 'localhost')
+  const currentPort = gamePort(port!)
+  server.listen(parseInt(currentPort), 'localhost')
 
-  logger.info(successDescription('Game available at: ' + bold(`http://localhost:${port}`)))
-  server.listen(3000)
+  logger.info(successDescription('Game available at: ' + bold(`http://localhost:${currentPort}`)))
+  server.listen(currentPort)
   return io
 }
 
-export const eventsFor = (io: Server, interpreter: Interpreter, { project, assetsFolder }: { project: string, assetsFolder: string }): void => {
+export async function initializeDynamicDiagram(options: Options, interpreter: Interpreter): Promise<void> {
+  if (!options.startDiagram) return
+
+  const app = express()
+  const server = http.createServer(app)
+
+  server.addListener('error', serverError)
+
+  const io = new Server(server)
+
+  io.on('connection', (socket: Socket) => {
+    logger.debug(successDescription('Connected to Dynamic diagram'))
+    socket.on('disconnect', () => { logger.debug(failureDescription('Dynamic diagram closed')) })
+  })
+  const connectionListener = (interpreter: Interpreter) => (socket: Socket) => {
+    socket.emit('initDiagram', options)
+    socket.emit('updateDiagram', getDataDiagram(interpreter))
+  }
+  const currentConnectionListener = connectionListener(interpreter)
+  io.on('connection', currentConnectionListener)
+
+  app.use(
+    cors({ allowedHeaders: '*' }),
+    express.static(publicPath('diagram'), { maxAge: '1d' }),
+  )
+  const currentPort = dynamicDiagramPort(options.port!)
+  server.listen(parseInt(currentPort), 'localhost')
+  server.addListener('listening', () => {
+    logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://localhost:${currentPort}`)))
+  })
+}
+
+
+export const eventsFor = (io: Server, interpreter: Interpreter, { game, project, assets }: Options): void => {
+  if (!game) return
   const sizeCanvas = canvasResolution(interpreter)
   io.on('connection', socket => {
     logger.info(successDescription('Running game!'))
@@ -143,8 +171,8 @@ export const eventsFor = (io: Server, interpreter: Interpreter, { project, asset
       queueEvent(interpreter, buildKeyPressEvent(interpreter, wKeyCode(key.key, key.keyCode)), buildKeyPressEvent(interpreter, 'ANY'))
     })
 
-    if (!assetsFolder) logger.warn(failureDescription('Folder for assets not found!'))
-    socket.emit('images', getImages(project, assetsFolder))
+    if (!assets) logger.warn(failureDescription('Folder for assets not found!'))
+    socket.emit('images', getImages(project, assets))
     socket.emit('sizeCanvasInic', [sizeCanvas.width, sizeCanvas.height])
 
     const id = setInterval(() => {
@@ -191,9 +219,25 @@ export const getSoundsFolder = (projectPath: string, assetsOptions: string | und
   fs.readdirSync(projectPath).includes('sounds') ? 'sounds' : assetsOptions ?? 'assets'
 
 
-export const getAssetsFolder = (projectPath: string, assetsOptions: string | undefined): string => {
-  const packageProperties = readPackageProperties(projectPath)
-  return assetsOptions ?? packageProperties?.resourceFolder
+export const getAssetsFolder = ({ game, project, assets }: Options): string => {
+  if (!game) return ''
+  const packageProperties = readPackageProperties(project)
+  return assets ?? packageProperties?.resourceFolder
 }
+
+export const buildEnvironmentForProgram = async ({ project, skipValidations, game }: Options): Promise<Environment> => {
+  let environment = await buildEnvironmentForProject(project)
+  if (game) {
+    environment = link([drawDefinition()], environment)
+  }
+  validateEnvironment(environment, skipValidations)
+  return environment
+}
+
+export const runner = (game: boolean): string => game ? 'as a game' : 'as a program'
+
+export const gamePort = (port: string): string => port ?? DEFAULT_PORT
+
+export const dynamicDiagramPort = (port: string): string => `${+gamePort(port) + 1}`
 
 const drawDefinition = () => parse.File('draw').tryParse('object drawer{ method apply() native }')
