@@ -1,3 +1,4 @@
+import { Image } from './../../build/src/commands/extrasGame.d'
 import { bold } from 'chalk'
 import cors from 'cors'
 import express from 'express'
@@ -210,21 +211,19 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
 }
 
 export const getImages = (projectPath: string, assetsFolder: string | undefined): Image[] => {
-  const images: Image[] = []
   const baseFolder = join(projectPath, assetsFolder ?? '')
-  const loadImagesIn = (basePath: string) => {
-    if (!existsSync(basePath)) throw `Folder ${basePath} does not exist while getting images`
-    return fs.readdirSync(basePath, { withFileTypes: true })
-      .forEach((file: Dirent) => {
-        if (file.isDirectory()) loadImagesIn(join(basePath, file.name))
-        else if (isImageFile(file)) {
-          const fileName = relative(baseFolder, join(basePath, file.name))
-          images.push({ name: fileName, url: fileName })
-        }
-      })
-  }
-  loadImagesIn(baseFolder)
-  return images
+  if (!existsSync(baseFolder)) throw `Folder image ${baseFolder} does not exist`
+
+  const fileRelativeFor = (fileName: string) => ({ name: fileName, url: fileName })
+
+  const loadImagesIn = (basePath: string): Image[] =>
+    fs.readdirSync(basePath, { withFileTypes: true })
+      .flatMap((file: Dirent) =>
+        file.isDirectory() ? loadImagesIn(join(basePath, file.name)) :
+        isImageFile(file) ? [fileRelativeFor(relative(baseFolder, join(basePath, file.name)))] : []
+      )
+
+  return loadImagesIn(baseFolder)
 }
 
 export const getVisuals = (game: RuntimeObject, interpreter: Interpreter): VisualState[] =>
