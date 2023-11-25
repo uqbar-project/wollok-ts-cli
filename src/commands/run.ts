@@ -47,6 +47,7 @@ export default async function (programFQN: Name, options: Options): Promise<void
     const debug = logger.getLevel() <= logger.levels.DEBUG
     if (debug) time(successDescription('Run initiated successfully'))
 
+
     const ioGame: Server | undefined = initializeGameClient(options)
     const interpreter = game ? getGameInterpreter(environment, ioGame!) : interpret(environment, { ...natives })
     const programPackage = environment.getNodeByFQN<Package>(programFQN).parent as Package
@@ -188,16 +189,19 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
     socket.emit('sizeCanvasInic', [sizeCanvas.width, sizeCanvas.height])
 
     const id = setInterval(() => {
-      const game = interpreter?.object('wollok.game.game')
-      socket.emit('cellPixelSize', game.get('cellSize')!.innerNumber!)
+      const gameSingleton = interpreter?.object('wollok.game.game')
+      socket.emit('cellPixelSize', gameSingleton.get('cellSize')!.innerNumber!)
       try {
-        interpreter.send('flushEvents', game, interpreter.reify(timer))
+        interpreter.send('flushEvents', gameSingleton, interpreter.reify(timer))
         timer += 300
-        // We can pass the interpreter but a program does not change its interpreter
+        // We can pass the interpreter but a program does not change it
         dynamicDiagramClient.onReload()
-        if (!game.get('running')) { clearInterval(id) }
+        if (!gameSingleton.get('running')?.innerBoolean) {
+          clearInterval(id)
+          process.exit(0)
+        }
       } catch (error: any) {
-        interpreter.send('stop', game)
+        interpreter.send('stop', gameSingleton)
         socket.emit('errorDetected', error.message)
         clearInterval(id)
       }

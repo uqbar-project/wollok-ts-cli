@@ -1,8 +1,8 @@
 import chai from 'chai'
-import { join } from 'path'
-import run, { getSoundsFolder, getAssetsFolder } from '../src/commands/run'
 import { mkdirSync, rmdirSync } from 'fs'
+import { join } from 'path'
 import sinon from 'sinon'
+import run, { getAssetsFolder, getSoundsFolder } from '../src/commands/run'
 import { spyCalledWithSubstring } from './assertions'
 
 chai.should()
@@ -91,6 +91,30 @@ describe('testing run', () => {
       expect(spyCalledWithSubstring(consoleLogSpy, 'Come')).to.be.true
       expect(spyCalledWithSubstring(consoleLogSpy, '290')).to.be.true
       expect(processExitSpy.calledWith(0)).to.be.true
+    })
+  })
+
+  describe('run a simple game', () => {
+
+    let clock: sinon.SinonFakeTimers
+
+    beforeEach(() => {
+      clock = sinon.useFakeTimers()
+    })
+
+    afterEach(() => {
+      sinon.restore()
+    })
+
+
+    it ('smoke teset - should work if program has no errors', async () => {
+      run('mainGame.PepitaGame', {
+        project: join('examples', 'run-examples', 'basic-example'),
+        skipValidations: false,
+        game: true,
+        startDiagram: true,
+      })
+      await clock.runAllAsync()
     })
   })
 
