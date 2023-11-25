@@ -116,7 +116,9 @@ describe('testing run', () => {
       )
     })
 
-    // TODO: unexistent folder
+    it('should throw error for unexistent folder', () => {
+      expect(() => { getImages(imageProject, 'unexistentFolder') }).to.throw(/does not exist while getting images/)
+    })
 
   })
 

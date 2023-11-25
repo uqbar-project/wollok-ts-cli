@@ -1,7 +1,7 @@
 import { bold } from 'chalk'
 import cors from 'cors'
 import express from 'express'
-import fs, { Dirent } from 'fs'
+import fs, { Dirent, existsSync } from 'fs'
 import http from 'http'
 import logger from 'loglevel'
 import { join, relative } from 'path'
@@ -212,14 +212,17 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
 export const getImages = (projectPath: string, assetsFolder: string | undefined): Image[] => {
   const images: Image[] = []
   const baseFolder = join(projectPath, assetsFolder ?? '')
-  const loadImagesIn = (basePath: string) => fs.readdirSync(basePath, { withFileTypes: true })
-    .forEach((file: Dirent) => {
-      if (file.isDirectory()) loadImagesIn(join(basePath, file.name))
-      else if (isImageFile(file)) {
-        const fileName = relative(baseFolder, join(basePath, file.name))
-        images.push({ name: fileName, url: fileName })
-      }
-    })
+  const loadImagesIn = (basePath: string) => {
+    if (!existsSync(basePath)) throw `Folder ${basePath} does not exist while getting images`
+    return fs.readdirSync(basePath, { withFileTypes: true })
+      .forEach((file: Dirent) => {
+        if (file.isDirectory()) loadImagesIn(join(basePath, file.name))
+        else if (isImageFile(file)) {
+          const fileName = relative(baseFolder, join(basePath, file.name))
+          images.push({ name: fileName, url: fileName })
+        }
+      })
+  }
   loadImagesIn(baseFolder)
   return images
 }
