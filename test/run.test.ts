@@ -2,7 +2,7 @@ import chai from 'chai'
 import { mkdirSync, rmdirSync } from 'fs'
 import { join } from 'path'
 import sinon from 'sinon'
-import run, { getAssetsFolder, getSoundsFolder } from '../src/commands/run'
+import run, { getAssetsFolder, getImages, getSoundsFolder } from '../src/commands/run'
 import { spyCalledWithSubstring } from './assertions'
 
 chai.should()
@@ -60,6 +60,63 @@ describe('testing run', () => {
     it('should return assets folder if assets options not sent', () => {
       expect(getSoundsFolder(project, undefined)).to.equal('assets')
     })
+
+  })
+
+  describe('getImages - project with several folders', () => {
+
+    const imageProject = join('examples', 'run-examples', 'asset-example')
+
+    it('should return all images for a single assets folder', () => {
+      expect(getImages(project, 'assets')).to.deep.equal(
+        [
+          {
+            'name': join('pepita.png'),
+            'url': join('pepita.png'),
+          },
+        ]
+      )
+    })
+
+    it('should return all images in assets folder recursively', () => {
+      expect(getImages(imageProject, 'assets')).to.deep.equal(
+        [
+          {
+            'name': join('medium', '3.png'),
+            'url': join('medium', '3.png'),
+          },
+          {
+            'name': join('smalls', '1.png'),
+            'url': join('smalls', '1.png'),
+          },
+          {
+            'name': join('smalls', '2.png'),
+            'url': join('smalls', '2.png'),
+          },
+        ]
+      )
+    })
+
+    it('should return all images even if assets folder is not present', () => {
+      expect(getImages(imageProject, undefined)).to.deep.equal(
+        [
+          {
+            'name': join('assets', 'medium', '3.png'),
+            'url': join('assets', 'medium', '3.png'),
+          },
+          {
+            'name': join('assets', 'smalls', '1.png'),
+            'url': join('assets', 'smalls', '1.png'),
+          },
+          {
+            'name': join('assets', 'smalls', '2.png'),
+            'url': join('assets', 'smalls', '2.png'),
+          },
+        ]
+      )
+    })
+
+    // TODO: unexistent folder
 
   })
 

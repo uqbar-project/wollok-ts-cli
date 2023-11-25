@@ -211,7 +211,7 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
 
 export const getImages = (projectPath: string, assetsFolder: string | undefined): Image[] => {
   const images: Image[] = []
-  const baseFolder = assetsFolder ?? projectPath
+  const baseFolder = join(projectPath, assetsFolder ?? '')
   const loadImagesIn = (basePath: string) => fs.readdirSync(basePath, { withFileTypes: true })
     .forEach((file: Dirent) => {
       if (file.isDirectory()) loadImagesIn(join(basePath, file.name))
