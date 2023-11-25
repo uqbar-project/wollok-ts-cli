@@ -92,6 +92,17 @@ describe('testing run', () => {
       expect(spyCalledWithSubstring(consoleLogSpy, '290')).to.be.true
       expect(processExitSpy.calledWith(0)).to.be.true
     })
+
+    it ('should exit if program has errors', async () => {
+      await run('mainExample.PepitaProgram', {
+        project: join('examples', 'run-examples', 'bad-example'),
+        skipValidations: false,
+        game: false,
+        startDiagram: false,
+      })
+      expect(processExitSpy.calledWith(21)).to.be.true
+    })
+
   })
 
   describe('run a simple game', () => {
@@ -107,7 +118,7 @@ describe('testing run', () => {
     })
 
 
-    it ('smoke teset - should work if program has no errors', async () => {
+    it ('smoke test - should work if program has no errors', async () => {
       run('mainGame.PepitaGame', {
         project: join('examples', 'run-examples', 'basic-example'),
         skipValidations: false,
