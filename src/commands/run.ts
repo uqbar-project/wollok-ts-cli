@@ -1,4 +1,3 @@
-import { Image } from './../../build/src/commands/extrasGame.d'
 import { bold } from 'chalk'
 import cors from 'cors'
 import express from 'express'
@@ -135,7 +134,6 @@ export const initializeGameClient = ({ project, assets, port, game }: Options): 
   return io
 }
 
-// TODO: change to an object with a reload function
 export async function initializeDynamicDiagram(programPackage: Package, options: Options, interpreter: Interpreter): Promise<DynamicDiagramClient> {
   if (!options.startDiagram || !options.game) return { onReload: () => {} }
 
@@ -195,7 +193,7 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
       try {
         interpreter.send('flushEvents', gameSingleton, interpreter.reify(timer))
         timer += 300
-        // We can pass the interpreter but a program does not change it
+        // We could pass the interpreter but a program does not change it
         dynamicDiagramClient.onReload()
         if (!gameSingleton.get('running')?.innerBoolean) {
           clearInterval(id)

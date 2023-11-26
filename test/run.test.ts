@@ -2,7 +2,7 @@ import chai from 'chai'
 import { mkdirSync, rmdirSync } from 'fs'
 import { join } from 'path'
 import sinon from 'sinon'
-import run, { getAssetsFolder, getImages, getSoundsFolder } from '../src/commands/run'
+import run, { buildEnvironmentForProgram, getAssetsFolder, getGameInterpreter, getImages, getSoundsFolder, getVisuals, initializeGameClient } from '../src/commands/run'
 import { spyCalledWithSubstring } from './assertions'
 
 chai.should()
@@ -21,6 +21,7 @@ describe('testing run', () => {
   })
 
   describe('getAssetsPath', () => {
+
     it('should return assets folder from options if it exists', () => {
       expect(getAssetsFolder(buildOptions(true, 'myAssets'))).to.equal('myAssets')
     })
@@ -59,6 +60,27 @@ describe('testing run', () => {
 
     it('should return assets folder if assets options not sent', () => {
       expect(getSoundsFolder(project, undefined)).to.equal('assets')
+    })
+
+  })
+
+  describe('getVisuals', () => {
+
+    it('should return all visuals for a simple project', async () => {
+      const imageProject = join('examples', 'run-examples', 'asset-example')
+
+      const options = {
+        ...buildOptions(true, 'assets'),
+        project: imageProject,
+      }
+
+      const io = initializeGameClient(options)!
+      const environment = await buildEnvironmentForProgram(options)
+      const interpreter = getGameInterpreter(environment, io)!
+      const game = interpreter.object('wollok.game.game')
+      interpreter.send('addVisual', game, interpreter.object('mainGame.elementoVisual'))
+      io.close()
+      expect(getVisuals(game, interpreter)).to.deep.equal([{ image: '1.png', position: { x: 0, y: 1 }, message: undefined }])
     })
 
   })
