@@ -80,7 +80,7 @@ describe('testing run', () => {
       const game = interpreter.object('wollok.game.game')
       interpreter.send('addVisual', game, interpreter.object('mainGame.elementoVisual'))
       io.close()
-      expect(getVisuals(game, interpreter)).to.deep.equal([{ image: '1.png', position: { x: 0, y: 1 }, message: undefined }])
+      expect(getVisuals(game, interpreter)).to.deep.equal([{ image: join('smalls', '1.png'), position: { x: 0, y: 1 }, message: undefined }])
     })
 
   })

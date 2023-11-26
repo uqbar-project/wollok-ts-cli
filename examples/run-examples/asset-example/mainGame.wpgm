@@ -1,4 +1,13 @@
 object elementoVisual {
+  var property image = "smalls/1.png"
+  var property position = new MutablePosition(x = 0, y = 1)
+  var height = 10
+  var width = 10
+
+  method doSomething() {}
+}
+
+class Elemento {
   var property image = "1.png"
   var property position = new MutablePosition(x = 0, y = 1)
   var height = 10
@@ -9,6 +18,8 @@ object elementoVisual {
 
 program PepitaGame {
 	game.addVisual(elementoVisual)
+  game.addVisual(new Elemento(image = "smalls/2.png", position = new Position(x = 2, y = 2)))
+  game.addVisual(new Elemento(image = "medium/3.png", position = new Position(x = 3, y = 3)))
   console.println("starting...")
 	game.start()
   game.onTick(500, "end", {
