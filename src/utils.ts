@@ -153,7 +153,7 @@ const scopeContribution = (contributor: Node): List<[Name, Node]> => {
 const canBeReferenced = (node: Node): node is Entity | Field | Parameter => node.is(Entity) || node.is(Field) || node.is(Parameter)
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-// WOLLOK AST
+// HTTP SERVER
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
 export const serverError = ({ port, code }: { port: string, code: string }): void => {
