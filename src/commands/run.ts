@@ -119,7 +119,7 @@ export const initializeGameClient = ({ project, assets, port, game }: Options): 
   app.use(
     cors({ allowedHeaders: '*' }),
     express.static(publicPath('game'), { maxAge: '1d' }),
-    express.static(assets ?? project, { maxAge: '1d' }))
+    express.static(assets ? join(project, assets) : project, { maxAge: '1d' }))
 
   const soundsFolder = getSoundsFolder(project, assets)
   if (soundsFolder !== assets) {
