@@ -113,6 +113,7 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
     validateEnvironment(environment, skipValidations)
 
     if (autoImportPath) {
+      // TODO: migrate to wollok-ts?? at least up to line 120
       const fqn = getFQN(project, autoImportPath)
       const entity = environment.getNodeOrUndefinedByFQN<Entity>(fqn)
       if (entity && entity.is(Package)) {
@@ -296,6 +297,7 @@ export async function initializeClient(options: Options, repl: Interface, interp
   }
 }
 
+// TODO: migrate to wollok-ts
 function newImport(importNode: Import, environment: Environment) {
   const node = replNode(environment)
   const imported = node.scope.resolve<Package | Entity>(importNode.entity.name)!
@@ -305,4 +307,5 @@ function newImport(importNode: Import, environment: Environment) {
   return node.scope.register([imported.name!, imported])
 }
 
+// TODO: migrate to wollok-ts
 export const replNode = (environment: Environment): Package => environment.getNodeByFQN<Package>(REPL)

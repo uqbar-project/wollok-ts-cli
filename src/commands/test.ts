@@ -25,6 +25,7 @@ export function sanitize(value?: string): string | undefined {
   return value?.replaceAll('"', '')
 }
 
+// TODO: migrate to wollok-ts (getTestsToRun)
 export function getTarget(environment: Environment, filter: string | undefined, { file, describe, test }: Options): Test[] {
   const fqnByOptionalParameters = [file, describe, test].filter(Boolean).join('.')
   const filterTest = sanitize(filter) ?? fqnByOptionalParameters ?? ''

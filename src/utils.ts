@@ -126,14 +126,17 @@ export const isImageFile = (file: Dirent): boolean => imageExtensions.some(ext =
 // WOLLOK AST
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
+// TODO: migrate to wollok-ts (could it be in RuntimeObject? Or at least in a helper function)
 export function isConstant(obj: RuntimeObject, localName: string): boolean {
   return obj.module.lookupField(localName)?.isConstant ?? false
 }
 
+// TODO: migrate to wollok-ts
 export function isREPLConstant(environment: Environment, localName: string): boolean {
   return replNode(environment).scope.resolve<Variable>(localName)?.isConstant ?? false
 }
 
+// TODO: migrate to wollok-ts
 // This is a fake linking, TS should give us a better API
 export function linkSentence<S extends Sentence>(newSentence: S, environment: Environment): void {
   const { scope } = replNode(environment)
@@ -144,6 +147,8 @@ export function linkSentence<S extends Sentence>(newSentence: S, environment: En
     return localScope
   }, scope)
 }
+
+// TODO: migrate to wollok-ts
 // Duplicated from TS
 const scopeContribution = (contributor: Node): List<[Name, Node]> => {
   if (canBeReferenced(contributor))

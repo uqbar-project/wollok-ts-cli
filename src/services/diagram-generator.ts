@@ -6,10 +6,12 @@ import { isConstant, isREPLConstant } from '../utils'
 
 type objectType = 'literal' | 'object' | 'null'
 
+// TODO: migrate to wollok-ts
 const LIST_MODULE = 'List'
 const STRING_MODULE = 'wollok.lang.String'
 const WOLLOK_BASE_MODULES = 'wollok.'
 
+// TODO: migrate to wollok-ts
 const SELF = 'self'
 
 function getImportedDefinitions(interpreter: Interpreter, rootFQN?: Package): Entity[] {
@@ -164,6 +166,7 @@ function shouldShortenRepresentation(moduleName: string) {
 }
 
 function shouldShowInnerValue(moduleName: string) {
+  // TODO: migrate to wollok-ts (use constants for String, number & Boolean, the function `shouldShowInnerValue` should remain here)
   return ['wollok.lang.String', 'wollok.lang.Number', 'wollok.lang.Boolean'].includes(moduleName)
 }
 
