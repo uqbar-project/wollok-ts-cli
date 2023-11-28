@@ -1,0 +1,9 @@
+
+program PepitaProgram {
+
+	const a = 1
+	const b = 2
+	a = a + b
+	console.println(a)
+
+}

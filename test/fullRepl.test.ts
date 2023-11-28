@@ -28,7 +28,10 @@ const buildOptionsFor = (path: string, skipValidations = false) => ({
 const callRepl = (autoImportPath: string, options: Options) =>
   replFn(join(options.project, autoImportPath), options)
 
-
+// Be careful, if you are in developing mode
+// and some of these tests fail it will lead to exit code 13
+// because an active session of the dynamic diagram
+// will remain running in background
 describe('REPL integration test for valid project', () => {
   const projectPath = join('examples', 'repl-examples')
 
@@ -60,8 +63,6 @@ describe('REPL integration test for valid project', () => {
     expect(spyCalledWithSubstring(consoleLogSpy, '6')).to.be.true
     repl.emit('line', ':q')
     expect(processExitSpy.calledWith(0)).to.be.true
-    // if we try to create a second test using the repl
-    // it will fail throwing an exit code 1 (it could be an out of memory issue but also an internal error)
   })
 
   it('should quit successfully if project has validation errors but skip validation config is passed', async () => {
@@ -84,20 +85,20 @@ describe('REPL integration test for invalid project', () => {
     sinon.restore()
   })
 
-  it('should return exit code 1 if project has parse errors', async () => {
-    await expect(callRepl('fileWithParseErrors.wlk', buildOptionsFor('parse-errors'))).to.eventually.be.rejectedWith(/exit with 1 error code/)
+  it('should return exit code 12 if project has parse errors', async () => {
+    await expect(callRepl('fileWithParseErrors.wlk', buildOptionsFor('parse-errors'))).to.eventually.be.rejectedWith(/exit with 12 error code/)
   })
 
-  it('should return exit code 1 if project has validation errors', async () => {
-    await expect(callRepl('fileWithValidationErrors.wlk', buildOptionsFor('validation-errors'))).to.eventually.be.rejectedWith(/exit with 1 error code/)
+  it('should return exit code 12 if project has validation errors', async () => {
+    await expect(callRepl('fileWithValidationErrors.wlk', buildOptionsFor('validation-errors'))).to.eventually.be.rejectedWith(/exit with 12 error code/)
   })
 
-  it('should return exit code 1 if file does not exist - no validation', async () => {
-    await expect(callRepl('noFile.wlk', buildOptionsFor('validation-errors', true))).to.eventually.be.rejectedWith(/exit with 1 error code/)
+  it('should return exit code 12 if file does not exist - no validation', async () => {
+    await expect(callRepl('noFile.wlk', buildOptionsFor('validation-errors', true))).to.eventually.be.rejectedWith(/exit with 12 error code/)
   })
 
-  it('should return exit code 1 if file does not exist - with validation', async () => {
-    await expect(callRepl('noFile.wlk', buildOptionsFor('missing-files'))).to.eventually.be.rejectedWith(/exit with 1 error code/)
+  it('should return exit code 12 if file does not exist - with validation', async () => {
+    await expect(callRepl('noFile.wlk', buildOptionsFor('missing-files'))).to.eventually.be.rejectedWith(/exit with 12 error code/)
   })
 
 })

@@ -3,7 +3,7 @@ import logger from 'loglevel'
 import { existsSync, writeFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { userInfo } from 'os'
-import { createFolderIfNotExists } from '../utils'
+import { ENTER, createFolderIfNotExists } from '../utils'
 
 export type Options = {
   project: string,
@@ -116,12 +116,13 @@ program PepitaGame {
 const packageJsonDefinition = (projectName: string, game: boolean) => `{
   "name": "${basename(projectName)}",
   "version": "1.0.0",
-  ${game ? '"resourceFolder": "assets",' : ''}
-  "wollokVersion": "4.0.0",
+  ${game ? assetsConfiguration() : ''}"wollokVersion": "4.0.0",
   "author": "${userInfo().username}",
   "license": "ISC"
 }
 `
+
+const assetsConfiguration = () => `"resourceFolder": "assets",${ENTER}  `
 
 const ymlForCI = `name: build
 
