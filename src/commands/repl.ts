@@ -193,6 +193,8 @@ function defineCommands(autoImportPath: string | undefined, options: Options, re
 
 export function interprete(interpreter: Interpreter, line: string): string {
   try {
+    // TODO: migrate to wollok-ts???
+    // Decouple 1. interpreter should link sentence, or add a new import, and repl should process the result and catch errors
     const sentenceOrImport = parse.Import.or(parse.Variable).or(parse.Assignment).or(parse.Expression).tryParse(line)
     const error = [sentenceOrImport, ...sentenceOrImport.descendants].flatMap(_ => _.problems ?? []).find(_ => _.level === 'error')
     if (error) throw error
