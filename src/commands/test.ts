@@ -25,7 +25,7 @@ export function sanitize(value?: string): string | undefined {
   return value?.replaceAll('"', '')
 }
 
-// TODO: migrate to wollok-ts (getTestsToRun)
+// TODO: migrate to wollok-ts (testRunner.run -> could return a list of test results)
 export function getTarget(environment: Environment, filter: string | undefined, { file, describe, test }: Options): Test[] {
   const fqnByOptionalParameters = [file, describe, test].filter(Boolean).join('.')
   const filterTest = sanitize(filter) ?? fqnByOptionalParameters ?? ''
@@ -49,6 +49,7 @@ export default async function (filter: string | undefined, options: Options): Pr
     const environment = await buildEnvironmentForProject(project)
     validateEnvironment(environment, skipValidations)
 
+    // TODO: this call and failures...
     const targets = getTarget(environment, filter, options)
 
     logger.info(`Running ${targets.length} tests...`)
