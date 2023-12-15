@@ -4,7 +4,7 @@
 name: CI build
 
 on:
-  pull_request
+  [pull_request, push]
 
 jobs:
   test:
