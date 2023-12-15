@@ -1,6 +1,6 @@
 {
   "name": "wollok-ts-cli",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Wollok Command Line Interface",
   "repository": "https://github.com/uqbar-project/wollok-ts-cli",
   "license": "MIT",
@@ -48,7 +48,7 @@
     "p5": "^1.8.0",
     "pkg": "^5.8.1",
     "socket.io": "^4.5.1",
-    "wollok-ts": "4.0.5"
+    "wollok-ts": "4.0.6"
   },
   "devDependencies": {
     "@types/chai": "^4.3.9",
