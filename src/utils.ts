@@ -87,7 +87,7 @@ export const valueDescription = (val: any): string => italic(blue(val))
 export const successDescription = (description: string): string =>
   green(`${bold('✓')} ${description}`)
 
-export const failureDescription = (description: string, e?: Error): string => {
+export const stackTrace = (e?: Error): string => {
   const indexOfTsStack = e?.stack?.indexOf(WOLLOK_EXTRA_STACK_TRACE_HEADER)
   const fullStack = e?.stack?.slice(0, indexOfTsStack ?? -1) ?? ''
 
@@ -97,8 +97,11 @@ export const failureDescription = (description: string, e?: Error): string => {
     .replaceAll('    ', '  ')
     .split('\n').join('\n  ')
 
-  return red(`${bold('✗')} ${description}${stack ? '\n  ' + stack : ''}`)
+  return stack ? '\n  ' + stack : ''
 }
+
+export const failureDescription = (description: string, e?: Error): string =>
+  red(`${bold('✗')} ${description}${stackTrace(e)}`)
 
 export const problemDescription = (problem: Problem): string => {
   const color = problem.level === 'warning' ? yellowBright : red

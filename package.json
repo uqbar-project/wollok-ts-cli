@@ -48,6 +48,7 @@
     "p5": "^1.8.0",
     "pkg": "^5.8.1",
     "socket.io": "^4.5.1",
+    "winston": "^3.11.0",
     "wollok-ts": "4.0.6"
   },
   "devDependencies": {
