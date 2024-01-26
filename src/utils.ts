@@ -74,7 +74,7 @@ export const validateEnvironment = (environment: Environment, skipValidations: b
 
 export const handleError = (error: any): void => {
   logger.error(red(bold('💥 Uh-oh... Unexpected Error!')))
-  logger.error(red(error.message))
+  logger.error(red(error.message.replaceAll(WOLLOK_EXTRA_STACK_TRACE_HEADER, '')))
   logger.debug(failureDescription('ℹ️ Stack trace:', error))
 }
 
@@ -87,21 +87,23 @@ export const valueDescription = (val: any): string => italic(blue(val))
 export const successDescription = (description: string): string =>
   green(`${bold('✓')} ${description}`)
 
-export const stackTrace = (e?: Error): string => {
+export const stackTrace = (e?: Error): string[] => {
   const indexOfTsStack = e?.stack?.indexOf(WOLLOK_EXTRA_STACK_TRACE_HEADER)
   const fullStack = e?.stack?.slice(0, indexOfTsStack ?? -1) ?? ''
 
-  const stack = fullStack
+  return fullStack
     .replaceAll('\t', '  ')
     .replaceAll('     ', '  ')
     .replaceAll('    ', '  ')
-    .split('\n').join('\n  ')
-
-  return stack ? '\n  ' + stack : ''
+    .split('\n')
+    .filter(stackTraceElement => stackTraceElement.trim())
 }
 
-export const failureDescription = (description: string, e?: Error): string =>
-  red(`${bold('✗')} ${description}${stackTrace(e)}`)
+export const failureDescription = (description: string, e?: Error): string => {
+  const stack = stackTrace(e).join('\n  ')
+  const stackTraceSanitized = stack ? '\n  ' + stack : ''
+  return red(`${bold('✗')} ${description}${stackTraceSanitized}`)
+}
 
 export const problemDescription = (problem: Problem): string => {
   const color = problem.level === 'warning' ? yellowBright : red

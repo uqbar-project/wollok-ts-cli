@@ -1,3 +1,4 @@
+import { TimeMeasurer } from './../time-measurer'
 import { bold } from 'chalk'
 import cors from 'cors'
 import express from 'express'
@@ -9,9 +10,10 @@ import { Server, Socket } from 'socket.io'
 import { Environment, link, Name, Package, parse, RuntimeObject, WollokException } from 'wollok-ts'
 import interpret, { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
-import { ENTER, buildEnvironmentForProject, failureDescription, handleError, isImageFile, publicPath, readPackageProperties, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
+import { ENTER, buildEnvironmentForProject, failureDescription, handleError, isImageFile, publicPath, readPackageProperties, serverError, stackTrace, successDescription, validateEnvironment, valueDescription } from '../utils'
 import { buildKeyPressEvent, canvasResolution, Image, queueEvent, visualState, VisualState, wKeyCode } from './extrasGame'
 import { getDataDiagram } from '../services/diagram-generator'
+import { logger as fileLogger } from '../logger'
 
 const { time, timeEnd } = console
 
@@ -33,16 +35,19 @@ type DynamicDiagramClient = {
   onReload: () => void,
 }
 
+const icon = '🚀'
+
 export default async function (programFQN: Name, options: Options): Promise<void> {
   const { project, game } = options
+  const timeMeasurer = new TimeMeasurer()
   try {
-    logger.info(`Running ${valueDescription(programFQN)} ${runner(game)} on ${valueDescription(project)}`)
+    logger.info(`${icon} Running program ${valueDescription(programFQN)} ${runner(game)} on ${valueDescription(project)}`)
     options.assets = game ? getAssetsFolder(options) : ''
     if (game) {
-      logger.info(`Assets folder ${join(project, options.assets)}`)
+      logger.info(`🗂️ Assets folder ${join(project, options.assets)}`)
     }
 
-    logger.info(`Building environment for ${valueDescription(programFQN)}...${ENTER}`)
+    logger.info(`🌏 Building environment for ${valueDescription(programFQN)}...${ENTER}`)
     const environment = await buildEnvironmentForProgram(options)
     const debug = logger.getLevel() <= logger.levels.DEBUG
     if (debug) time(successDescription('Run initiated successfully'))
@@ -59,10 +64,16 @@ export default async function (programFQN: Name, options: Options): Promise<void
 
     if (debug) timeEnd(successDescription('Run finalized successfully'))
 
-    if (!game) process.exit(0)
+    if (!game) {
+      fileLogger.info({ message: `${icon} Program executed ${programFQN} on ${project}`, timeElapsed: timeMeasurer.elapsedTime(), ok: true })
+      process.exit(0)
+    }
   } catch (error: any) {
     handleError(error)
-    if (!game) process.exit(21)
+    if (!game) {
+      fileLogger.info({ message: `${icon} Program executed ${programFQN} on ${project}`, timeElapsed: timeMeasurer.elapsedTime(), ok: false, error: stackTrace(error) })
+      process.exit(21)
+    }
   }
 }
 
