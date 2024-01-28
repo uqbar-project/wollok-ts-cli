@@ -35,16 +35,24 @@ type DynamicDiagramClient = {
   onReload: () => void,
 }
 
-const icon = '🚀'
+const programIcon = '🚀'
+const gameIcon = '👾'
 
 export default async function (programFQN: Name, options: Options): Promise<void> {
   const { project, game } = options
   const timeMeasurer = new TimeMeasurer()
   try {
-    logger.info(`${icon} Running program ${valueDescription(programFQN)} ${runner(game)} on ${valueDescription(project)}`)
+    logger.info(`${programIcon} Running program ${valueDescription(programFQN)} ${runner(game)} on ${valueDescription(project)}`)
     options.assets = game ? getAssetsFolder(options) : ''
     if (game) {
-      logger.info(`🗂️ Assets folder ${join(project, options.assets)}`)
+      const logGameFinished = (exitCode: any) => {
+        fileLogger.info({ message: `${gameIcon} Game executed ${programFQN} on ${project}`, timeElapsed: timeMeasurer.elapsedTime(), exitCode })
+        process.exit(exitCode)
+      }
+      logger.info(`🗂️  Assets folder ${join(project, options.assets)}`)
+      Array.from(['exit', 'SIGINT', 'SIGUSR1', 'SIGUSR2', 'SIGTERM', 'SIGHUP', 'uncaughtException']).forEach((eventType: string) => {
+        process.on(eventType, logGameFinished)
+      })
     }
 
     logger.info(`🌏 Building environment for ${valueDescription(programFQN)}...${ENTER}`)
@@ -65,13 +73,13 @@ export default async function (programFQN: Name, options: Options): Promise<void
     if (debug) timeEnd(successDescription('Run finalized successfully'))
 
     if (!game) {
-      fileLogger.info({ message: `${icon} Program executed ${programFQN} on ${project}`, timeElapsed: timeMeasurer.elapsedTime(), ok: true })
+      fileLogger.info({ message: `${programIcon} Program executed ${programFQN} on ${project}`, timeElapsed: timeMeasurer.elapsedTime(), ok: true })
       process.exit(0)
     }
   } catch (error: any) {
     handleError(error)
+    fileLogger.info({ message: `${game ? gameIcon : programIcon} ${game ? 'Game' : 'Program'} executed ${programFQN} on ${project}`, timeElapsed: timeMeasurer.elapsedTime(), ok: false, error: stackTrace(error) })
     if (!game) {
-      fileLogger.info({ message: `${icon} Program executed ${programFQN} on ${project}`, timeElapsed: timeMeasurer.elapsedTime(), ok: false, error: stackTrace(error) })
       process.exit(21)
     }
   }
