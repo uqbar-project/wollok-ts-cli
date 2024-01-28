@@ -45,7 +45,7 @@ export default async function (autoImportPath: string | undefined, options: Opti
 const history: string[] = []
 
 export async function replFn(autoImportPath: string | undefined, options: Options): Promise<Interface> {
-  logger.info(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
+  logger.info(`${replIcon}  Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
 
   let interpreter = await initializeInterpreter(autoImportPath, options)
   const autoImportName = autoImportPath && replNode(interpreter.evaluation.environment).name
