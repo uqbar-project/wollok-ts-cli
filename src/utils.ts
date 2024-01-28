@@ -14,6 +14,15 @@ const { time, timeEnd } = console
 export const ENTER = '\n'
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// ICONS
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+export const programIcon = '🚀'
+export const gameIcon = '👾'
+export const testIcon = '🧪'
+export const buildEnvironmentIcon = '🌏'
+export const folderIcon = '🗂️'
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // FILE / PATH HANDLING
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 export function relativeFilePath(project: string, filePath: string): string {

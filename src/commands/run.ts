@@ -10,7 +10,7 @@ import { Server, Socket } from 'socket.io'
 import { Environment, link, Name, Package, parse, RuntimeObject, WollokException } from 'wollok-ts'
 import interpret, { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
-import { ENTER, buildEnvironmentForProject, failureDescription, handleError, isImageFile, publicPath, readPackageProperties, serverError, stackTrace, successDescription, validateEnvironment, valueDescription } from '../utils'
+import { ENTER, buildEnvironmentForProject, buildEnvironmentIcon, failureDescription, folderIcon, gameIcon, handleError, isImageFile, programIcon, publicPath, readPackageProperties, serverError, stackTrace, successDescription, validateEnvironment, valueDescription } from '../utils'
 import { buildKeyPressEvent, canvasResolution, Image, queueEvent, visualState, VisualState, wKeyCode } from './extrasGame'
 import { getDataDiagram } from '../services/diagram-generator'
 import { logger as fileLogger } from '../logger'
@@ -35,27 +35,24 @@ type DynamicDiagramClient = {
   onReload: () => void,
 }
 
-const programIcon = '🚀'
-const gameIcon = '👾'
-
 export default async function (programFQN: Name, options: Options): Promise<void> {
   const { project, game } = options
   const timeMeasurer = new TimeMeasurer()
   try {
-    logger.info(`${programIcon} Running program ${valueDescription(programFQN)} ${runner(game)} on ${valueDescription(project)}`)
+    logger.info(`${game ? gameIcon : programIcon} Running program ${valueDescription(programFQN)} ${runner(game)} on ${valueDescription(project)}`)
     options.assets = game ? getAssetsFolder(options) : ''
     if (game) {
       const logGameFinished = (exitCode: any) => {
         fileLogger.info({ message: `${gameIcon} Game executed ${programFQN} on ${project}`, timeElapsed: timeMeasurer.elapsedTime(), exitCode })
         process.exit(exitCode)
       }
-      logger.info(`🗂️  Assets folder ${join(project, options.assets)}`)
+      logger.info(`${folderIcon}  Assets folder ${join(project, options.assets)}`)
       Array.from(['exit', 'SIGINT', 'SIGUSR1', 'SIGUSR2', 'SIGTERM', 'SIGHUP', 'uncaughtException']).forEach((eventType: string) => {
         process.on(eventType, logGameFinished)
       })
     }
 
-    logger.info(`🌏 Building environment for ${valueDescription(programFQN)}...${ENTER}`)
+    logger.info(`${buildEnvironmentIcon} Building environment for ${valueDescription(programFQN)}...${ENTER}`)
     const environment = await buildEnvironmentForProgram(options)
     const debug = logger.getLevel() <= logger.levels.DEBUG
     if (debug) time(successDescription('Run initiated successfully'))
