@@ -19,6 +19,7 @@ export const ENTER = '\n'
 export const programIcon = '🚀'
 export const gameIcon = '👾'
 export const testIcon = '🧪'
+export const replIcon = '🖥️'
 export const buildEnvironmentIcon = '🌏'
 export const folderIcon = '🗂️'
 
