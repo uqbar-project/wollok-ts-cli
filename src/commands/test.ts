@@ -101,7 +101,7 @@ export default async function (filter: string | undefined, options: Options): Pr
       test: test.fullyQualifiedName,
       error: stackTrace(error),
     }))
-    fileLogger.info({ message: `🧪 Test runner executed ${filter ? `matching ${filter} ` : ''}on ${project}`, result: { ok: successes, failed: failures.length }, failures: failuresForLogging, timeElapsed: timeMeasurer.elapsedTime() })
+    fileLogger.info({ message: `${testIcon} Test runner executed ${filter ? `matching ${filter} ` : ''}on ${project}`, result: { ok: successes, failed: failures.length }, failures: failuresForLogging, timeElapsed: timeMeasurer.elapsedTime() })
 
     logger.info(
       ENTER,
