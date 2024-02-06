@@ -4,6 +4,7 @@ import { buildEnvironmentForProject } from '../src/utils'
 import test, { getTarget, sanitize, tabulationForNode, validateParameters } from '../src/commands/test'
 import { Environment } from 'wollok-ts'
 import logger from 'loglevel'
+import { logger as fileLogger } from '../src/logger'
 import sinon from 'sinon'
 import { spyCalledWithSubstring } from './assertions'
 
@@ -251,6 +252,7 @@ describe('Test', () => {
 
   describe('smoke test for test default function', () => {
 
+    let fileLoggerInfoSpy: sinon.SinonStub
     let loggerInfoSpy: sinon.SinonStub
     let processExitSpy: sinon.SinonStub
 
@@ -266,6 +268,7 @@ describe('Test', () => {
 
     beforeEach(() => {
       loggerInfoSpy = sinon.stub(logger, 'info')
+      fileLoggerInfoSpy = sinon.stub(fileLogger, 'info')
       processExitSpy = sinon.stub(process, 'exit')
     })
 
@@ -283,6 +286,8 @@ describe('Test', () => {
       expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 2 tests')).to.be.true
       expect(spyCalledWithSubstring(loggerInfoSpy, '2 passing')).to.be.true
       expect(spyCalledWithSubstring(loggerInfoSpy, '0 failing')).to.be.false // old version
+      expect(fileLoggerInfoSpy.calledOnce).to.be.true
+      expect(fileLoggerInfoSpy.firstCall.firstArg.result).to.deep.equal({ ok: 2, failed: 0 })
     })
 
     it('returns exit code 2 if one or more tests fail', async () => {
@@ -292,6 +297,10 @@ describe('Test', () => {
       expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 5 tests')).to.be.true
       expect(spyCalledWithSubstring(loggerInfoSpy, '4 passing')).to.be.true
       expect(spyCalledWithSubstring(loggerInfoSpy, '1 failing')).to.be.true
+      expect(fileLoggerInfoSpy.calledOnce).to.be.true
+      const fileLoggerArg = fileLoggerInfoSpy.firstCall.firstArg
+      expect(fileLoggerArg.result).to.deep.equal({ ok: 4, failed: 1 })
+      expect(fileLoggerArg.failures.length).to.equal(1)
     })
 
     it('returns exit code 1 if tests throw an error', async () => {

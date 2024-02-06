@@ -5,7 +5,9 @@ import { Entity, Environment, Node, Test } from 'wollok-ts'
 import { is, match, when } from 'wollok-ts/dist/extensions'
 import interpret from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
-import { buildEnvironmentForProject, failureDescription, successDescription, valueDescription, validateEnvironment, handleError, ENTER } from '../utils'
+import { buildEnvironmentForProject, failureDescription, successDescription, valueDescription, validateEnvironment, handleError, ENTER, stackTrace, buildEnvironmentIcon, testIcon } from '../utils'
+import { logger as fileLogger } from '../logger'
+import { TimeMeasurer } from '../time-measurer'
 
 const { log } = console
 
@@ -42,9 +44,13 @@ export default async function (filter: string | undefined, options: Options): Pr
   try {
     validateParameters(filter, options)
 
+    const timeMeasurer = new TimeMeasurer()
     const { project, skipValidations } = options
-    logger.info(`Running all tests ${filter ? `matching ${valueDescription(filter)} ` : ''}on ${valueDescription(project)}`)
+    const runAllTestsDescription = `${testIcon} Running all tests ${filter ? `matching ${valueDescription(filter)} ` : ''}on ${valueDescription(project)}`
 
+    logger.info(runAllTestsDescription)
+
+    logger.info(`${buildEnvironmentIcon} Building environment for ${valueDescription(project)}...${ENTER}`)
     const environment = await buildEnvironmentForProject(project)
     validateEnvironment(environment, skipValidations)
 
@@ -90,6 +96,12 @@ export default async function (filter: string | undefined, options: Options): Pr
       log()
       logger.error(failureDescription(bold(test.fullyQualifiedName), error))
     })
+
+    const failuresForLogging = failures.map(([test, error]) => ({
+      test: test.fullyQualifiedName,
+      error: stackTrace(error),
+    }))
+    fileLogger.info({ message: `${testIcon} Test runner executed ${filter ? `matching ${filter} ` : ''}on ${project}`, result: { ok: successes, failed: failures.length }, failures: failuresForLogging, timeElapsed: timeMeasurer.elapsedTime() })
 
     logger.info(
       ENTER,

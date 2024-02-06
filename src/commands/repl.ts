@@ -14,7 +14,9 @@ import link from 'wollok-ts/dist/linker'
 import { ParseError } from 'wollok-ts/dist/parser'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { getDataDiagram } from '../services/diagram-generator'
-import { buildEnvironmentForProject, failureDescription, getFQN, linkSentence, publicPath, successDescription, valueDescription, validateEnvironment, handleError, ENTER, serverError } from '../utils'
+import { buildEnvironmentForProject, failureDescription, getFQN, linkSentence, publicPath, successDescription, valueDescription, validateEnvironment, handleError, ENTER, serverError, stackTrace, replIcon } from '../utils'
+import { logger as fileLogger } from '../logger'
+import { TimeMeasurer } from '../time-measurer'
 
 export const REPL = 'REPL'
 
@@ -43,7 +45,7 @@ export default async function (autoImportPath: string | undefined, options: Opti
 const history: string[] = []
 
 export async function replFn(autoImportPath: string | undefined, options: Options): Promise<Interface> {
-  logger.info(`Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
+  logger.info(`${replIcon}  Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
 
   let interpreter = await initializeInterpreter(autoImportPath, options)
   const autoImportName = autoImportPath && replNode(interpreter.evaluation.environment).name
@@ -107,6 +109,7 @@ export async function replFn(autoImportPath: string | undefined, options: Option
 
 export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations }: Options): Promise<Interpreter> {
   let environment: Environment
+  const timeMeasurer = new TimeMeasurer()
 
   try {
     environment = await buildEnvironmentForProject(project)
@@ -129,6 +132,7 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
     return new Interpreter(Evaluation.build(environment, natives))
   } catch (error: any) {
     handleError(error)
+    fileLogger.info({ message: `${replIcon} REPL execution - build failed for ${project}`, timeElapsed: timeMeasurer.elapsedTime(), ok: false, error: stackTrace(error) })
     return process.exit(12)
   }
 }

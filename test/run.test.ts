@@ -4,6 +4,7 @@ import { join } from 'path'
 import sinon from 'sinon'
 import run, { buildEnvironmentForProgram, getAssetsFolder, getGameInterpreter, getImages, getSoundsFolder, getVisuals, initializeGameClient } from '../src/commands/run'
 import { spyCalledWithSubstring } from './assertions'
+import { logger as fileLogger } from '../src/logger'
 
 chai.should()
 const expect = chai.expect
@@ -148,10 +149,12 @@ describe('testing run', () => {
 
     let processExitSpy: sinon.SinonStub
     let consoleLogSpy: sinon.SinonStub
+    let fileLoggerInfoSpy: sinon.SinonStub
 
     beforeEach(() => {
       processExitSpy = sinon.stub(process, 'exit')
       consoleLogSpy = sinon.stub(console, 'log')
+      fileLoggerInfoSpy = sinon.stub(fileLogger, 'info')
     })
 
     afterEach(() => {
@@ -172,6 +175,10 @@ describe('testing run', () => {
       expect(spyCalledWithSubstring(consoleLogSpy, 'Come')).to.be.true
       expect(spyCalledWithSubstring(consoleLogSpy, '290')).to.be.true
       expect(processExitSpy.calledWith(0)).to.be.true
+      expect(fileLoggerInfoSpy.calledOnce).to.be.true
+      const fileLoggerArg = fileLoggerInfoSpy.firstCall.firstArg
+      expect(fileLoggerArg.ok).to.be.true
+      expect(fileLoggerArg.message).to.contain('Program executed')
     })
 
     it ('should exit if program has errors', async () => {
@@ -182,6 +189,10 @@ describe('testing run', () => {
         startDiagram: false,
       })
       expect(processExitSpy.calledWith(21)).to.be.true
+      expect(fileLoggerInfoSpy.calledOnce).to.be.true
+      const fileLoggerArg = fileLoggerInfoSpy.firstCall.firstArg
+      expect(fileLoggerArg.ok).to.be.false
+      expect(fileLoggerArg.error).to.be.ok
     })
 
   })
