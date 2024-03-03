@@ -7,10 +7,7 @@ import http from 'http'
 import logger from 'loglevel'
 import { CompleterResult, Interface, createInterface as Repl } from 'readline'
 import { Server, Socket } from 'socket.io'
-import { Entity, Environment, Evaluation, Import, Package, Reference, Sentence, WollokException, parse } from 'wollok-ts'
-import { notEmpty } from 'wollok-ts/dist/extensions'
-import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
-import link from 'wollok-ts/dist/linker'
+import { Entity, Environment, Evaluation, Import, Interpreter, link, notEmpty, Package, Reference, Sentence, WollokException, parse, TO_STRING_METHOD } from 'wollok-ts'
 import { ParseError } from 'wollok-ts/dist/parser'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { getDataDiagram } from '../services/diagram-generator'
@@ -215,7 +212,7 @@ export function interprete(interpreter: Interpreter, line: string): string {
       const stringResult = result
         ? typeof result.innerValue === 'string'
           ? `"${result.innerValue}"`
-          : interpreter.send('toString', result)!.innerString!
+          : interpreter.send(TO_STRING_METHOD, result)!.innerString!
         : ''
       return successDescription(stringResult)
     }

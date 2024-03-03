@@ -1,8 +1,7 @@
 import { bold } from 'chalk'
 import { time, timeEnd } from 'console'
 import logger from 'loglevel'
-import { Entity, Environment, Node, Test } from 'wollok-ts'
-import { is, match, when } from 'wollok-ts/dist/extensions'
+import { Entity, Environment, Node, Test, is, match, when } from 'wollok-ts'
 import interpret from 'wollok-ts/dist/interpreter/interpreter'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { buildEnvironmentForProject, failureDescription, successDescription, valueDescription, validateEnvironment, handleError, ENTER, stackTrace, buildEnvironmentIcon, testIcon } from '../utils'
@@ -31,7 +30,7 @@ export function getTarget(environment: Environment, filter: string | undefined, 
   const fqnByOptionalParameters = [file, describe, test].filter(Boolean).join('.')
   const filterTest = sanitize(filter) ?? fqnByOptionalParameters ?? ''
   const possibleTargets = environment.descendants.filter(is(Test))
-  const onlyTarget = possibleTargets.find(test => test.isOnly)
+  const onlyTarget = possibleTargets.find((test: Test) => test.isOnly)
   const testMatches = (filter: string) => (test: Test) => !filter || sanitize(test.fullyQualifiedName)!.includes(filter)
   return onlyTarget ? [onlyTarget] : possibleTargets.filter(testMatches(filterTest))
 }
@@ -64,8 +63,8 @@ export default async function (filter: string | undefined, options: Options): Pr
     const failures: [Test, Error][] = []
     let successes = 0
 
-    environment.forEach(node => match(node)(
-      when(Test)(node => {
+    environment.forEach((node: Node) => match(node)(
+      when(Test)((node: Test) => {
         if (targets.includes(node)) {
           const tabulation = tabulationForNode(node)
           try {
@@ -79,14 +78,14 @@ export default async function (filter: string | undefined, options: Options): Pr
         }
       }),
 
-      when(Entity)(node => {
+      when(Entity)((node: Entity) => {
         const tabulation = tabulationForNode(node)
         if(targets.some(target => node.descendants.includes(target))){
           logger.info(tabulation, node.name)
         }
       }),
 
-      when(Node)( _ => { }),
+      when(Node)((_: Node) => { }),
     ))
 
     log()

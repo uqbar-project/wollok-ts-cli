@@ -7,7 +7,6 @@ import logger from 'loglevel'
 import { version } from  '../package.json'
 import { cyan } from 'chalk'
 
-
 const program = new Command()
   .name('wollok')
   .description('Wollok Language command line interpreter tool')
