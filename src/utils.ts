@@ -133,7 +133,7 @@ export const readPackageProperties = (pathProject: string): any | undefined => {
 }
 
 const imageExtensions = ['png', 'jpg']
-export const isImageFile = (file: Dirent): boolean => imageExtensions.some(file.name.endsWith)
+export const isImageFile = (file: Dirent): boolean => imageExtensions.some(extension => file.name.endsWith(extension))
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // WOLLOK AST
