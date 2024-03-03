@@ -1,7 +1,7 @@
 import { ElementDefinition } from 'cytoscape'
 import { BOOLEAN_MODULE, CLOSURE_MODULE, DATE_MODULE, DICTIONARY_MODULE, Entity, getImportedEntities, InnerValue, Interpreter, KEYWORDS, LIST_MODULE, NUMBER_MODULE, Package, PAIR_MODULE, RANGE_MODULE, RuntimeObject, STRING_MODULE, TO_STRING_METHOD, WOLLOK_BASE_PACKAGE } from 'wollok-ts'
 import { REPL, replNode } from '../commands/repl'
-import { isConstant, isREPLConstant } from '../utils'
+import { isREPLConstant } from '../utils'
 
 type objectType = 'literal' | 'object' | 'null'
 
@@ -164,7 +164,7 @@ function buildReference(obj: RuntimeObject, label: string) {
   return {
     data: {
       id: `${id}_${runtimeValue?.id}`,
-      label: `${label}${isConstant(obj, label) ? '🔒' : ''}`,
+      label: `${label}${obj.isConstant(label) ? '🔒' : ''}`,
       source: id,
       target: runtimeValue?.id,
       style: 'solid',

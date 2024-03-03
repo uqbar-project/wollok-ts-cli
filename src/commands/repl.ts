@@ -11,9 +11,10 @@ import { Entity, Environment, Evaluation, Import, Interpreter, link, notEmpty, P
 import { ParseError } from 'wollok-ts/dist/parser'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { getDataDiagram } from '../services/diagram-generator'
-import { buildEnvironmentForProject, failureDescription, getFQN, linkSentence, publicPath, successDescription, valueDescription, validateEnvironment, handleError, ENTER, serverError, stackTrace, replIcon } from '../utils'
+import { buildEnvironmentForProject, failureDescription, getFQN, publicPath, successDescription, valueDescription, validateEnvironment, handleError, ENTER, serverError, stackTrace, replIcon } from '../utils'
 import { logger as fileLogger } from '../logger'
 import { TimeMeasurer } from '../time-measurer'
+import { linkSentenceWithPackage } from 'wollok-ts/dist/linker'
 
 export const REPL = 'REPL'
 
@@ -198,7 +199,8 @@ export function interprete(interpreter: Interpreter, line: string): string {
     if (error) throw error
 
     if (sentenceOrImport.is(Sentence)) {
-      linkSentence(sentenceOrImport, interpreter.evaluation.environment)
+      const environment = interpreter.evaluation.environment
+      linkSentenceWithPackage(sentenceOrImport, environment, replNode(environment))
       const unlinkedNode = [sentenceOrImport, ...sentenceOrImport.descendants].find(_ => _.is(Reference) && !_.target)
 
       if (unlinkedNode) {
