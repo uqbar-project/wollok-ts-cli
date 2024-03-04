@@ -192,6 +192,7 @@ function defineCommands(autoImportPath: string | undefined, options: Options, re
 // EVALUATION
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
+// TODO WOLLOK-TS: check if we should decouple the function
 export function interprete(interpreter: Interpreter, line: string): string {
   try {
     const sentenceOrImport = parse.Import.or(parse.Variable).or(parse.Assignment).or(parse.Expression).tryParse(line)
@@ -299,6 +300,8 @@ export async function initializeClient(options: Options, repl: Interface, interp
   }
 }
 
+// TODO WOLLOK-TS: migrate it? Maybe it could be part of Environment
+// Environment.newImportFor(baseNode, importNode)
 function newImport(importNode: Import, environment: Environment) {
   const node = replNode(environment)
   const imported = node.scope.resolve<Package | Entity>(importNode.entity.name)!

@@ -122,8 +122,7 @@ function getLabel(obj: RuntimeObject, interpreter: Interpreter): string {
   if (innerValue === null) return 'null'
   const moduleName = module.fullyQualifiedName
   if (shouldShortenRepresentation(moduleName)) return showInnerValue(interpreter.send(TO_STRING_METHOD, obj)?.innerValue)
-  // Otra opción es enviar el mensaje "printString" pero por cuestiones de performance preferí aprovechar el innerValue
-  if (moduleName === STRING_MODULE) return `"${showInnerValue(innerValue)}"`  // TODO: usar fqn o ... hay un isString en Literalc
+  if (moduleName === STRING_MODULE) return `"${showInnerValue(innerValue)}"`
   if (shouldShowInnerValue(moduleName)) return showInnerValue(innerValue)
   return module.name ?? 'Object'
 }
