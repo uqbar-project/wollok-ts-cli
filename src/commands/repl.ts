@@ -7,7 +7,7 @@ import http from 'http'
 import logger from 'loglevel'
 import { CompleterResult, Interface, createInterface as Repl } from 'readline'
 import { Server, Socket } from 'socket.io'
-import { Entity, Environment, Evaluation, Import, Interpreter, link, notEmpty, Package, Reference, Sentence, WollokException, parse, TO_STRING_METHOD } from 'wollok-ts'
+import { Entity, Environment, Evaluation, Import, Interpreter, link, notEmpty, Package, Reference, Sentence, WollokException, parse, TO_STRING_METHOD, RuntimeObject } from 'wollok-ts'
 import { ParseError } from 'wollok-ts/dist/parser'
 import natives from 'wollok-ts/dist/wre/wre.natives'
 import { getDataDiagram } from '../services/diagram-generator'
@@ -213,9 +213,7 @@ export function interprete(interpreter: Interpreter, line: string): string {
 
       const result = interpreter.exec(sentenceOrImport)
       const stringResult = result
-        ? typeof result.innerValue === 'string'
-          ? `"${result.innerValue}"`
-          : interpreter.send(TO_STRING_METHOD, result)!.innerString!
+        ? showInnerValue(interpreter, result)
         : ''
       return successDescription(stringResult)
     }
@@ -240,6 +238,13 @@ export function interprete(interpreter: Interpreter, line: string): string {
       failureDescription('Uh-oh... Unexpected TypeScript Error!', error)
     )
   }
+}
+
+function showInnerValue(interpreter: Interpreter, obj: RuntimeObject) {
+  if (obj!.innerValue) return 'null'
+  return typeof obj.innerValue === 'string'
+    ? `"${obj.innerValue}"`
+    : interpreter.send(TO_STRING_METHOD, obj)!.innerString!
 }
 
 async function autocomplete(input: string): Promise<CompleterResult> {
