@@ -1,5 +1,6 @@
 import { ElementDefinition } from 'cytoscape'
-import { BOOLEAN_MODULE, CLOSURE_MODULE, DATE_MODULE, DICTIONARY_MODULE, Entity, getImportedEntities, InnerValue, Interpreter, KEYWORDS, LIST_MODULE, NUMBER_MODULE, Package, PAIR_MODULE, RANGE_MODULE, RuntimeObject, STRING_MODULE, TO_STRING_METHOD, WOLLOK_BASE_PACKAGE } from 'wollok-ts'
+import { BOOLEAN_MODULE, CLOSURE_MODULE, DATE_MODULE, DICTIONARY_MODULE, Entity, InnerValue, KEYWORDS, LIST_MODULE, NUMBER_MODULE, Package, PAIR_MODULE, RANGE_MODULE, RuntimeObject, STRING_MODULE, TO_STRING_METHOD, WOLLOK_BASE_PACKAGE } from 'wollok-ts'
+import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import { REPL, replNode } from '../commands/repl'
 import { isREPLConstant } from '../utils'
 
@@ -7,7 +8,7 @@ type objectType = 'literal' | 'object' | 'null'
 
 export function getDataDiagram(interpreter: Interpreter, rootFQN?: Package): ElementDefinition[] {
   const environment = interpreter.evaluation.environment
-  const importedFromConsole = getImportedEntities(interpreter, replNode(environment), rootFQN)
+  const importedFromConsole = (replNode(environment) ?? rootFQN!).allScopedEntities()
   const currentFrame = interpreter.evaluation.currentFrame
   const objects = new Map(Array.from(currentFrame.locals.keys()).map((name) => [name, currentFrame.get(name)]))
 
