@@ -1,8 +1,8 @@
 import { should } from 'chai'
 import { join } from 'path'
-import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 import { initializeInterpreter, interprete, REPL, replNode } from '../src/commands/repl'
 import { failureDescription, successDescription, valueDescription } from '../src/utils'
+import { Interpreter } from 'wollok-ts'
 
 const projectPath = join('examples', 'repl-examples')
 

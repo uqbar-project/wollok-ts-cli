@@ -7,38 +7,16 @@ import http from 'http'
 import logger from 'loglevel'
 import { CompleterResult, Interface, createInterface as Repl } from 'readline'
 import { Server, Socket } from 'socket.io'
-import { Entity, Environment, Evaluation, Import, link, notEmpty, Package, Reference, Sentence, WollokException, parse, TO_STRING_METHOD, RuntimeObject, LocalScope, List, Name, Node, Field, Parameter } from 'wollok-ts'
-import { ParseError } from 'wollok-ts/dist/parser'
-import natives from 'wollok-ts/dist/wre/wre.natives'
+import { Entity, Environment, Evaluation, Import, link, notEmpty, Package, Reference, Sentence, WollokException, parse, TO_STRING_METHOD, RuntimeObject, linkSentenceInNode, Interpreter, ParseError, WRENatives as natives } from 'wollok-ts'
 import { getDataDiagram } from '../services/diagram-generator'
 import { buildEnvironmentForProject, failureDescription, getFQN, publicPath, successDescription, valueDescription, validateEnvironment, handleError, ENTER, serverError, stackTrace, replIcon } from '../utils'
 import { logger as fileLogger } from '../logger'
 import { TimeMeasurer } from '../time-measurer'
-import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
 
 export const REPL = 'REPL'
 
 // TODO:
 // - autocomplete piola
-
-// This is a fake linking, TS should give us a better API
-export function linkSentence<S extends Sentence>(newSentence: S, environment: Environment): void {
-  const { scope } = replNode(environment)
-  scope.register(...scopeContribution(newSentence))
-  newSentence.reduce((parentScope, node) => {
-    const localScope = new LocalScope(parentScope, ...scopeContribution(node))
-    Object.assign(node, { scope: localScope, environment })
-    return localScope
-  }, scope)
-}
-
-const scopeContribution = (contributor: Node): List<[Name, Node]> => {
-  if (canBeReferenced(contributor))
-    return contributor.name ? [[contributor.name, contributor]] : []
-  return []
-}
-const canBeReferenced = (node: Node): node is Entity | Field | Parameter => node.is(Entity) || node.is(Field) || node.is(Parameter)
-// ========================================================================================================================
 
 export type Options = {
   project: string
@@ -220,7 +198,7 @@ export function interprete(interpreter: Interpreter, line: string): string {
 
     if (sentenceOrImport.is(Sentence)) {
       const environment = interpreter.evaluation.environment
-      linkSentence(sentenceOrImport, environment)
+      linkSentenceInNode(sentenceOrImport, replNode(environment))
       const unlinkedNode = [sentenceOrImport, ...sentenceOrImport.descendants].find(_ => _.is(Reference) && !_.target)
 
       if (unlinkedNode) {
@@ -260,7 +238,7 @@ export function interprete(interpreter: Interpreter, line: string): string {
 }
 
 function showInnerValue(interpreter: Interpreter, obj: RuntimeObject) {
-  if (obj!.innerValue) return 'null'
+  if (obj!.innerValue === null) return 'null'
   return typeof obj.innerValue === 'string'
     ? `"${obj.innerValue}"`
     : interpreter.send(TO_STRING_METHOD, obj)!.innerString!

@@ -1,5 +1,4 @@
-import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
-import { RuntimeObject } from 'wollok-ts'
+import { Interpreter, RuntimeObject } from 'wollok-ts'
 
 const { round } = Math
 

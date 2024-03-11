@@ -1,6 +1,5 @@
 import { ElementDefinition } from 'cytoscape'
-import { BOOLEAN_MODULE, CLOSURE_MODULE, DATE_MODULE, DICTIONARY_MODULE, Entity, InnerValue, KEYWORDS, LIST_MODULE, NUMBER_MODULE, Package, PAIR_MODULE, RANGE_MODULE, RuntimeObject, STRING_MODULE, TO_STRING_METHOD, WOLLOK_BASE_PACKAGE } from 'wollok-ts'
-import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
+import { BOOLEAN_MODULE, CLOSURE_MODULE, DATE_MODULE, DICTIONARY_MODULE, Entity, InnerValue, KEYWORDS, LIST_MODULE, NUMBER_MODULE, Package, PAIR_MODULE, RANGE_MODULE, RuntimeObject, STRING_MODULE, TO_STRING_METHOD, WOLLOK_BASE_PACKAGE, Interpreter } from 'wollok-ts'
 import { REPL, replNode } from '../commands/repl'
 import { isREPLConstant } from '../utils'
 
