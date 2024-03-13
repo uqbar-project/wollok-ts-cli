@@ -60,7 +60,7 @@ function checkError() {
 function loadBackground() {
   socket.on("background", (fondo) => {
     backgroundImage =
-      fondo != "default" && images.find((img) => img.name == fondo)
+      fondo != "default"
         ? images.find((img) => img.name == fondo).url
         : defaultBackground
   })
