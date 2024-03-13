@@ -90,9 +90,7 @@ export const getGameInterpreter = (environment: Environment, io: Server): Interp
         *apply() {
           try {
             const game = interpreter?.object('wollok.game.game')
-            const background = game.get('boardGround') ? game.get('boardGround')?.innerString : 'default'
             const visuals = getVisuals(game, interpreter)
-            io.emit('background', background)
             io.emit('visuals', visuals)
 
             const gameSounds = game.get('sounds')?.innerCollection ?? []
@@ -188,7 +186,6 @@ export async function initializeDynamicDiagram(programPackage: Package, options:
   }
 }
 
-
 export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramClient: DynamicDiagramClient, { game, project, assets }: Options): void => {
   if (!game) return
   const sizeCanvas = canvasResolution(interpreter)
@@ -199,9 +196,17 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
       queueEvent(interpreter, buildKeyPressEvent(interpreter, wKeyCode(key.key, key.keyCode)), buildKeyPressEvent(interpreter, 'ANY'))
     })
 
+    const gameInterpreter = interpreter?.object('wollok.game.game')
+    const background = gameInterpreter.get('boardGround') ? gameInterpreter.get('boardGround')?.innerString : 'default'
+
     if (!assets) logger.warn(failureDescription('Folder for assets not found!'))
-    socket.emit('images', getImages(project, assets))
-    socket.emit('sizeCanvasInic', [sizeCanvas.width, sizeCanvas.height])
+    // when frontend is ready, send assets
+    socket.on("ready", () => {
+      logger.info(successDescription('Ready!'))
+      socket.emit('images', getImages(project, assets))
+      socket.emit('sizeCanvasInic', [sizeCanvas.width, sizeCanvas.height])
+      socket.emit('background', background)
+    })
 
     const id = setInterval(() => {
       const gameSingleton = interpreter?.object('wollok.game.game')

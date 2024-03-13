@@ -19,14 +19,16 @@
     </script>
     <script type="module">
       import { io } from "https://cdn.socket.io/4.4.1/socket.io.esm.min.js";
-
-      socket = io("http://localhost:3000");
-      socket.on("connect", function () {
-        console.log("conectado!");
-      });
-      socket.on("disconnect", function () {
-        console.log("desconectado!");
-      });
+      window.onload = () => {
+        socket = io();
+        socket.on("connect", function () {
+          console.log("conectado!");
+          socket.emit("ready")
+        });
+        socket.on("disconnect", function () {
+          console.log("desconectado!");
+        });
+      }
     </script>
   </body>
 </html>
