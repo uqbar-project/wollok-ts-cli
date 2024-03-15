@@ -25,10 +25,9 @@ function setup() {
   socket.on("updateSound", (data) => {
     updateSound(data.soundInstances)
   })
-
   loadBackground()
   loadVisuals()
-  }
+}
 
 function draw() {
   clear()
