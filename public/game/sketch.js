@@ -27,6 +27,7 @@ function setup() {
   })
   loadBackground()
   loadVisuals()
+  socket.emit("ready")
 }
 
 function draw() {
