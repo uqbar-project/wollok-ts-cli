@@ -14,9 +14,9 @@ function preload() {
   wko = loadImage("./wko.png")
   defaultBackground = loadImage("./background.jpg")
   socket.on("sizeCanvasInic", (size) => {
-    resizeCanvas(size[0], size[1])
-    gameWidth = size[0]
-    gameHeight = size[1]
+      gameWidth = size[0]
+      gameHeight = size[1]
+      resizeCanvas(gameWidth, gameHeight)
   })
   socket.on("cellPixelSize", (size) => {
     cellPixelSize = size
