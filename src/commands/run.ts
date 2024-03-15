@@ -202,12 +202,13 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
     socket.emit('images', getImages(project, assets))
     socket.emit('sizeCanvasInic', [sizeCanvas.width, sizeCanvas.height])
 
+    const flushInterval = 100
     const id = setInterval(() => {
       const gameSingleton = interpreter?.object('wollok.game.game')
       socket.emit('cellPixelSize', gameSingleton.get('cellSize')!.innerNumber!)
       try {
         interpreter.send('flushEvents', gameSingleton, interpreter.reify(timer))
-        timer += 300
+        timer += flushInterval
         // We could pass the interpreter but a program does not change it
         dynamicDiagramClient.onReload()
         if (!gameSingleton.get('running')?.innerBoolean) {
@@ -219,7 +220,7 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
         socket.emit('errorDetected', error.message)
         clearInterval(id)
       }
-    }, 100)
+    }, flushInterval)
 
     socket.on('disconnect', () => {
       clearInterval(id)
