@@ -10,8 +10,6 @@ var sounds = new Map()
 
 function preload() {
   loadAllImages()
-  loadBackground()
-  loadVisuals()
   wko = loadImage("./wko.png")
   defaultBackground = loadImage("./background.jpg")
   socket.on("sizeCanvasInic", (size) => {
@@ -27,7 +25,10 @@ function setup() {
   socket.on("updateSound", (data) => {
     updateSound(data.soundInstances)
   })
-}
+
+  loadBackground()
+  loadVisuals()
+  }
 
 function draw() {
   clear()

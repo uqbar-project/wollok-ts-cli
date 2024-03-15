@@ -196,21 +196,21 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
       queueEvent(interpreter, buildKeyPressEvent(interpreter, wKeyCode(key.key, key.keyCode)), buildKeyPressEvent(interpreter, 'ANY'))
     })
 
-    const gameInterpreter = interpreter?.object('wollok.game.game')
-    const background = gameInterpreter.get('boardGround') ? gameInterpreter.get('boardGround')?.innerString : 'default'
+    const gameSingleton = interpreter?.object('wollok.game.game')
+    const background = gameSingleton.get('boardGround') ? gameSingleton.get('boardGround')?.innerString : 'default'
 
     if (!assets) logger.warn(failureDescription('Folder for assets not found!'))
-    // when frontend is ready, send assets
+
+    // send assets only when frontend is ready
     socket.on("ready", () => {
       logger.info(successDescription('Ready!'))
       socket.emit('images', getImages(project, assets))
       socket.emit('sizeCanvasInic', [sizeCanvas.width, sizeCanvas.height])
+      socket.emit('cellPixelSize', gameSingleton.get('cellSize')!.innerNumber!)
       socket.emit('background', background)
     })
 
     const id = setInterval(() => {
-      const gameSingleton = interpreter?.object('wollok.game.game')
-      socket.emit('cellPixelSize', gameSingleton.get('cellSize')!.innerNumber!)
       try {
         interpreter.send('flushEvents', gameSingleton, interpreter.reify(timer))
         timer += 300
