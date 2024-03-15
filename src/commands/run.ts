@@ -194,7 +194,6 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
   const sizeCanvas = canvasResolution(interpreter)
   io.on('connection', socket => {
     logger.info(successDescription('Running game!'))
-    socket.on('disconnect', () => { logger.info(successDescription('Game finished')) })
     socket.on('keyPressed', key => {
       queueEvent(interpreter, buildKeyPressEvent(interpreter, wKeyCode(key.key, key.keyCode)), buildKeyPressEvent(interpreter, 'ANY'))
     })
@@ -221,6 +220,12 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
         clearInterval(id)
       }
     }, 100)
+
+    socket.on('disconnect', () => {
+      clearInterval(id)
+      logger.info(successDescription('Game finished'))
+    })
+
   })
 }
 
