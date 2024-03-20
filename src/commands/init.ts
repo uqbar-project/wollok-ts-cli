@@ -4,6 +4,7 @@ import { existsSync, writeFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { userInfo } from 'os'
 import { ENTER, createFolderIfNotExists } from '../utils'
+import { PROGRAM_FILE_EXTENSION, TEST_FILE_EXTENSION, WOLLOK_FILE_EXTENSION } from 'wollok-ts'
 
 export type Options = {
   project: string,
@@ -31,17 +32,17 @@ export default function ({ project, name, noTest = false, noCI = false, game = f
 
   // Creating files
   const exampleName = name ?? 'example'
-  logger.info(`Creating definition file ${exampleName}.wlk`)
-  writeFileSync(join(project, `${exampleName}.wlk`), wlkDefinition)
+  logger.info(`Creating definition file ${exampleName}.${WOLLOK_FILE_EXTENSION}`)
+  writeFileSync(join(project, `${exampleName}.${WOLLOK_FILE_EXTENSION}`), wlkDefinition)
 
   if (!noTest) {
-    const testFile = `test${capitalizeFirstLetter(exampleName)}.wtest`
+    const testFile = `test${capitalizeFirstLetter(exampleName)}.${TEST_FILE_EXTENSION}`
     logger.info(`Creating test file ${testFile}`)
     writeFileSync(join(project, testFile), testDefinition(exampleName))
   }
 
   if (game) {
-    const gameFile = `main${capitalizeFirstLetter(exampleName)}.wpgm`
+    const gameFile = `main${capitalizeFirstLetter(exampleName)}.${PROGRAM_FILE_EXTENSION}`
     logger.info(`Creating program file ${gameFile}`)
     writeFileSync(join(project, `${gameFile}`), gameDefinition(exampleName))
   }

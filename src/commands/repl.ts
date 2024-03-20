@@ -7,14 +7,9 @@ import http from 'http'
 import logger from 'loglevel'
 import { CompleterResult, Interface, createInterface as Repl } from 'readline'
 import { Server, Socket } from 'socket.io'
-import { Entity, Environment, Evaluation, Import, Package, Reference, Sentence, WollokException, parse } from 'wollok-ts'
-import { notEmpty } from 'wollok-ts/dist/extensions'
-import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
-import link from 'wollok-ts/dist/linker'
-import { ParseError } from 'wollok-ts/dist/parser'
-import natives from 'wollok-ts/dist/wre/wre.natives'
+import { Entity, Environment, Evaluation, Import, link, notEmpty, Package, Reference, Sentence, WollokException, parse, TO_STRING_METHOD, RuntimeObject, linkSentenceInNode, Interpreter, ParseError, WRENatives as natives } from 'wollok-ts'
 import { getDataDiagram } from '../services/diagram-generator'
-import { buildEnvironmentForProject, failureDescription, getFQN, linkSentence, publicPath, successDescription, valueDescription, validateEnvironment, handleError, ENTER, serverError, stackTrace, replIcon } from '../utils'
+import { buildEnvironmentForProject, failureDescription, getFQN, publicPath, successDescription, valueDescription, validateEnvironment, handleError, ENTER, serverError, stackTrace, replIcon } from '../utils'
 import { logger as fileLogger } from '../logger'
 import { TimeMeasurer } from '../time-measurer'
 
@@ -194,6 +189,7 @@ function defineCommands(autoImportPath: string | undefined, options: Options, re
 // EVALUATION
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
+// TODO WOLLOK-TS: check if we should decouple the function
 export function interprete(interpreter: Interpreter, line: string): string {
   try {
     const sentenceOrImport = parse.Import.or(parse.Variable).or(parse.Assignment).or(parse.Expression).tryParse(line)
@@ -201,7 +197,8 @@ export function interprete(interpreter: Interpreter, line: string): string {
     if (error) throw error
 
     if (sentenceOrImport.is(Sentence)) {
-      linkSentence(sentenceOrImport, interpreter.evaluation.environment)
+      const environment = interpreter.evaluation.environment
+      linkSentenceInNode(sentenceOrImport, replNode(environment))
       const unlinkedNode = [sentenceOrImport, ...sentenceOrImport.descendants].find(_ => _.is(Reference) && !_.target)
 
       if (unlinkedNode) {
@@ -213,9 +210,7 @@ export function interprete(interpreter: Interpreter, line: string): string {
 
       const result = interpreter.exec(sentenceOrImport)
       const stringResult = result
-        ? typeof result.innerValue === 'string'
-          ? `"${result.innerValue}"`
-          : interpreter.send('toString', result)!.innerString!
+        ? showInnerValue(interpreter, result)
         : ''
       return successDescription(stringResult)
     }
@@ -240,6 +235,13 @@ export function interprete(interpreter: Interpreter, line: string): string {
       failureDescription('Uh-oh... Unexpected TypeScript Error!', error)
     )
   }
+}
+
+function showInnerValue(interpreter: Interpreter, obj: RuntimeObject) {
+  if (obj!.innerValue === null) return 'null'
+  return typeof obj.innerValue === 'string'
+    ? `"${obj.innerValue}"`
+    : interpreter.send(TO_STRING_METHOD, obj)!.innerString!
 }
 
 async function autocomplete(input: string): Promise<CompleterResult> {
@@ -300,6 +302,8 @@ export async function initializeClient(options: Options, repl: Interface, interp
   }
 }
 
+// TODO WOLLOK-TS: migrate it? Maybe it could be part of Environment
+// Environment.newImportFor(baseNode, importNode)
 function newImport(importNode: Import, environment: Environment) {
   const node = replNode(environment)
   const imported = node.scope.resolve<Package | Entity>(importNode.entity.name)!

@@ -1,4 +1,4 @@
-import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
+import { Interpreter } from 'wollok-ts'
 import chai from 'chai'
 import chaiHttp from 'chai-http'
 import { initializeClient, initializeInterpreter } from '../src/commands/repl'
