@@ -86,10 +86,8 @@ export const getGameInterpreter = (environment: Environment, io: Server): Interp
       drawer: {
         *apply() {
           try {
-            const game = interpreter?.object(GAME_MODULE)
-            const background = game.get('boardGround') ? game.get('boardGround')?.innerString : 'default'
+            const game = interpreter?.object('wollok.game.game')
             const visuals = getVisuals(game, interpreter)
-            io.emit('background', background)
             io.emit('visuals', visuals)
 
             const gameSounds = game.get('sounds')?.innerCollection ?? []
@@ -185,7 +183,6 @@ export async function initializeDynamicDiagram(programPackage: Package, options:
   }
 }
 
-
 export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramClient: DynamicDiagramClient, { game, project, assets }: Options): void => {
   if (!game) return
   const sizeCanvas = canvasResolution(interpreter)
@@ -195,14 +192,22 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
       queueEvent(interpreter, buildKeyPressEvent(interpreter, wKeyCode(key.key, key.keyCode)), buildKeyPressEvent(interpreter, 'ANY'))
     })
 
+    const gameSingleton = interpreter?.object('wollok.game.game')
+    const background = gameSingleton.get('boardGround') ? gameSingleton.get('boardGround')?.innerString : 'default'
+
     if (!assets) logger.warn(failureDescription('Folder for assets not found!'))
-    socket.emit('images', getImages(project, assets))
-    socket.emit('sizeCanvasInic', [sizeCanvas.width, sizeCanvas.height])
+
+    // send assets only when frontend is ready
+    socket.on("ready", () => {
+      logger.info(successDescription('Ready!'))
+      socket.emit('images', getImages(project, assets))
+      socket.emit('sizeCanvasInic', [sizeCanvas.width, sizeCanvas.height])
+      socket.emit('cellPixelSize', gameSingleton.get('cellSize')!.innerNumber!)
+      socket.emit('background', background)
+    })
 
     const flushInterval = 100
     const id = setInterval(() => {
-      const gameSingleton = interpreter?.object('wollok.game.game')
-      socket.emit('cellPixelSize', gameSingleton.get('cellSize')!.innerNumber!)
       try {
         interpreter.send('flushEvents', gameSingleton, interpreter.reify(timer))
         timer += flushInterval

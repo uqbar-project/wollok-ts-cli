@@ -30,6 +30,7 @@ function setup() {
   })
   loadBackground()
   loadVisuals()
+  socket.emit("ready")
 }
 
 function draw() {
@@ -59,9 +60,10 @@ function checkError() {
 
 function loadBackground() {
   socket.on("background", (fondo) => {
+    const imagen = images.find((img) => img.name == fondo)
     backgroundImage =
-      fondo != "default"
-        ? images.find((img) => img.name == fondo).url
+      fondo != "default" && imagen != null
+        ? imagen.url
         : defaultBackground
   })
 }
