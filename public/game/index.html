@@ -11,6 +11,15 @@
       type="text/javascript"
       src="./sketch.js"
     ></script>
+    <style>
+        main {
+            display: flex;
+            height: calc(100vh - 20px);
+        }
+        .p5Canvas {
+            margin: auto;
+        }
+    </style>
   </head>
 
   <body>
@@ -20,7 +29,7 @@
     <script type="module">
       import { io } from "https://cdn.socket.io/4.4.1/socket.io.esm.min.js";
 
-      socket = io("http://localhost:3000");
+      socket = io();
       socket.on("connect", function () {
         console.log("conectado!");
       });

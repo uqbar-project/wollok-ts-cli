@@ -1,7 +1,8 @@
 var wko
 var backgroundImage
 var messageError
-var widthGame = 0
+var gameWidth = 0
+var gameHeight = 0
 const sizeFactor = 50
 var cellPixelSize
 var images = new Array()
@@ -13,7 +14,9 @@ function preload() {
   wko = loadImage("./wko.png")
   defaultBackground = loadImage("./background.jpg")
   socket.on("sizeCanvasInic", (size) => {
-    widthGame = size[0]
+      gameWidth = size[0]
+      gameHeight = size[1]
+      resizeCanvas(gameWidth, gameHeight)
   })
   socket.on("cellPixelSize", (size) => {
     cellPixelSize = size
@@ -34,10 +37,6 @@ function draw() {
   if (backgroundImage) background(backgroundImage)
   drawVisuals()
   checkError()
-}
-
-function windowResized() {
-  resizeCanvas(windowWidth - 20, windowHeight - 20)
 }
 
 function checkError() {
@@ -84,9 +83,8 @@ function loadVisuals() {
 function drawVisuals() {
   if (visuals) {
     for (i = 0 ; i < visuals.length ; i++) {
-      var positionX =
-        visuals[i].position.x * cellPixelSize * (windowWidth / widthGame)
-      var y = windowHeight - 20 - visuals[i].position.y * cellPixelSize
+      var positionX = visuals[i].position.x * cellPixelSize
+      var y = gameHeight - visuals[i].position.y * cellPixelSize
       var img = images.find((img) => img.name == visuals[i].image)
       var positionY = img ? y - img.url.height : y - wko.height
       if (img) image(img.url, positionX, positionY)
@@ -170,7 +168,7 @@ function messageXPosition(message) {
 }
 
 function xPositionIsOutOfCanvas(xPosition, width) {
-  return xPosition + width > windowWidth
+  return xPosition + width > gameWidth
 }
 
 function yPositionIsOutOfCanvas(yPosition) {
