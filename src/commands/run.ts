@@ -7,9 +7,7 @@ import http from 'http'
 import logger from 'loglevel'
 import { join, relative } from 'path'
 import { Server, Socket } from 'socket.io'
-import { Environment, link, Name, Package, parse, RuntimeObject, WollokException } from 'wollok-ts'
-import interpret, { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
-import natives from 'wollok-ts/dist/wre/wre.natives'
+import { Environment, GAME_MODULE, link, Name, Package, parse, RuntimeObject, WollokException, interpret, Interpreter, WRENatives as natives } from 'wollok-ts'
 import { ENTER, buildEnvironmentForProject, buildEnvironmentIcon, failureDescription, folderIcon, gameIcon, handleError, isImageFile, programIcon, publicPath, readPackageProperties, serverError, stackTrace, successDescription, validateEnvironment, valueDescription } from '../utils'
 import { buildKeyPressEvent, canvasResolution, Image, queueEvent, visualState, VisualState, wKeyCode } from './extrasGame'
 import { getDataDiagram } from '../services/diagram-generator'
@@ -26,7 +24,6 @@ type Options = {
   startDiagram: boolean
 }
 
-// TODO: Decouple io from getInterpreter
 let timer = 0
 
 const DEFAULT_PORT = '4200'
@@ -116,7 +113,7 @@ export const getGameInterpreter = (environment: Environment, io: Server): Interp
 
   const interpreter = interpret(environment, nativesAndDraw)
 
-  const gameSingleton = interpreter?.object('wollok.game.game')
+  const gameSingleton = interpreter?.object(GAME_MODULE)
   const drawer = interpreter.object('draw.drawer')
   interpreter.send('onTick', gameSingleton, interpreter.reify(17), interpreter.reify('renderizar'), drawer)
 
@@ -191,7 +188,6 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
   const sizeCanvas = canvasResolution(interpreter)
   io.on('connection', socket => {
     logger.info(successDescription('Running game!'))
-    socket.on('disconnect', () => { logger.info(successDescription('Game finished')) })
     socket.on('keyPressed', key => {
       queueEvent(interpreter, buildKeyPressEvent(interpreter, wKeyCode(key.key, key.keyCode)), buildKeyPressEvent(interpreter, 'ANY'))
     })
@@ -210,10 +206,11 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
       socket.emit('background', background)
     })
 
+    const flushInterval = 100
     const id = setInterval(() => {
       try {
         interpreter.send('flushEvents', gameSingleton, interpreter.reify(timer))
-        timer += 300
+        timer += flushInterval
         // We could pass the interpreter but a program does not change it
         dynamicDiagramClient.onReload()
         if (!gameSingleton.get('running')?.innerBoolean) {
@@ -225,7 +222,13 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
         socket.emit('errorDetected', error.message)
         clearInterval(id)
       }
-    }, 100)
+    }, flushInterval)
+
+    socket.on('disconnect', () => {
+      clearInterval(id)
+      logger.info(successDescription('Game finished'))
+    })
+
   })
 }
 

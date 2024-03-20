@@ -1,3 +1,5 @@
 {
-    "files.trimTrailingWhitespace": true
+    "files.trimTrailingWhitespace": true,
+    "typescript.preferences.quoteStyle": "single",
+    "typescript.format.semicolons": "remove"
 }

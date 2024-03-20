@@ -1,6 +1,6 @@
 import { should, use } from 'chai'
 import { join } from 'path'
-import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
+import { Interpreter } from 'wollok-ts'
 import { initializeInterpreter, interprete } from '../src/commands/repl'
 import { getDataDiagram } from '../src/services/diagram-generator'
 import { diagramAssertions } from './assertions'

@@ -6,8 +6,7 @@ import { buildEnvironmentForProject, failureDescription, getFQN, handleError, pr
 import chaiAsPromised from 'chai-as-promised'
 import chai from 'chai'
 import { spyCalledWithSubstring } from './assertions'
-import { Problem, WOLLOK_EXTRA_STACK_TRACE_HEADER, validate } from 'wollok-ts'
-import { List } from 'wollok-ts/dist/extensions'
+import { Problem, WOLLOK_EXTRA_STACK_TRACE_HEADER, validate, List } from 'wollok-ts'
 
 describe('build & validating environment', () => {
 

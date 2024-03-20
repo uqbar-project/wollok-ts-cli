@@ -1,38 +1,17 @@
 import { ElementDefinition } from 'cytoscape'
-import { Entity, Import, InnerValue, Package, RuntimeObject } from 'wollok-ts'
-import { Interpreter } from 'wollok-ts/dist/interpreter/interpreter'
+import { BOOLEAN_MODULE, CLOSURE_MODULE, DATE_MODULE, DICTIONARY_MODULE, Entity, InnerValue, KEYWORDS, LIST_MODULE, NUMBER_MODULE, Package, PAIR_MODULE, RANGE_MODULE, RuntimeObject, STRING_MODULE, TO_STRING_METHOD, WOLLOK_BASE_PACKAGE, Interpreter } from 'wollok-ts'
 import { REPL, replNode } from '../commands/repl'
-import { isConstant, isREPLConstant } from '../utils'
+import { isREPLConstant } from '../utils'
 
 type objectType = 'literal' | 'object' | 'null'
 
-const LIST_MODULE = 'List'
-const STRING_MODULE = 'wollok.lang.String'
-const WOLLOK_BASE_MODULES = 'wollok.'
-
-const SELF = 'self'
-
-function getImportedDefinitions(interpreter: Interpreter, rootFQN?: Package): Entity[] {
-  const environment = interpreter.evaluation.environment
-  const importedPackage = rootFQN ?? replNode(environment)
-  return [
-    ...importedPackage.members,
-    ...importedPackage.imports.flatMap(resolveImport),
-  ]
-}
-
-function resolveImport(imp: Import): Entity[] {
-  const importedEntity = imp.entity.target!
-  return imp.isGeneric
-    ? [...(importedEntity as Package).members]
-    : [importedEntity]
-}
-
 export function getDataDiagram(interpreter: Interpreter, rootFQN?: Package): ElementDefinition[] {
-  const importedFromConsole = getImportedDefinitions(interpreter, rootFQN)
+  const environment = interpreter.evaluation.environment
+  const importedFromConsole = (replNode(environment) ?? rootFQN!).allScopedEntities()
   const currentFrame = interpreter.evaluation.currentFrame
   const objects = new Map(Array.from(currentFrame.locals.keys()).map((name) => [name, currentFrame.get(name)]))
 
+  // TODO: Aclarar qué está haciendo
   return Array.from(objects.keys())
     .filter((name) => {
       const object = objects.get(name)
@@ -95,7 +74,6 @@ function elementFromObject(obj: RuntimeObject, interpreter: Interpreter, already
   ])
 }
 
-
 function concatOverlappedReferences(elementDefinitions: ElementDefinition[]): ElementDefinition[] {
   const cleanDefinitions: ElementDefinition[] = []
   elementDefinitions.forEach(elem => {
@@ -114,7 +92,6 @@ function concatOverlappedReferences(elementDefinitions: ElementDefinition[]): El
   return cleanDefinitions
 }
 
-
 // De acá se obtiene la lista de objetos a dibujar
 function decoration(obj: RuntimeObject, interpreter: Interpreter) {
   const moduleName: string = obj.module.fullyQualifiedName
@@ -132,20 +109,19 @@ function isConsoleLocal(name: string): boolean {
 }
 
 function isLanguageLocal(name: string) {
-  return name.startsWith(WOLLOK_BASE_MODULES) || ['true', 'false', 'null'].includes(name)
+  return name.startsWith(WOLLOK_BASE_PACKAGE) || ['true', 'false', 'null'].includes(name)
 }
 
 function getType(obj: RuntimeObject, moduleName: string): objectType {
   if (obj.innerValue === null) return 'null'
-  return moduleName.startsWith(WOLLOK_BASE_MODULES) ? 'literal' : 'object'
+  return moduleName.startsWith(WOLLOK_BASE_PACKAGE) ? 'literal' : 'object'
 }
 
 function getLabel(obj: RuntimeObject, interpreter: Interpreter): string {
   const { innerValue, module } = obj
   if (innerValue === null) return 'null'
   const moduleName = module.fullyQualifiedName
-  if (shouldShortenRepresentation(moduleName)) return showInnerValue(interpreter.send('toString', obj)?.innerValue)
-  // Otra opción es enviar el mensaje "printString" pero por cuestiones de performance preferí aprovechar el innerValue
+  if (shouldShortenRepresentation(moduleName)) return showInnerValue(interpreter.send(TO_STRING_METHOD, obj)?.innerValue)
   if (moduleName === STRING_MODULE) return `"${showInnerValue(innerValue)}"`
   if (shouldShowInnerValue(moduleName)) return showInnerValue(innerValue)
   return module.name ?? 'Object'
@@ -159,12 +135,11 @@ function getFontSize(text: string) {
 }
 
 function shouldShortenRepresentation(moduleName: string) {
-  // Por ahora el Closure está viniendo como `wollok.lang.Closure#undefined` supongo que porque está en el contexto de un REPL
-  return ['wollok.lang.Date', 'wollok.lang.Pair', 'wollok.lang.Range', 'wollok.lang.Dictionary'].includes(moduleName) || moduleName.startsWith('wollok.lang.Closure')
+  return [DATE_MODULE, PAIR_MODULE, RANGE_MODULE, DICTIONARY_MODULE].includes(moduleName) || moduleName.startsWith(CLOSURE_MODULE)
 }
 
 function shouldShowInnerValue(moduleName: string) {
-  return ['wollok.lang.String', 'wollok.lang.Number', 'wollok.lang.Boolean'].includes(moduleName)
+  return [STRING_MODULE, NUMBER_MODULE, BOOLEAN_MODULE].includes(moduleName)
 }
 
 function shouldIterateChildren(moduleName: string): boolean {
@@ -179,7 +154,7 @@ function getLocalKeys(obj: RuntimeObject) {
   const { innerValue, module } = obj
   if (innerValue === null) return []
   const moduleName: string = module.fullyQualifiedName
-  return shouldIterateChildren(moduleName) ? [...obj.locals.keys()].filter(key => key !== SELF) : []
+  return shouldIterateChildren(moduleName) ? [...obj.locals.keys()].filter(key => key !== KEYWORDS.SELF) : []
 }
 
 function buildReference(obj: RuntimeObject, label: string) {
@@ -188,7 +163,7 @@ function buildReference(obj: RuntimeObject, label: string) {
   return {
     data: {
       id: `${id}_${runtimeValue?.id}`,
-      label: `${label}${isConstant(obj, label) ? '🔒' : ''}`,
+      label: `${label}${obj.isConstant(label) ? '🔒' : ''}`,
       source: id,
       target: runtimeValue?.id,
       style: 'solid',
@@ -207,7 +182,7 @@ function getCollections(obj: RuntimeObject, interpreter: Interpreter, alreadyVis
             id: `${id}_${item.id}`,
             source: id,
             target: item.id,
-            label: isList(obj.module.name) ? i.toString() : '',
+            label: obj.module.fullyQualifiedName === LIST_MODULE ? i.toString() : '',
             style: 'dotted',
             width: 1,
           },
@@ -217,10 +192,6 @@ function getCollections(obj: RuntimeObject, interpreter: Interpreter, alreadyVis
       alreadyVisited.push(item.id)
       return result
     })
-}
-
-function isList(moduleName: string | undefined) {
-  return moduleName === LIST_MODULE
 }
 
 function getInstanceVariables(obj: RuntimeObject, interpreter: Interpreter, alreadyVisited: string[]) {
