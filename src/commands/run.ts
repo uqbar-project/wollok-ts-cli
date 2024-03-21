@@ -239,6 +239,9 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
 
 export const getImages = (projectPath: string, assetsFolder: string): Image[] => {
   const baseFolder = join(projectPath, assetsFolder)
+  if (!existsSync(baseFolder))
+    throw `Folder image ${baseFolder} does not exist`
+
 
   const fileRelativeFor = (fileName: string) => ({ name: fileName, url: fileName })
 

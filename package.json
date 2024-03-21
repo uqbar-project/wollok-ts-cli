@@ -16,7 +16,7 @@
     "test-with-coverage": "npm run lint && nyc --reporter=json --lines 70 npm run test:unit",
     "lint": "eslint . ",
     "lint:fix": "eslint . --fix",
-    "test:unit": "mocha --parallel -r ts-node/register/transpile-only test/**/*.test.ts --timeout 7000",
+    "test:unit": "mocha -r ts-node/register/transpile-only test/**/*.test.ts --timeout 7000",
     "build": "shx rm -rf build && shx mkdir ./build && shx cp -r ./public ./build/public && tsc -p ./tsconfig.build.json",
     "watch": "npm run build -- -w",
     "pack": "pkg ."
