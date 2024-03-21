@@ -17,7 +17,7 @@ const { time, timeEnd } = console
 
 type Options = {
   project: string
-  assets?: string
+  assets: string
   skipValidations: boolean
   port?: string
   game: boolean,
@@ -186,6 +186,12 @@ export async function initializeDynamicDiagram(programPackage: Package, options:
 export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramClient: DynamicDiagramClient, { game, project, assets }: Options): void => {
   if (!game) return
   const sizeCanvas = canvasResolution(interpreter)
+  const baseFolder = join(project, assets)
+  if (!existsSync(baseFolder)) {
+    logger.warn(failureDescription(`Resource folder for images not found: ${assets}`))
+    throw `Folder image ${baseFolder} does not exist`
+  }
+
   io.on('connection', socket => {
     logger.info(successDescription('Running game!'))
     socket.on('keyPressed', key => {
@@ -195,10 +201,9 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
     const gameSingleton = interpreter?.object('wollok.game.game')
     const background = gameSingleton.get('boardGround') ? gameSingleton.get('boardGround')?.innerString : 'default'
 
-    if (!assets) logger.warn(failureDescription('Folder for assets not found!'))
 
     // send assets only when frontend is ready
-    socket.on("ready", () => {
+    socket.on('ready', () => {
       logger.info(successDescription('Ready!'))
       socket.emit('images', getImages(project, assets))
       socket.emit('sizeCanvasInic', [sizeCanvas.width, sizeCanvas.height])
@@ -232,9 +237,8 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
   })
 }
 
-export const getImages = (projectPath: string, assetsFolder: string | undefined): Image[] => {
-  const baseFolder = join(projectPath, assetsFolder ?? '')
-  if (!existsSync(baseFolder)) throw `Folder image ${baseFolder} does not exist`
+export const getImages = (projectPath: string, assetsFolder: string): Image[] => {
+  const baseFolder = join(projectPath, assetsFolder)
 
   const fileRelativeFor = (fileName: string) => ({ name: fileName, url: fileName })
 
@@ -264,7 +268,7 @@ export const getSoundsFolder = (projectPath: string, assetsOptions: string | und
 export const getAssetsFolder = ({ game, project, assets }: Options): string => {
   if (!game) return ''
   const packageProperties = readPackageProperties(project)
-  return assets ?? packageProperties?.resourceFolder
+  return packageProperties?.resourceFolder ?? assets
 }
 
 export const buildEnvironmentForProgram = async ({ project, skipValidations, game }: Options): Promise<Environment> => {
