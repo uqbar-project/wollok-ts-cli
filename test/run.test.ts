@@ -10,10 +10,11 @@ chai.should()
 const expect = chai.expect
 
 const project = join('examples', 'run-examples', 'basic-example')
+const assets = 'assets'
 
 describe('testing run', () => {
 
-  const buildOptions = (game: boolean, assets: string | undefined) => ({
+  const buildOptions = (game: boolean, assets: string) => ({
     game,
     project,
     assets,
@@ -23,12 +24,12 @@ describe('testing run', () => {
 
   describe('getAssetsPath', () => {
 
-    it('should return assets folder from options if it exists', () => {
-      expect(getAssetsFolder(buildOptions(true, 'myAssets'))).to.equal('myAssets')
+    it('should return assets folder from package if it exists', () => {
+      expect(getAssetsFolder(buildOptions(true, 'myAssets' /** Ignored :( */))).to.equal('specialAssets')
     })
 
-    it('should return assets folder from package if options is not set', () => {
-      expect(getAssetsFolder(buildOptions(true, undefined))).to.equal('specialAssets')
+    it('should return assets folder from package with default option', () => {
+      expect(getAssetsFolder(buildOptions(true, assets))).to.equal('specialAssets')
     })
 
     it('should return undefined if game is not set', () => {
@@ -121,7 +122,7 @@ describe('testing run', () => {
     })
 
     it('should return all images even if assets folder is not present', () => {
-      expect(getImages(imageProject, undefined)).to.deep.equal(
+      expect(getImages(imageProject, '')).to.deep.equal(
         [
           {
             'name': join('assets', 'medium', '3.png'),
@@ -168,6 +169,7 @@ describe('testing run', () => {
         skipValidations: false,
         game: false,
         startDiagram: false,
+        assets,
       })
       expect(spyCalledWithSubstring(consoleLogSpy, 'Pepita empieza con 70')).to.be.true
       expect(spyCalledWithSubstring(consoleLogSpy, 'Vuela')).to.be.true
@@ -187,6 +189,7 @@ describe('testing run', () => {
         skipValidations: false,
         game: false,
         startDiagram: false,
+        assets,
       })
       expect(processExitSpy.calledWith(21)).to.be.true
       expect(fileLoggerInfoSpy.calledOnce).to.be.true
@@ -216,6 +219,7 @@ describe('testing run', () => {
         skipValidations: false,
         game: true,
         startDiagram: true,
+        assets,
       })
       await clock.runAllAsync()
     })
