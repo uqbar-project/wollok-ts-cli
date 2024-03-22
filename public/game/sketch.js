@@ -8,6 +8,7 @@ var cellPixelSize
 var images = new Array()
 var visuals = new Array()
 var sounds = new Map()
+const fps = 10
 
 function preload() {
   loadAllImages()
@@ -30,10 +31,14 @@ function setup() {
   })
   loadBackground()
   loadVisuals()
+  frameRate(fps);
   socket.emit("ready")
+
 }
 
 function draw() {
+  console.log("draw")
+  socket.emit("flushEvents", 1000/fps)
   clear()
   if (backgroundImage) background(backgroundImage)
   drawVisuals()
@@ -78,6 +83,7 @@ function loadAllImages() {
 
 function loadVisuals() {
   socket.on("visuals", (visualsList) => {
+    console.log("visuals")
     visuals = visualsList
   })
 }

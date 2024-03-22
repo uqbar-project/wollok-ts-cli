@@ -207,8 +207,32 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
       socket.emit('sizeCanvasInic', [sizeCanvas.width, sizeCanvas.height])
       socket.emit('cellPixelSize', gameSingleton.get('cellSize')!.innerNumber!)
       socket.emit('background', background)
+      interpreter.send('flushEvents', gameSingleton, interpreter.reify(100))
+
     })
 
+    socket.on('flushEvents', time => {
+      try {
+        const tsInicio = performance.now()
+        timer += time
+        interpreter.send('flushEvents', gameSingleton, interpreter.reify(timer))
+        // We could pass the interpreter but a program does not change it
+        dynamicDiagramClient.onReload()
+        const tsFin = performance.now()
+        if(tsFin - tsInicio > time) {
+          logger.warn(failureDescription(`flushEvents took ${(tsFin - tsInicio).toFixed(2)} ms`))
+        }
+
+        if (!gameSingleton.get('running')?.innerBoolean) {
+          process.exit(0)
+        }
+      } catch (error: any) {
+        interpreter.send('stop', gameSingleton)
+        socket.emit('errorDetected', error.message)
+      }
+  })
+
+/*
     const flushInterval = 100
     const id = setInterval(() => {
       try {
@@ -226,9 +250,9 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
         clearInterval(id)
       }
     }, flushInterval)
-
+*/
     socket.on('disconnect', () => {
-      clearInterval(id)
+      // clearInterval(id)
       logger.info(successDescription('Game finished'))
     })
 
