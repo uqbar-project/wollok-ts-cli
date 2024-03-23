@@ -29,7 +29,7 @@ export function getTarget(environment: Environment, filter: string | undefined, 
   if(filter){
     return getTargetByFilter(environment, filter)
   } else {
-    return getTargetByOptions(environment, options)
+    return getTargetByPreciseOptions(environment, options)
   }
 }
 
@@ -42,13 +42,12 @@ function getTargetByFilter(environment: Environment, filter: string | undefined)
 }
 
 
-function getTargetByOptions(environment: Environment, { file, describe, test }: Options): Test[] {
+function getTargetByPreciseOptions(environment: Environment, { file, describe, test }: Options): Test[] {
   let nodeToFilter: Environment | Package | Describe = environment
 
   if(file) {
     nodeToFilter = environment.descendants.find(node => node.is(Package) && node.name === file) as Package | undefined ?? environment
   }
-
   if(describe) {
     nodeToFilter = nodeToFilter.descendants.find(node => node.is(Describe) && node.name === `"${describe}"`) as Describe | undefined ?? nodeToFilter
   }
@@ -59,11 +58,9 @@ function getTargetByOptions(environment: Environment, { file, describe, test }: 
 
   const matchedTests = nodeToFilter.descendants.filter(testFilter)
 
-  if(matchedTests.some(test => test.isOnly)) {
-    return [matchedTests.find(test => test.isOnly)!]
-  }
+  const onlyTest = matchedTests.find(test => test.isOnly)
 
-  return matchedTests
+  return onlyTest ? [onlyTest] : matchedTests
 }
 
 export function tabulationForNode({ fullyQualifiedName }: { fullyQualifiedName: string }): string {
