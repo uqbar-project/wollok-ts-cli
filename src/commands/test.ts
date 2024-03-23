@@ -1,10 +1,11 @@
 import { bold } from 'chalk'
 import { time, timeEnd } from 'console'
 import logger from 'loglevel'
-import { Entity, Environment, Node, Test, is, match, when, WRENatives as natives, interpret } from 'wollok-ts'
+import { Entity, Environment, Node, Test, is, match, when, WRENatives as natives, interpret, Describe } from 'wollok-ts'
 import { buildEnvironmentForProject, failureDescription, successDescription, valueDescription, validateEnvironment, handleError, ENTER, stackTrace, buildEnvironmentIcon, testIcon } from '../utils'
 import { logger as fileLogger } from '../logger'
 import { TimeMeasurer } from '../time-measurer'
+import { Package } from 'wollok-ts'
 
 const { log } = console
 
@@ -24,13 +25,45 @@ export function sanitize(value?: string): string | undefined {
   return value?.replaceAll('"', '')
 }
 
-export function getTarget(environment: Environment, filter: string | undefined, { file, describe, test }: Options): Test[] {
-  const fqnByOptionalParameters = [file, describe, test].filter(Boolean).join('.')
-  const filterTest = sanitize(filter) ?? fqnByOptionalParameters ?? ''
+export function getTarget(environment: Environment, filter: string | undefined, options: Options): Test[] {
+  if(filter){
+    return getTargetByFilter(environment, filter)
+  } else {
+    return getTargetByOptions(environment, options)
+  }
+}
+
+function getTargetByFilter(environment: Environment, filter: string | undefined): Test[] {
+  const filterTest = sanitize(filter) ?? ''
   const possibleTargets = environment.descendants.filter(is(Test))
   const onlyTarget = possibleTargets.find((test: Test) => test.isOnly)
   const testMatches = (filter: string) => (test: Test) => !filter || sanitize(test.fullyQualifiedName)!.includes(filter)
   return onlyTarget ? [onlyTarget] : possibleTargets.filter(testMatches(filterTest))
+}
+
+
+function getTargetByOptions(environment: Environment, { file, describe, test }: Options): Test[] {
+  let nodeToFilter: Environment | Package | Describe = environment
+
+  if(file) {
+    nodeToFilter = environment.descendants.find(node => node.is(Package) && node.name === file) as Package | undefined ?? environment
+  }
+
+  if(describe) {
+    nodeToFilter = nodeToFilter.descendants.find(node => node.is(Describe) && node.name === `"${describe}"`) as Describe | undefined ?? nodeToFilter
+  }
+
+  const testFilter = test ?
+    (node: Node): node is Test => node.is(Test) && node.name === `"${test}"` :
+    is(Test)
+
+  const matchedTests = nodeToFilter.descendants.filter(testFilter)
+
+  if(matchedTests.some(test => test.isOnly)) {
+    return [matchedTests.find(test => test.isOnly)!]
+  }
+
+  return matchedTests
 }
 
 export function tabulationForNode({ fullyQualifiedName }: { fullyQualifiedName: string }): string {
