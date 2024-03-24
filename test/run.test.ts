@@ -82,7 +82,8 @@ describe('testing run', () => {
       const game = interpreter.object('wollok.game.game')
       interpreter.send('addVisual', game, interpreter.object('mainGame.elementoVisual'))
       io.close()
-      expect(getVisuals(game, interpreter)).to.deep.equal([{ image: join('smalls', '1.png'), position: { x: 0, y: 1 }, message: undefined }])
+      // we can't use join in the image path since it's in Wollok project
+      expect(getVisuals(game, interpreter)).to.deep.equal([{ image: 'smalls/1.png', position: { x: 0, y: 1 }, message: undefined }])
     })
 
   })
