@@ -25,44 +25,37 @@ export function sanitize(value?: string): string | undefined {
   return value?.replaceAll('"', '')
 }
 
-export function getTarget(environment: Environment, filter: string | undefined, options: Options): Test[] {
-  if(filter){
-    return getTargetByFilter(environment, filter)
-  } else {
-    return getTargetByPreciseOptions(environment, options)
-  }
+export function sanitize(value?: string): string | undefined {
+  return value?.replaceAll('"', '')
 }
 
-function getTargetByFilter(environment: Environment, filter: string | undefined): Test[] {
-  const filterTest = sanitize(filter) ?? ''
-  const possibleTargets = environment.descendants.filter(is(Test))
+export function getTarget(environment: Environment, filter: string | undefined, options: Options): Test[] {
+  const possibleTargets = getBaseNode(environment, filter, options).descendants.filter(getTestFilter(filter, options))
   const onlyTarget = possibleTargets.find((test: Test) => test.isOnly)
   const testMatches = (filter: string) => (test: Test) => !filter || sanitize(test.fullyQualifiedName)!.includes(filter)
+  const filterTest = sanitize(filter) ?? ''
   return onlyTarget ? [onlyTarget] : possibleTargets.filter(testMatches(filterTest))
 }
 
+function getBaseNode(environment: Environment, filter: string | undefined, options: Options): Environment | Package | Describe {
+  if (filter) return environment
 
-function getTargetByPreciseOptions(environment: Environment, { file, describe, test }: Options): Test[] {
+  const { file, describe } = options
   let nodeToFilter: Environment | Package | Describe = environment
-
-  if(file) {
-    nodeToFilter = environment.descendants.find(node => node.is(Package) && node.name === file) as Package | undefined ?? environment
+  if (file) {
+    nodeToFilter = environment.descendants.find(node => node.is(Package) && node.name === file) as Package | undefined ?? nodeToFilter
   }
-  if(describe) {
-    nodeToFilter = nodeToFilter.descendants.find(node => node.is(Describe) && node.name === `"${describe}"`) as Describe | undefined ?? nodeToFilter
+  if (describe) {
+    nodeToFilter = environment.descendants.find(node => node.is(Describe) && node.name === `"${describe}"`) as Describe | undefined ?? nodeToFilter
   }
-
-  const testFilter = test ?
-    (node: Node): node is Test => node.is(Test) && node.name === `"${test}"` :
-    is(Test)
-
-  const matchedTests = nodeToFilter.descendants.filter(testFilter)
-
-  const onlyTest = matchedTests.find(test => test.isOnly)
-
-  return onlyTest ? [onlyTest] : matchedTests
+  return nodeToFilter
 }
 
+function getTestFilter(filter: string | undefined, options: Options): (node: Node) => node is Test {
+  return filter || !options.test ?
+    is(Test) :
+    (node: Node): node is Test => node.is(Test) && node.name === `"${options.test}"`
+}
 export function tabulationForNode({ fullyQualifiedName }: { fullyQualifiedName: string }): string {
   return '  '.repeat(fullyQualifiedName.split('.').length - 1)
 }
