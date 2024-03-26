@@ -30,116 +30,127 @@ describe('Test', () => {
         environment = await buildEnvironmentForProject(projectPath)
       })
 
-      it('should filter by test using filter option', () => {
-        const tests = getTarget(environment, 'another test', emptyOptions)
-        expect(tests.length).to.equal(1)
-        expect(tests[0].name).to.equal('"another test"')
-      })
-
-      it('should filter by test using filter option - case insensitive', () => {
-        const tests = getTarget(environment, 'aNothEr Test', emptyOptions)
-        expect(tests.length).to.equal(0)
-      })
-
-      it('should filter by test using test option', () => {
-        const tests = getTarget(environment, undefined, {
-          ...emptyOptions,
-          test: 'another test',
+      describe('using filter option', () => {
+        it('should filter by test using filter option', () => {
+          const tests = getTarget(environment, 'another test', emptyOptions)
+          expect(tests.length).to.equal(2)
+          expect(tests[0].name).to.equal('"another test"')
+          expect(tests[1].name).to.equal('"another test with longer name"')
         })
-        expect(tests.length).to.equal(1)
-        expect(tests[0].name).to.equal('"another test"')
-      })
 
-      it('should filter by test using test option - case insensitive', () => {
-        const tests = getTarget(environment, undefined, {
-          ...emptyOptions,
-          test: 'aNother Test',
+        it('should filter by test using filter option - case insensitive', () => {
+          const tests = getTarget(environment, 'aNothEr Test', emptyOptions)
+          expect(tests.length).to.equal(0)
         })
-        expect(tests.length).to.equal(0)
-      })
 
-      it('should filter by describe using filter option', () => {
-        const tests = getTarget(environment, 'second describe', emptyOptions)
-        expect(tests.length).to.equal(2)
-        expect(tests[0].name).to.equal('"second test"')
-        expect(tests[1].name).to.equal('"another second test"')
-      })
-
-      it('should filter by describe using filter option - case insensitive', () => {
-        const tests = getTarget(environment, 'SeCOND describe', emptyOptions)
-        expect(tests.length).to.equal(0)
-      })
-
-      it('should filter by describe using describe option', () => {
-        const tests = getTarget(environment, undefined, {
-          ...emptyOptions,
-          describe: 'second describe',
+        it('should filter by describe using filter option', () => {
+          const tests = getTarget(environment, 'second describe', emptyOptions)
+          expect(tests.length).to.equal(2)
+          expect(tests[0].name).to.equal('"second test"')
+          expect(tests[1].name).to.equal('"another second test"')
         })
-        expect(tests.length).to.equal(2)
-        expect(tests[0].name).to.equal('"second test"')
-        expect(tests[1].name).to.equal('"another second test"')
-      })
 
-      it('should filter by describe & test using describe & test option', () => {
-        const tests = getTarget(environment, undefined, {
-          ...emptyOptions,
-          describe: 'second describe',
-          test: 'another second test',
+        it('should filter by describe using filter option - case insensitive', () => {
+          const tests = getTarget(environment, 'SeCOND describe', emptyOptions)
+          expect(tests.length).to.equal(0)
         })
-        expect(tests.length).to.equal(1)
-        expect(tests[0].name).to.equal('"another second test"')
-      })
 
-      it('should filter by file using filter option', () => {
-        const tests = getTarget(environment, 'test-one', emptyOptions)
-        expect(tests.length).to.equal(2)
-        expect(tests[0].name).to.equal('"a test"')
-        expect(tests[1].name).to.equal('"another test"')
-      })
-
-      it('should filter by file using file option', () => {
-        const tests = getTarget(environment, undefined, {
-          ...emptyOptions,
-          file: 'test-one',
+        it('should filter by file using filter option', () => {
+          const tests = getTarget(environment, 'test-one', emptyOptions)
+          expect(tests.length).to.equal(3)
+          expect(tests[0].name).to.equal('"a test"')
+          expect(tests[1].name).to.equal('"another test"')
+          expect(tests[2].name).to.equal('"another test with longer name"')
         })
-        expect(tests.length).to.equal(2)
-        expect(tests[0].name).to.equal('"a test"')
-        expect(tests[1].name).to.equal('"another test"')
-      })
 
-      it('should filter by file & describe using file & describe option', () => {
-        const tests = getTarget(environment, undefined, {
-          ...emptyOptions,
-          file: 'test-one',
-          describe: 'this describe',
+        it('should filter by file & describe using filter option', () => {
+          const tests = getTarget(environment, 'test-one.this describe', emptyOptions)
+          expect(tests.length).to.equal(3)
+          expect(tests[0].name).to.equal('"a test"')
+          expect(tests[1].name).to.equal('"another test"')
+          expect(tests[2].name).to.equal('"another test with longer name"')
         })
-        expect(tests.length).to.equal(2)
-        expect(tests[0].name).to.equal('"a test"')
-        expect(tests[1].name).to.equal('"another test"')
-      })
 
-      it('should filter by file & describe using filter option', () => {
-        const tests = getTarget(environment, 'test-one.this describe', emptyOptions)
-        expect(tests.length).to.equal(2)
-        expect(tests[0].name).to.equal('"a test"')
-        expect(tests[1].name).to.equal('"another test"')
-      })
-
-      it('should filter by file & describe & test using file & describe & test option', () => {
-        const tests = getTarget(environment, undefined, {
-          ...emptyOptions,
-          file: 'test-one',
-          describe: 'this describe',
-          test: 'another test',
+        it('should filter by file using filter option', () => {
+          const tests = getTarget(environment, 'test-one.this describe.another test', emptyOptions)
+          expect(tests.length).to.equal(2)
+          expect(tests[0].name).to.equal('"another test"')
+          expect(tests[1].name).to.equal('"another test with longer name"')
         })
-        expect(tests.length).to.equal(1)
-        expect(tests[0].name).to.equal('"another test"')
+
       })
 
-      it('should filter by file using filter option', () => {
-        const tests = getTarget(environment, 'test-one.this describe.another test', emptyOptions)
-        expect(tests.length).to.equal(1)
-        expect(tests[0].name).to.equal('"another test"')
+      describe('with file/describe/test options', () => {
+        it('should filter by test using test option', () => {
+          const tests = getTarget(environment, undefined, {
+            ...emptyOptions,
+            test: 'another test',
+          })
+          expect(tests.length).to.equal(1)
+          expect(tests[0].name).to.equal('"another test"')
+        })
+
+        it('should filter by test using test option - case sensitive', () => {
+          const tests = getTarget(environment, undefined, {
+            ...emptyOptions,
+            test: 'aNother Test',
+          })
+          expect(tests.length).to.equal(0)
+        })
+
+        it('should filter by describe using describe option', () => {
+          const tests = getTarget(environment, undefined, {
+            ...emptyOptions,
+            describe: 'second describe',
+          })
+          expect(tests.length).to.equal(2)
+          expect(tests[0].name).to.equal('"second test"')
+          expect(tests[1].name).to.equal('"another second test"')
+        })
+
+        it('should filter by describe & test using describe & test option', () => {
+          const tests = getTarget(environment, undefined, {
+            ...emptyOptions,
+            describe: 'second describe',
+            test: 'another second test',
+          })
+          expect(tests.length).to.equal(1)
+          expect(tests[0].name).to.equal('"another second test"')
+        })
+
+        it('should filter by file using file option', () => {
+          const tests = getTarget(environment, undefined, {
+            ...emptyOptions,
+            file: 'test-one',
+          })
+          expect(tests.length).to.equal(3)
+          expect(tests[0].name).to.equal('"a test"')
+          expect(tests[1].name).to.equal('"another test"')
+          expect(tests[2].name).to.equal('"another test with longer name"')
+        })
+
+        it('should filter by file & describe using file & describe option', () => {
+          const tests = getTarget(environment, undefined, {
+            ...emptyOptions,
+            file: 'test-one',
+            describe: 'this describe',
+          })
+          expect(tests.length).to.equal(3)
+          expect(tests[0].name).to.equal('"a test"')
+          expect(tests[1].name).to.equal('"another test"')
+          expect(tests[2].name).to.equal('"another test with longer name"')
+        })
+
+        it('should filter by file & describe & test using file & describe & test option', () => {
+          const tests = getTarget(environment, undefined, {
+            ...emptyOptions,
+            file: 'test-one',
+            describe: 'this describe',
+            test: 'another test',
+          })
+          expect(tests.length).to.equal(1)
+          expect(tests[0].name).to.equal('"another test"')
+        })
       })
 
     })
@@ -283,23 +294,23 @@ describe('Test', () => {
       })
 
       expect(processExitSpy.callCount).to.equal(0)
-      expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 2 tests')).to.be.true
-      expect(spyCalledWithSubstring(loggerInfoSpy, '2 passing')).to.be.true
+      expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 3 tests')).to.be.true
+      expect(spyCalledWithSubstring(loggerInfoSpy, '3 passing')).to.be.true
       expect(spyCalledWithSubstring(loggerInfoSpy, '0 failing')).to.be.false // old version
       expect(fileLoggerInfoSpy.calledOnce).to.be.true
-      expect(fileLoggerInfoSpy.firstCall.firstArg.result).to.deep.equal({ ok: 2, failed: 0 })
+      expect(fileLoggerInfoSpy.firstCall.firstArg.result).to.deep.equal({ ok: 3, failed: 0 })
     })
 
     it('returns exit code 2 if one or more tests fail', async () => {
       await test(undefined, emptyOptions)
 
       expect(processExitSpy.calledWith(2)).to.be.true
-      expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 5 tests')).to.be.true
-      expect(spyCalledWithSubstring(loggerInfoSpy, '4 passing')).to.be.true
+      expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 6 tests')).to.be.true
+      expect(spyCalledWithSubstring(loggerInfoSpy, '5 passing')).to.be.true
       expect(spyCalledWithSubstring(loggerInfoSpy, '1 failing')).to.be.true
       expect(fileLoggerInfoSpy.calledOnce).to.be.true
       const fileLoggerArg = fileLoggerInfoSpy.firstCall.firstArg
-      expect(fileLoggerArg.result).to.deep.equal({ ok: 4, failed: 1 })
+      expect(fileLoggerArg.result).to.deep.equal({ ok: 5, failed: 1 })
       expect(fileLoggerArg.failures.length).to.equal(1)
     })
 
