@@ -25,10 +25,6 @@ export function sanitize(value?: string): string | undefined {
   return value?.replaceAll('"', '')
 }
 
-export function sanitize(value?: string): string | undefined {
-  return value?.replaceAll('"', '')
-}
-
 export function getTarget(environment: Environment, filter: string | undefined, options: Options): Test[] {
   const possibleTargets = getBaseNode(environment, filter, options).descendants.filter(getTestFilter(filter, options))
   const onlyTarget = possibleTargets.find((test: Test) => test.isOnly)
