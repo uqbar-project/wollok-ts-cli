@@ -39,10 +39,10 @@ function getBaseNode(environment: Environment, filter: string | undefined, optio
   const { file, describe } = options
   let nodeToFilter: Environment | Package | Describe = environment
   if (file) {
-    nodeToFilter = environment.descendants.find(node => node.is(Package) && node.name === file) as Package | undefined ?? nodeToFilter
+    nodeToFilter = nodeToFilter.descendants.find(node => node.is(Package) && node.name === file) as Package | undefined ?? nodeToFilter
   }
   if (describe) {
-    nodeToFilter = environment.descendants.find(node => node.is(Describe) && node.name === `"${describe}"`) as Describe | undefined ?? nodeToFilter
+    nodeToFilter = nodeToFilter.descendants.find(node => node.is(Describe) && node.name === `"${describe}"`) as Describe | undefined ?? nodeToFilter
   }
   return nodeToFilter
 }
