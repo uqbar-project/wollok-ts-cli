@@ -9,4 +9,8 @@ describe "this describe" {
     assert.equals(2, a)
   }
 
+  test "another test with longer name" {
+    assert.equals("aaa", "aaa")
+  }
+
 }
