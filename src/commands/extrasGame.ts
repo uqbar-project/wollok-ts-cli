@@ -33,9 +33,9 @@ function invokeMethod(interpreter: Interpreter, visual: RuntimeObject, method: s
 export function visualState(interpreter: Interpreter, visual: RuntimeObject): VisualState {
   const image = invokeMethod(interpreter, visual, 'image')
   const position = interpreter.send('position', visual)!
-  const roundedPosition = interpreter.send('round', position)!
-  const x = roundedPosition.get('x')!.innerNumber!
-  const y = roundedPosition.get('y')!.innerNumber!
+  // const roundedPosition = interpreter.send('round', position)!
+  const x = position.get('x')!.innerNumber!
+  const y = position.get('y')!.innerNumber!
   const message = visual.get('message')?.innerString
   return { image, position: { x, y }, message }
 }
