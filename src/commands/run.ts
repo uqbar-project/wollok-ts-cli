@@ -138,7 +138,7 @@ export const initializeGameClient = ({ project, assets, port, game }: Options): 
   }
 
   const currentPort = gamePort(port!)
-  server.listen(parseInt(currentPort), 'localhost')
+  server.listen(parseInt(currentPort), '0.0.0.0')
 
   logger.info(successDescription('Game available at: ' + bold(`http://localhost:${currentPort}`)))
   server.listen(currentPort)
@@ -171,7 +171,7 @@ export async function initializeDynamicDiagram(programPackage: Package, options:
     express.static(publicPath('diagram'), { maxAge: '1d' }),
   )
   const currentPort = dynamicDiagramPort(options.port!)
-  server.listen(parseInt(currentPort), 'localhost')
+  server.listen(parseInt(currentPort), '0.0.0.0')
   server.addListener('listening', () => {
     logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://localhost:${currentPort}`)))
   })

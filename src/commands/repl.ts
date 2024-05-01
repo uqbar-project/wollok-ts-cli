@@ -282,9 +282,10 @@ export async function initializeClient(options: Options, repl: Interface, interp
     cors({ allowedHeaders: '*' }),
     express.static(publicPath('diagram'), { maxAge: '1d' }),
   )
-  server.listen(parseInt(options.port), 'localhost')
+  const host = "0.0.0.0"
+  server.listen(parseInt(options.port), host)
   server.addListener('listening', () => {
-    logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://localhost:${options.port}`)))
+    logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://127.0.0.1:${options.port}`)))
     repl.prompt()
   })
 
