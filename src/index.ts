@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { Command } from 'commander'
 import repl from './commands/repl'
 import run from './commands/run'
