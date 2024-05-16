@@ -1,6 +1,6 @@
 # Wollok-TS-CLI
 
-[![Build CI](https://github.com/uqbar-project/wollok-ts-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/uqbar-project/wollok-ts-cli/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/uqbar-project/wollok-ts-cli/graph/badge.svg?token=rpJA6VlVJo)](https://codecov.io/gh/uqbar-project/wollok-ts-cli) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)[![npm version](https://badge.fury.io/js/wollok-ts-cli.svg)](https://badge.fury.io/js/wollok-ts-cli)
+[![Build CI](https://github.com/uqbar-project/wollok-ts-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/uqbar-project/wollok-ts-cli/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/uqbar-project/wollok-ts-cli/graph/badge.svg?token=rpJA6VlVJo)](https://codecov.io/gh/uqbar-project/wollok-ts-cli) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![npm version](https://badge.fury.io/js/wollok-ts-cli.svg)](https://badge.fury.io/js/wollok-ts-cli)
 
 🖖 Welcome to the Wollok Command Line Interface!
 
