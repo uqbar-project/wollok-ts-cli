@@ -23,6 +23,8 @@ This is the list of the currently available commands:
 
 Go to [latest release](https://github.com/uqbar-project/wollok-ts-cli/releases/latest), download the executable based on your operating system and add it to the PATH (here are instructions to do so in [Mac](https://apple.stackexchange.com/questions/41542/adding-a-new-executable-to-the-path-environment-variable), [Windows](https://medium.com/@kevinmarkvi/how-to-add-executables-to-your-path-in-windows-5ffa4ce61a53) and [Linux](https://unix.stackexchange.com/questions/183295/adding-programs-to-path)).
 
+Or install it using [npm](https://www.npmjs.com/package/wollok-ts-cli) with the command `npm i -g wollok-ts-cli`
+
 Feel free to report issues on [the project's issue tracker](https://github.com/uqbar-project/wollok-ts-cli/issues).
 
 This component is part of the [Wollok language project](https://github.com/uqbar-project/wollok-language) where you can have an overall picture of our roadmap.
