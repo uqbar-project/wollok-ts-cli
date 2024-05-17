@@ -12,6 +12,11 @@
     "url": "https://github.com/uqbar-project/wollok-ts-cli/issues"
   },
   "homepage": "https://github.com/uqbar-project/wollok-language",
+  "keywords": [
+    "wollok",
+    "cli",
+    "typescript"
+  ],
   "main": "./build/src/index.js",
   "scripts": {
     "preinstall": "sh scripts/download-libs.sh",
