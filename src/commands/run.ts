@@ -19,8 +19,8 @@ type Options = {
   project: string
   assets: string
   skipValidations: boolean
-  host?: string,
-  port?: string
+  host: string,
+  port: string
   game: boolean,
   startDiagram: boolean
 }

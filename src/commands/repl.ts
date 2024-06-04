@@ -22,7 +22,7 @@ export type Options = {
   project: string
   skipValidations: boolean,
   darkMode: boolean,
-  host?: string,
+  host: string,
   port: string,
   skipDiagram: boolean,
 }
