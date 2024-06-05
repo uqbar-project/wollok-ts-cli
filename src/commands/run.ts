@@ -19,7 +19,8 @@ type Options = {
   project: string
   assets: string
   skipValidations: boolean
-  port?: string
+  host: string,
+  port: string
   game: boolean,
   startDiagram: boolean
 }
@@ -27,6 +28,7 @@ type Options = {
 let timer = 0
 
 const DEFAULT_PORT = '4200'
+const DEFAULT_HOST = 'localhost'
 
 type DynamicDiagramClient = {
   onReload: () => void,
@@ -120,7 +122,7 @@ export const getGameInterpreter = (environment: Environment, io: Server): Interp
   return interpreter
 }
 
-export const initializeGameClient = ({ project, assets, port, game }: Options): Server | undefined => {
+export const initializeGameClient = ({ project, assets, host, port, game }: Options): Server | undefined => {
   if (!game) return undefined
 
   const app = express()
@@ -137,10 +139,11 @@ export const initializeGameClient = ({ project, assets, port, game }: Options): 
     app.use(cors({ allowedHeaders: '*' }), express.static(soundsFolder, { maxAge: '1d' }))
   }
 
+  const currentHost = gameHost(host!)
   const currentPort = gamePort(port!)
-  server.listen(parseInt(currentPort), 'localhost')
+  server.listen(parseInt(currentPort), currentHost)
 
-  logger.info(successDescription('Game available at: ' + bold(`http://localhost:${currentPort}`)))
+  logger.info(successDescription('Game available at: ' + bold(`http://${currentHost}:${currentPort}`)))
   server.listen(currentPort)
   return io
 }
@@ -170,10 +173,11 @@ export async function initializeDynamicDiagram(programPackage: Package, options:
     cors({ allowedHeaders: '*' }),
     express.static(publicPath('diagram'), { maxAge: '1d' }),
   )
+  const currentHost = gameHost(options.host!)
   const currentPort = dynamicDiagramPort(options.port!)
-  server.listen(parseInt(currentPort), 'localhost')
+  server.listen(parseInt(currentPort), currentHost)
   server.addListener('listening', () => {
-    logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://localhost:${currentPort}`)))
+    logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://${currentHost}:${currentPort}`)))
   })
 
   return {
@@ -283,6 +287,7 @@ export const buildEnvironmentForProgram = async ({ project, skipValidations, gam
 export const runner = (game: boolean): string => game ? 'as a game' : 'as a program'
 
 export const gamePort = (port: string): string => port ?? DEFAULT_PORT
+export const gameHost = (host: string): string => host ?? DEFAULT_HOST
 
 export const dynamicDiagramPort = (port: string): string => `${+gamePort(port) + 1}`
 
