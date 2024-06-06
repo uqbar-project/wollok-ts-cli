@@ -271,7 +271,7 @@ describe('Test', () => {
 
     const emptyOptions = {
       project: projectPath,
-      skipValidations: false,
+      skipValidations: true,
       file: undefined,
       describe: undefined,
       test: undefined,
@@ -314,9 +314,10 @@ describe('Test', () => {
       expect(fileLoggerArg.failures.length).to.equal(1)
     })
 
-    it('returns exit code 1 if tests throw an error', async () => {
+    it('returns exit code 1 if tests has parse errors', async () => {
       await test(undefined, {
         ...emptyOptions,
+        skipValidations: false,
         project: join('examples', 'test-examples', 'failing-case'),
       })
 

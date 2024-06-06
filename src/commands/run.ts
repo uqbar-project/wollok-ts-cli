@@ -15,7 +15,7 @@ import { logger as fileLogger } from '../logger'
 
 const { time, timeEnd } = console
 
-type Options = {
+export type Options = {
   project: string
   assets: string
   skipValidations: boolean
@@ -291,4 +291,4 @@ export const gameHost = (host: string): string => host ?? DEFAULT_HOST
 
 export const dynamicDiagramPort = (port: string): string => `${+gamePort(port) + 1}`
 
-const drawDefinition = () => parse.File('draw').tryParse('object drawer{ method apply() native }')
+const drawDefinition = () => parse.File('draw.wlk').tryParse('object drawer{ method apply() native }')
