@@ -121,7 +121,7 @@ describe('Test', () => {
         it('should filter by file using file option', () => {
           const tests = getTarget(environment, undefined, {
             ...emptyOptions,
-            file: 'test-one',
+            file: 'test-one.wtest',
           })
           expect(tests.length).to.equal(3)
           expect(tests[0].name).to.equal('"a test"')
@@ -132,7 +132,7 @@ describe('Test', () => {
         it('should filter by file & describe using file & describe option', () => {
           const tests = getTarget(environment, undefined, {
             ...emptyOptions,
-            file: 'test-one',
+            file: 'test-one.wtest',
             describe: 'this describe',
           })
           expect(tests.length).to.equal(3)
@@ -144,7 +144,7 @@ describe('Test', () => {
         it('should filter by file & describe & test using file & describe & test option', () => {
           const tests = getTarget(environment, undefined, {
             ...emptyOptions,
-            file: 'test-one',
+            file: 'test-one.wtest',
             describe: 'this describe',
             test: 'another test',
           })
@@ -195,7 +195,7 @@ describe('Test', () => {
       it('should execute single test when running a file using file option', () => {
         const tests = getTarget(environment, undefined, {
           ...emptyOptions,
-          file: 'only-file',
+          file: 'only-file.wtest',
         })
         expect(tests.length).to.equal(1)
         expect(tests[0].name).to.equal('"this is the one"')
@@ -290,7 +290,7 @@ describe('Test', () => {
     it('passes all the tests successfully and exits normally', async () => {
       await test(undefined, {
         ...emptyOptions,
-        file: 'test-one',
+        file: 'test-one.wtest',
       })
 
       expect(processExitSpy.callCount).to.equal(0)

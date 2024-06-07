@@ -1,4 +1,4 @@
-import { bold } from 'chalk'
+import { bold, red } from 'chalk'
 import { time, timeEnd } from 'console'
 import logger from 'loglevel'
 import { Entity, Environment, Node, Test, is, match, when, WRENatives as natives, interpret, Describe } from 'wollok-ts'
@@ -17,8 +17,16 @@ export type Options = {
   skipValidations: boolean
 }
 
+class TestSearchMissError extends Error{}
+
 export function validateParameters(filter: string | undefined, { file, describe, test }: Options): void {
   if (filter && (file || describe || test)) throw new Error('You should either use filter by full name or file/describe/test.')
+}
+
+function matchingTestDescription(filter: string | undefined, options: Options): string {
+  if(filter) return `matching ${valueDescription(filter)}`
+  if(options.file || options.describe || options.test) return `matching ${valueDescription(`${options.file ? `'${options.file}'` : '*'}.${options.describe ? `'${options.describe}'` : '*'}.${options.test ? `'${options.test}'` : '*'}`)}`
+  return ''
 }
 
 export function sanitize(value?: string): string | undefined {
@@ -26,7 +34,16 @@ export function sanitize(value?: string): string | undefined {
 }
 
 export function getTarget(environment: Environment, filter: string | undefined, options: Options): Test[] {
-  const possibleTargets = getBaseNode(environment, filter, options).descendants.filter(getTestFilter(filter, options))
+  let possibleTargets: Test[]
+  try {
+    possibleTargets = getBaseNode(environment, filter, options).descendants.filter(getTestFilter(filter, options))
+  } catch(e: any){
+    if(e instanceof TestSearchMissError){
+      logger.error(red(bold(e.message)))
+      return []
+    }
+    throw e
+  }
   const onlyTarget = possibleTargets.find((test: Test) => test.isOnly)
   const testMatches = (filter: string) => (test: Test) => !filter || sanitize(test.fullyQualifiedName)!.includes(filter)
   const filterTest = sanitize(filter) ?? ''
@@ -37,12 +54,14 @@ function getBaseNode(environment: Environment, filter: string | undefined, optio
   if (filter) return environment
 
   const { file, describe } = options
-  let nodeToFilter: Environment | Package | Describe = environment
+  let nodeToFilter: Environment | Package | Describe | undefined = environment
   if (file) {
-    nodeToFilter = nodeToFilter.descendants.find(node => node.is(Package) && node.name === file) as Package | undefined ?? nodeToFilter
+    nodeToFilter = nodeToFilter.descendants.find(node => node.is(Package) && node.fileName === file) as Package | undefined
+    if(!nodeToFilter) throw new TestSearchMissError(`File '${file}' not found`)
   }
   if (describe) {
     nodeToFilter = nodeToFilter.descendants.find(node => node.is(Describe) && node.name === `"${describe}"`) as Describe | undefined ?? nodeToFilter
+    if(!nodeToFilter) throw new TestSearchMissError(`Describe '${describe}' not found`)
   }
   return nodeToFilter
 }
@@ -62,7 +81,9 @@ export default async function (filter: string | undefined, options: Options): Pr
 
     const timeMeasurer = new TimeMeasurer()
     const { project, skipValidations } = options
-    const runAllTestsDescription = `${testIcon} Running all tests ${filter ? `matching ${valueDescription(filter)} ` : ''}on ${valueDescription(project)}`
+
+    const matchLog = matchingTestDescription(filter, options)
+    const runAllTestsDescription = `${testIcon} Running all tests${matchLog ? ` ${matchLog} `: ' '}on ${valueDescription(project)}`
 
     logger.info(runAllTestsDescription)
 
