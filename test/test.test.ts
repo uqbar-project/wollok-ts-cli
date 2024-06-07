@@ -1,11 +1,11 @@
 import { expect } from 'chai'
-import { join } from 'path'
-import { buildEnvironmentForProject } from '../src/utils'
-import test, { getTarget, sanitize, tabulationForNode, validateParameters } from '../src/commands/test'
-import { Environment } from 'wollok-ts'
 import logger from 'loglevel'
-import { logger as fileLogger } from '../src/logger'
+import { join } from 'path'
 import sinon from 'sinon'
+import { Environment } from 'wollok-ts'
+import test, { getTarget, sanitize, tabulationForNode, validateParameters } from '../src/commands/test'
+import { logger as fileLogger } from '../src/logger'
+import { buildEnvironmentForProject } from '../src/utils'
 import { spyCalledWithSubstring } from './assertions'
 
 describe('Test', () => {
@@ -265,6 +265,7 @@ describe('Test', () => {
 
     let fileLoggerInfoSpy: sinon.SinonStub
     let loggerInfoSpy: sinon.SinonStub
+    let loggerErrorSpy: sinon.SinonStub
     let processExitSpy: sinon.SinonStub
 
     const projectPath = join('examples', 'test-examples', 'normal-case')
@@ -281,6 +282,7 @@ describe('Test', () => {
       loggerInfoSpy = sinon.stub(logger, 'info')
       fileLoggerInfoSpy = sinon.stub(fileLogger, 'info')
       processExitSpy = sinon.stub(process, 'exit')
+      loggerErrorSpy = sinon.stub(logger, 'error')
     })
 
     afterEach(() => {
@@ -299,6 +301,29 @@ describe('Test', () => {
       expect(spyCalledWithSubstring(loggerInfoSpy, '0 failing')).to.be.false // old version
       expect(fileLoggerInfoSpy.calledOnce).to.be.true
       expect(fileLoggerInfoSpy.firstCall.firstArg.result).to.deep.equal({ ok: 3, failed: 0 })
+    })
+
+    it('passing a wrong filename runs no tests and logs a warning', async () => {
+      await test(undefined, {
+        ...emptyOptions,
+        file: 'non-existing-file.wtest',
+      })
+
+      expect(processExitSpy.callCount).to.equal(0)
+      expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 0 tests')).to.be.true
+      expect(spyCalledWithSubstring(loggerErrorSpy, 'File \'non-existing-file.wtest\' not found')).to.be.true
+    })
+
+    it('passing a wrong describe runs no tests and logs a warning', async () => {
+      await test(undefined, {
+        ...emptyOptions,
+        file: 'test-one.wtest',
+        describe: 'non-existing-describe',
+      })
+
+      expect(processExitSpy.callCount).to.equal(0)
+      expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 0 tests')).to.be.true
+      expect(spyCalledWithSubstring(loggerErrorSpy, 'Describe \'non-existing-describe\' not found')).to.be.true
     })
 
     it('returns exit code 2 if one or more tests fail', async () => {

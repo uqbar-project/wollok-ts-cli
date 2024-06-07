@@ -60,7 +60,7 @@ function getBaseNode(environment: Environment, filter: string | undefined, optio
     if(!nodeToFilter) throw new TestSearchMissError(`File '${file}' not found`)
   }
   if (describe) {
-    nodeToFilter = nodeToFilter.descendants.find(node => node.is(Describe) && node.name === `"${describe}"`) as Describe | undefined ?? nodeToFilter
+    nodeToFilter = nodeToFilter.descendants.find(node => node.is(Describe) && node.name === `"${describe}"`) as Describe | undefined
     if(!nodeToFilter) throw new TestSearchMissError(`Describe '${describe}' not found`)
   }
   return nodeToFilter
