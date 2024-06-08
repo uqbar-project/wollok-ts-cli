@@ -3,7 +3,7 @@ import logger from 'loglevel'
 import { join } from 'path'
 import sinon from 'sinon'
 import { Environment } from 'wollok-ts'
-import test, { getTarget, sanitize, tabulationForNode, validateParameters } from '../src/commands/test'
+import test, { getTarget, matchingTestDescription, sanitize, tabulationForNode, validateParameters } from '../src/commands/test'
 import { logger as fileLogger } from '../src/logger'
 import { buildEnvironmentForProject } from '../src/utils'
 import { spyCalledWithSubstring } from './assertions'
@@ -248,6 +248,43 @@ describe('Test', () => {
       }) }).to.throw(/You should either use filter by full name or file/)
     })
 
+  })
+
+  describe('matching test description', () => {
+    const emptyOptions = {
+      project: '',
+      skipValidations: false,
+      file: undefined,
+      describe: undefined,
+      test: undefined,
+    }
+
+
+    it('should return empty string if no filter or options are passed', () => {
+      expect(matchingTestDescription(undefined, emptyOptions)).to.equal('')
+    })
+
+    it('should return filter description if filter is passed', () => {
+      expect(matchingTestDescription('some test', emptyOptions)).to.include('some test')
+    })
+
+    it('should return options descriptions if options are passed', () => {
+      expect(matchingTestDescription(undefined, {
+        ...emptyOptions,
+        file: 'test-one.wtest',
+        describe: 'this describe',
+        test: 'another test',
+      })).to.include('\'test-one.wtest\'.\'this describe\'.\'another test\'')
+    })
+
+    it('should return options descriptions with wildcards if options are missing', () => {
+      expect(matchingTestDescription(undefined, {
+        ...emptyOptions,
+        file: undefined,
+        describe: 'this discribe',
+        test: undefined,
+      })).to.include('*.\'this discribe\'.*')
+    })
   })
 
   describe('tabulations for node', () => {

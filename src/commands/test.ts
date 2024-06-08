@@ -23,9 +23,12 @@ export function validateParameters(filter: string | undefined, { file, describe,
   if (filter && (file || describe || test)) throw new Error('You should either use filter by full name or file/describe/test.')
 }
 
-function matchingTestDescription(filter: string | undefined, options: Options): string {
+export function matchingTestDescription(filter: string | undefined, options: Options): string {
   if(filter) return `matching ${valueDescription(filter)}`
-  if(options.file || options.describe || options.test) return `matching ${valueDescription(`${options.file ? `'${options.file}'` : '*'}.${options.describe ? `'${options.describe}'` : '*'}.${options.test ? `'${options.test}'` : '*'}`)}`
+  if(options.file || options.describe || options.test) {
+    const stringifiedOrWildcard = (value?: string) => value ? `'${value}'` : '*'
+    return `matching ${valueDescription([options.file, options.describe, options.test].map(stringifiedOrWildcard).join('.'))}`
+  }
   return ''
 }
 
