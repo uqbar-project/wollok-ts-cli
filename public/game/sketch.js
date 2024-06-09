@@ -28,6 +28,7 @@ function setup() {
   socket.on("updateSound", (data) => {
     updateSound(data.soundInstances)
   })
+  noLoop()
   loadBackground()
   loadVisuals()
   socket.emit("ready")
@@ -65,6 +66,7 @@ function loadBackground() {
       fondo != "default" && imagen != null
         ? imagen.url
         : defaultBackground
+    draw()
   })
 }
 
@@ -73,12 +75,14 @@ function loadAllImages() {
     for (i = 0 ; i < img.length ; i++) {
       images.push({ name: img[i].name, url: loadImage(`${img[i].url}`) })
     }
+    draw()
   })
 }
 
 function loadVisuals() {
   socket.on("visuals", (visualsList) => {
     visuals = visualsList
+    draw()
   })
 }
 
