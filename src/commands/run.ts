@@ -209,11 +209,30 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
       socket.emit('background', background)
     })
 
-    const flushInterval = 100
+    const flushInterval = 17
+    let muestras = 0
+    let tEvents = 0
+
     const id = setInterval(() => {
       try {
+      	const tsStart = performance.now()
         interpreter.send('flushEvents', gameSingleton, interpreter.reify(timer))
-        timer += flushInterval
+        const elapsed = performance.now() - tsStart
+        tEvents += elapsed
+
+        // Si flushEvents demoró más del tiempo flushInterval
+        // incrementamos el timer tomando el mayor de los tiempos
+        timer += elapsed > flushInterval ? elapsed : flushInterval
+        muestras += 1
+
+        // cada 30 muestras se imprime por consola el tiempo promedio
+        // que tardó en procesar todos los eventos
+        if(muestras >= 30) {
+        	logger.debug(`flushEvents: ${tEvents / muestras} ms`)
+        	muestras = 0
+        	tEvents = 0
+        }
+
         // We could pass the interpreter but a program does not change it
         dynamicDiagramClient.onReload()
         if (!gameSingleton.get('running')?.innerBoolean) {
@@ -286,4 +305,4 @@ export const gamePort = (port: string): string => port ?? DEFAULT_PORT
 
 export const dynamicDiagramPort = (port: string): string => `${+gamePort(port) + 1}`
 
-const drawDefinition = () => parse.File('draw').tryParse('object drawer{ method apply() native }')
+const drawDefinition = () => parse.File('draw.wlk').tryParse('object drawer{ method apply() native }')
