@@ -58,7 +58,7 @@ export default async function (programFQN: Name, options: Options): Promise<void
 
 
     const ioGame: Server | undefined = initializeGameClient(options)
-    const interpreter = game ? getGameInterpreter(environment, ioGame!) : interpret(environment, { ...natives })
+    const interpreter = game ? getGameInterpreter(environment) : interpret(environment, { ...natives })
     const programPackage = environment.getNodeByFQN<Package>(programFQN).parent as Package
     const dynamicDiagramClient = await initializeDynamicDiagram(programPackage, options, interpreter)
 
@@ -81,7 +81,8 @@ export default async function (programFQN: Name, options: Options): Promise<void
   }
 }
 
-export const getGameInterpreter = (environment: Environment, io: Server): Interpreter => {
+// TODO: ver si se elimina este método
+export const getGameInterpreter = (environment: Environment): Interpreter => {
   const interpreter = interpret(environment, natives)
 
   return interpreter
