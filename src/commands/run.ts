@@ -82,7 +82,7 @@ export default async function (programFQN: Name, options: Options): Promise<void
 }
 
 export const getGameInterpreter = (environment: Environment, io: Server): Interpreter => {
-   const interpreter = interpret(environment, natives)
+  const interpreter = interpret(environment, natives)
 
   return interpreter
 }
@@ -162,7 +162,7 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
       queueEvent(interpreter, buildKeyPressEvent(interpreter, wKeyCode(key.key, key.keyCode)), buildKeyPressEvent(interpreter, 'ANY'))
     })
 
-    const gameSingleton = interpreter?.object('wollok.game.game')
+    const gameSingleton = interpreter?.object(GAME_MODULE)
     const background = gameSingleton.get('boardGround') ? gameSingleton.get('boardGround')?.innerString : 'default'
 
     const baseFolder = join(project, assets)
@@ -282,7 +282,7 @@ const drawDefinition = () => parse.File('draw.wlk').tryParse('object drawer{ met
 
 
 const draw = (interpreter: Interpreter, io: Server) => {
-  const game = interpreter?.object('wollok.game.game')
+  const game = interpreter?.object(GAME_MODULE)
   try {
     const visuals = getVisuals(game, interpreter)
     io.emit('visuals', visuals)
