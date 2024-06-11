@@ -2,7 +2,7 @@ import chai from 'chai'
 import { mkdirSync, rmdirSync } from 'fs'
 import { join } from 'path'
 import sinon from 'sinon'
-import run, { buildEnvironmentForProgram, getAssetsFolder, getGameInterpreter, getImages, getSoundsFolder, getVisuals, initializeGameClient } from '../src/commands/run'
+import run, { Options, buildEnvironmentForProgram, getAssetsFolder, getGameInterpreter, getImages, getSoundsFolder, getVisuals, initializeGameClient } from '../src/commands/run'
 import { spyCalledWithSubstring } from './assertions'
 import { logger as fileLogger } from '../src/logger'
 
@@ -14,12 +14,14 @@ const assets = 'assets'
 
 describe('testing run', () => {
 
-  const buildOptions = (game: boolean, assets: string) => ({
+  const buildOptions = (game: boolean, assets: string): Options => ({
     game,
     project,
     assets,
     skipValidations: false,
     startDiagram: false,
+    host: 'localhost',
+    port: '3000',
   })
 
   describe('getAssetsPath', () => {
@@ -171,6 +173,8 @@ describe('testing run', () => {
         game: false,
         startDiagram: false,
         assets,
+        host: 'localhost',
+        port: '3000',
       })
       expect(spyCalledWithSubstring(consoleLogSpy, 'Pepita empieza con 70')).to.be.true
       expect(spyCalledWithSubstring(consoleLogSpy, 'Vuela')).to.be.true
@@ -191,6 +195,8 @@ describe('testing run', () => {
         game: false,
         startDiagram: false,
         assets,
+        host: 'localhost',
+        port: '3000',
       })
       expect(processExitSpy.calledWith(21)).to.be.true
       expect(fileLoggerInfoSpy.calledOnce).to.be.true
@@ -221,6 +227,8 @@ describe('testing run', () => {
         game: true,
         startDiagram: true,
         assets,
+        host: 'localhost',
+        port: '3000',
       })
       await clock.runAllAsync()
     })

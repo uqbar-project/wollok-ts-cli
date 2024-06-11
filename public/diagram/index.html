@@ -34,8 +34,7 @@
       <script type="module">
         import { io } from "./lib/socket.io.esm.min.js";
 
-        const { port } = window.location
-        const socket = io(`http://localhost:${port}`);
+        const socket = io();
         socket.on("connect", function () {
           console.log("conectado!");
         });

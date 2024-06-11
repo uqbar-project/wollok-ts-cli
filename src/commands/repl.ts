@@ -22,6 +22,7 @@ export type Options = {
   project: string
   skipValidations: boolean,
   darkMode: boolean,
+  host: string,
   port: string,
   skipDiagram: boolean,
 }
@@ -282,9 +283,10 @@ export async function initializeClient(options: Options, repl: Interface, interp
     cors({ allowedHeaders: '*' }),
     express.static(publicPath('diagram'), { maxAge: '1d' }),
   )
-  server.listen(parseInt(options.port), 'localhost')
+  const host = options.host
+  server.listen(parseInt(options.port), host)
   server.addListener('listening', () => {
-    logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://localhost:${options.port}`)))
+    logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://${host}:${options.port}`)))
     repl.prompt()
   })
 
