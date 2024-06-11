@@ -82,42 +82,7 @@ export default async function (programFQN: Name, options: Options): Promise<void
 }
 
 export const getGameInterpreter = (environment: Environment, io: Server): Interpreter => {
-  const nativesAndDraw = {
-    ...natives,
-    draw: {
-      drawer: {
-        *apply() {
-          try {
-            const game = interpreter?.object('wollok.game.game')
-            const visuals = getVisuals(game, interpreter)
-            io.emit('visuals', visuals)
-
-            const gameSounds = game.get('sounds')?.innerCollection ?? []
-            const mappedSounds = gameSounds.map(sound =>
-              [
-                sound.id,
-                sound.get('file')!.innerString!,
-                sound.get('status')!.innerString!,
-                sound.get('volume')!.innerNumber!,
-                sound.get('loop')!.innerBoolean!,
-              ])
-            io.emit('updateSound', { soundInstances: mappedSounds })
-          } catch (error: any) {
-            logger.error(failureDescription(error instanceof WollokException ? error.message : 'Exception while executing the program'))
-            const debug = logger.getLevel() <= logger.levels.DEBUG
-            if (debug) logger.error(error)
-            interpreter.send('stop', gameSingleton)
-          }
-        },
-      },
-    },
-  }
-
-  const interpreter = interpret(environment, nativesAndDraw)
-
-  const gameSingleton = interpreter?.object(GAME_MODULE)
-  const drawer = interpreter.object('draw.drawer')
-  interpreter.send('onTick', gameSingleton, interpreter.reify(17), interpreter.reify('renderizar'), drawer)
+   const interpreter = interpret(environment, natives)
 
   return interpreter
 }
@@ -221,6 +186,8 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
       try {
       	const tsStart = performance.now()
         interpreter.send('flushEvents', gameSingleton, interpreter.reify(timer))
+
+        draw(interpreter, io)
         const elapsed = performance.now() - tsStart
         tEvents += elapsed
 
@@ -229,10 +196,11 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
         timer += elapsed > flushInterval ? elapsed : flushInterval
         muestras += 1
 
+
         // cada 30 muestras se imprime por consola el tiempo promedio
         // que tardó en procesar todos los eventos
         if(muestras >= 30) {
-        	logger.debug(`flushEvents: ${tEvents / muestras} ms`)
+        	logger.debug(`flushEvents: ${(tEvents / muestras).toFixed(2)} ms`)
         	muestras = 0
         	tEvents = 0
         }
@@ -311,3 +279,28 @@ export const gameHost = (host: string): string => host ?? DEFAULT_HOST
 export const dynamicDiagramPort = (port: string): string => `${+gamePort(port) + 1}`
 
 const drawDefinition = () => parse.File('draw.wlk').tryParse('object drawer{ method apply() native }')
+
+
+const draw = (interpreter: Interpreter, io: Server) => {
+  const game = interpreter?.object('wollok.game.game')
+  try {
+    const visuals = getVisuals(game, interpreter)
+    io.emit('visuals', visuals)
+
+    const gameSounds = game.get('sounds')?.innerCollection ?? []
+    const mappedSounds = gameSounds.map(sound =>
+      [
+        sound.id,
+        sound.get('file')!.innerString!,
+        sound.get('status')!.innerString!,
+        sound.get('volume')!.innerNumber!,
+        sound.get('loop')!.innerBoolean!,
+      ])
+    io.emit('updateSound', { soundInstances: mappedSounds })
+  } catch (error: any) {
+    logger.error(failureDescription(error instanceof WollokException ? error.message : 'Exception while executing the program'))
+    const debug = logger.getLevel() <= logger.levels.DEBUG
+    if (debug) logger.error(error)
+    interpreter.send('stop', game)
+  }
+}
