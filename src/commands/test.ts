@@ -40,6 +40,10 @@ export function getTarget(environment: Environment, filter: string | undefined, 
   let possibleTargets: Test[]
   try {
     possibleTargets = getBaseNode(environment, filter, options).descendants.filter(getTestFilter(filter, options))
+    const onlyTarget = possibleTargets.find((test: Test) => test.isOnly)
+    const testMatches = (filter: string) => (test: Test) => !filter || sanitize(test.fullyQualifiedName)!.includes(filter)
+    const filterTest = sanitize(filter) ?? ''
+    return onlyTarget ? [onlyTarget] : possibleTargets.filter(testMatches(filterTest))
   } catch(e: any){
     if(e instanceof TestSearchMissError){
       logger.error(red(bold(e.message)))
@@ -47,10 +51,6 @@ export function getTarget(environment: Environment, filter: string | undefined, 
     }
     throw e
   }
-  const onlyTarget = possibleTargets.find((test: Test) => test.isOnly)
-  const testMatches = (filter: string) => (test: Test) => !filter || sanitize(test.fullyQualifiedName)!.includes(filter)
-  const filterTest = sanitize(filter) ?? ''
-  return onlyTarget ? [onlyTarget] : possibleTargets.filter(testMatches(filterTest))
 }
 
 function getBaseNode(environment: Environment, filter: string | undefined, options: Options): Environment | Package | Describe {
