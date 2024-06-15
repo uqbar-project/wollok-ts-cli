@@ -1,11 +1,11 @@
 import { expect } from 'chai'
-import { join } from 'path'
-import { buildEnvironmentForProject } from '../src/utils'
-import test, { getTarget, sanitize, tabulationForNode, validateParameters } from '../src/commands/test'
-import { Environment } from 'wollok-ts'
 import logger from 'loglevel'
-import { logger as fileLogger } from '../src/logger'
+import { join } from 'path'
 import sinon from 'sinon'
+import { Environment } from 'wollok-ts'
+import test, { getTarget, matchingTestDescription, sanitize, tabulationForNode, validateParameters } from '../src/commands/test'
+import { logger as fileLogger } from '../src/logger'
+import { buildEnvironmentForProject } from '../src/utils'
 import { spyCalledWithSubstring } from './assertions'
 
 describe('Test', () => {
@@ -121,7 +121,7 @@ describe('Test', () => {
         it('should filter by file using file option', () => {
           const tests = getTarget(environment, undefined, {
             ...emptyOptions,
-            file: 'test-one',
+            file: 'test-one.wtest',
           })
           expect(tests.length).to.equal(3)
           expect(tests[0].name).to.equal('"a test"')
@@ -132,7 +132,7 @@ describe('Test', () => {
         it('should filter by file & describe using file & describe option', () => {
           const tests = getTarget(environment, undefined, {
             ...emptyOptions,
-            file: 'test-one',
+            file: 'test-one.wtest',
             describe: 'this describe',
           })
           expect(tests.length).to.equal(3)
@@ -144,7 +144,7 @@ describe('Test', () => {
         it('should filter by file & describe & test using file & describe & test option', () => {
           const tests = getTarget(environment, undefined, {
             ...emptyOptions,
-            file: 'test-one',
+            file: 'test-one.wtest',
             describe: 'this describe',
             test: 'another test',
           })
@@ -195,7 +195,7 @@ describe('Test', () => {
       it('should execute single test when running a file using file option', () => {
         const tests = getTarget(environment, undefined, {
           ...emptyOptions,
-          file: 'only-file',
+          file: 'only-file.wtest',
         })
         expect(tests.length).to.equal(1)
         expect(tests[0].name).to.equal('"this is the one"')
@@ -250,6 +250,43 @@ describe('Test', () => {
 
   })
 
+  describe('matching test description', () => {
+    const emptyOptions = {
+      project: '',
+      skipValidations: false,
+      file: undefined,
+      describe: undefined,
+      test: undefined,
+    }
+
+
+    it('should return empty string if no filter or options are passed', () => {
+      expect(matchingTestDescription(undefined, emptyOptions)).to.equal('')
+    })
+
+    it('should return filter description if filter is passed', () => {
+      expect(matchingTestDescription('some test', emptyOptions)).to.include('some test')
+    })
+
+    it('should return options descriptions if options are passed', () => {
+      expect(matchingTestDescription(undefined, {
+        ...emptyOptions,
+        file: 'test-one.wtest',
+        describe: 'this describe',
+        test: 'another test',
+      })).to.include('\'test-one.wtest\'.\'this describe\'.\'another test\'')
+    })
+
+    it('should return options descriptions with wildcards if options are missing', () => {
+      expect(matchingTestDescription(undefined, {
+        ...emptyOptions,
+        file: undefined,
+        describe: 'this discribe',
+        test: undefined,
+      })).to.include('*.\'this discribe\'.*')
+    })
+  })
+
   describe('tabulations for node', () => {
 
     it('should work for root package', () => {
@@ -265,6 +302,7 @@ describe('Test', () => {
 
     let fileLoggerInfoSpy: sinon.SinonStub
     let loggerInfoSpy: sinon.SinonStub
+    let loggerErrorSpy: sinon.SinonStub
     let processExitSpy: sinon.SinonStub
 
     const projectPath = join('examples', 'test-examples', 'normal-case')
@@ -281,6 +319,7 @@ describe('Test', () => {
       loggerInfoSpy = sinon.stub(logger, 'info')
       fileLoggerInfoSpy = sinon.stub(fileLogger, 'info')
       processExitSpy = sinon.stub(process, 'exit')
+      loggerErrorSpy = sinon.stub(logger, 'error')
     })
 
     afterEach(() => {
@@ -290,7 +329,7 @@ describe('Test', () => {
     it('passes all the tests successfully and exits normally', async () => {
       await test(undefined, {
         ...emptyOptions,
-        file: 'test-one',
+        file: 'test-one.wtest',
       })
 
       expect(processExitSpy.callCount).to.equal(0)
@@ -299,6 +338,29 @@ describe('Test', () => {
       expect(spyCalledWithSubstring(loggerInfoSpy, '0 failing')).to.be.false // old version
       expect(fileLoggerInfoSpy.calledOnce).to.be.true
       expect(fileLoggerInfoSpy.firstCall.firstArg.result).to.deep.equal({ ok: 3, failed: 0 })
+    })
+
+    it('passing a wrong filename runs no tests and logs a warning', async () => {
+      await test(undefined, {
+        ...emptyOptions,
+        file: 'non-existing-file.wtest',
+      })
+
+      expect(processExitSpy.callCount).to.equal(0)
+      expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 0 tests')).to.be.true
+      expect(spyCalledWithSubstring(loggerErrorSpy, 'File \'non-existing-file.wtest\' not found')).to.be.true
+    })
+
+    it('passing a wrong describe runs no tests and logs a warning', async () => {
+      await test(undefined, {
+        ...emptyOptions,
+        file: 'test-one.wtest',
+        describe: 'non-existing-describe',
+      })
+
+      expect(processExitSpy.callCount).to.equal(0)
+      expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 0 tests')).to.be.true
+      expect(spyCalledWithSubstring(loggerErrorSpy, 'Describe \'non-existing-describe\' not found')).to.be.true
     })
 
     it('returns exit code 2 if one or more tests fail', async () => {
