@@ -58,7 +58,7 @@ export default async function (programFQN: Name, options: Options): Promise<void
 
 
     const ioGame: Server | undefined = initializeGameClient(options)
-    const interpreter = game ? getGameInterpreter(environment) : interpret(environment, { ...natives })
+    const interpreter =  interpret(environment, { ...natives })
     const programPackage = environment.getNodeByFQN<Package>(programFQN).parent as Package
     const dynamicDiagramClient = await initializeDynamicDiagram(programPackage, options, interpreter)
 
@@ -79,13 +79,6 @@ export default async function (programFQN: Name, options: Options): Promise<void
       process.exit(21)
     }
   }
-}
-
-// TODO: ver si se elimina este método
-export const getGameInterpreter = (environment: Environment): Interpreter => {
-  const interpreter = interpret(environment, natives)
-
-  return interpreter
 }
 
 export const initializeGameClient = ({ project, assets, host, port, game }: Options): Server | undefined => {
@@ -185,7 +178,7 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
 
     const id = setInterval(() => {
       try {
-      	const tsStart = performance.now()
+        const tsStart = performance.now()
         interpreter.send('flushEvents', gameSingleton, interpreter.reify(timer))
 
         draw(interpreter, io)
@@ -201,9 +194,9 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
         // cada 30 muestras se imprime por consola el tiempo promedio
         // que tardó en procesar todos los eventos
         if(muestras >= 30) {
-        	logger.debug(`flushEvents: ${(tEvents / muestras).toFixed(2)} ms`)
-        	muestras = 0
-        	tEvents = 0
+          logger.debug(`flushEvents: ${(tEvents / muestras).toFixed(2)} ms`)
+          muestras = 0
+          tEvents = 0
         }
 
         // We could pass the interpreter but a program does not change it
@@ -265,9 +258,6 @@ export const getAssetsFolder = ({ game, project, assets }: Options): string => {
 
 export const buildEnvironmentForProgram = async ({ project, skipValidations, game }: Options): Promise<Environment> => {
   let environment = await buildEnvironmentForProject(project)
-  if (game) {
-    environment = link([drawDefinition()], environment)
-  }
   validateEnvironment(environment, skipValidations)
   return environment
 }
@@ -278,9 +268,6 @@ export const gamePort = (port: string): string => port ?? DEFAULT_PORT
 export const gameHost = (host: string): string => host ?? DEFAULT_HOST
 
 export const dynamicDiagramPort = (port: string): string => `${+gamePort(port) + 1}`
-
-const drawDefinition = () => parse.File('draw.wlk').tryParse('object drawer{ method apply() native }')
-
 
 const draw = (interpreter: Interpreter, io: Server) => {
   const game = interpreter?.object(GAME_MODULE)
