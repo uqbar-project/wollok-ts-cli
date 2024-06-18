@@ -173,6 +173,9 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
     })
 
     const flushInterval = 17
+
+    // muestras y tEvents se utilizan para poder
+    // sacar un promedio de demora del flushEvents
     let muestras = 0
     let tEvents = 0
 
@@ -183,16 +186,19 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
 
         draw(interpreter, io)
         const elapsed = performance.now() - tsStart
-        tEvents += elapsed
 
-        // Si flushEvents demoró más del tiempo flushInterval
+        // Timer contiene el timestamp enviado a flushEvent
+        // para que pueda procesar los timeEvents.
+        //
+        // En el mejor de los casos va a incrementar de a 17ms
+        // Si flushEvents demoró más del tiempo flushInterval (17ms)
         // incrementamos el timer tomando el mayor de los tiempos
         timer += elapsed > flushInterval ? elapsed : flushInterval
-        muestras += 1
-
 
         // cada 30 muestras se imprime por consola el tiempo promedio
         // que tardó en procesar todos los eventos
+        tEvents += elapsed
+        muestras += 1
         if(muestras >= 30) {
           logger.debug(`flushEvents: ${(tEvents / muestras).toFixed(2)} ms`)
           muestras = 0
