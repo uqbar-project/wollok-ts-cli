@@ -7,7 +7,7 @@ import http from 'http'
 import logger from 'loglevel'
 import { join, relative } from 'path'
 import { Server, Socket } from 'socket.io'
-import { Environment, GAME_MODULE, link, Name, Package, parse, RuntimeObject, WollokException, interpret, Interpreter, WRENatives as natives } from 'wollok-ts'
+import { Environment, GAME_MODULE, Name, Package, RuntimeObject, WollokException, interpret, Interpreter, WRENatives as natives } from 'wollok-ts'
 import { ENTER, buildEnvironmentForProject, buildEnvironmentIcon, failureDescription, folderIcon, gameIcon, handleError, isImageFile, programIcon, publicPath, readPackageProperties, serverError, stackTrace, successDescription, validateEnvironment, valueDescription } from '../utils'
 import { buildKeyPressEvent, canvasResolution, Image, queueEvent, visualState, VisualState, wKeyCode } from './extrasGame'
 import { getDataDiagram } from '../services/diagram-generator'
@@ -262,8 +262,8 @@ export const getAssetsFolder = ({ game, project, assets }: Options): string => {
   return packageProperties?.resourceFolder ?? assets
 }
 
-export const buildEnvironmentForProgram = async ({ project, skipValidations, game }: Options): Promise<Environment> => {
-  let environment = await buildEnvironmentForProject(project)
+export const buildEnvironmentForProgram = async ({ project, skipValidations }: Options): Promise<Environment> => {
+  const environment = await buildEnvironmentForProject(project)
   validateEnvironment(environment, skipValidations)
   return environment
 }
