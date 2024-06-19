@@ -7,6 +7,7 @@ import { Interface } from 'readline'
 import sinon from 'sinon'
 import { ENTER } from '../src/utils'
 import { spyCalledWithSubstring } from './assertions'
+import * as wollok from 'wollok-ts'
 
 chai.should()
 chai.use(chaiHttp)
@@ -16,6 +17,7 @@ const expect = chai.expect
 const baseOptions = {
   darkMode: true,
   port: '8080',
+  host: 'localhost',
   skipDiagram: true,
 }
 
@@ -39,6 +41,7 @@ describe('REPL integration test for valid project', () => {
     project: projectPath,
     skipValidations: false,
     darkMode: true,
+    host: 'localhost',
     port: '8080',
     skipDiagram: false,
   }
@@ -86,6 +89,8 @@ describe('REPL integration test for invalid project', () => {
   })
 
   it('should return exit code 12 if project has parse errors', async () => {
+    sinon.stub(wollok, 'buildEnvironment').throws(new Error('Failed to parse fileWithParseErrors.wlk'))
+
     await expect(callRepl('fileWithParseErrors.wlk', buildOptionsFor('parse-errors'))).to.eventually.be.rejectedWith(/exit with 12 error code/)
   })
 
