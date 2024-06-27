@@ -18,6 +18,10 @@ const libsToDownload = [
         filename: "socket.io.esm.min.js",
         url: "http://cdn.socket.io/4.4.1/socket.io.esm.min.js",
       },
+      {
+        filename: "socket.io.esm.min.js.map",
+        url: "http://cdn.socket.io/4.4.1/socket.io.esm.min.js.map",
+      },
     ],
   },
   {
