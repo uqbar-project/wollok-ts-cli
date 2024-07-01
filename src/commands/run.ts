@@ -1,4 +1,3 @@
-import { TimeMeasurer } from './../time-measurer'
 import { bold } from 'chalk'
 import cors from 'cors'
 import express from 'express'
@@ -7,11 +6,12 @@ import http from 'http'
 import logger from 'loglevel'
 import { join, relative } from 'path'
 import { Server, Socket } from 'socket.io'
-import { Environment, GAME_MODULE, link, Name, Package, parse, RuntimeObject, WollokException, interpret, Interpreter, WRENatives as natives } from 'wollok-ts'
-import { ENTER, buildEnvironmentForProject, buildEnvironmentIcon, failureDescription, folderIcon, gameIcon, handleError, isImageFile, programIcon, publicPath, readPackageProperties, serverError, stackTrace, successDescription, validateEnvironment, valueDescription } from '../utils'
-import { buildKeyPressEvent, canvasResolution, Image, queueEvent, visualState, VisualState, wKeyCode } from './extrasGame'
-import { getDataDiagram } from '../services/diagram-generator'
+import { Image, VisualState, buildKeyPressEvent, canvasResolution, queueEvent, visualState, wKeyCode } from 'wollok-game-web/dist/utils'
+import { Environment, GAME_MODULE, Interpreter, Name, Package, RuntimeObject, WollokException, interpret, link, WRENatives as natives, parse } from 'wollok-ts'
 import { logger as fileLogger } from '../logger'
+import { getDataDiagram } from '../services/diagram-generator'
+import { ENTER, buildEnvironmentForProject, buildEnvironmentIcon, failureDescription, folderIcon, gameIcon, handleError, isImageFile, programIcon, publicPath, readPackageProperties, serverError, stackTrace, successDescription, validateEnvironment, valueDescription } from '../utils'
+import { TimeMeasurer } from './../time-measurer'
 
 const { time, timeEnd } = console
 
