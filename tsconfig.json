@@ -13,6 +13,6 @@
     "esModuleInterop": true,
     "experimentalDecorators": true
   },
-  "include": ["test/**/*.ts", "src/**/*.ts", "public/**/*"],
+  "include": ["test/**/*.ts", "src/**/*.ts"],
   "exclude": ["**/*.js", "node_modules"]
 }
