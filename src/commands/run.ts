@@ -7,7 +7,7 @@ import http from 'http'
 import logger from 'loglevel'
 import { join, relative } from 'path'
 import { Server, Socket } from 'socket.io'
-import { Environment, GAME_MODULE, link, Name, Package, parse, RuntimeObject, WollokException, interpret, Interpreter, WRENatives as natives } from 'wollok-ts'
+import { Environment, GAME_MODULE, Name, Package, RuntimeObject, WollokException, interpret, Interpreter, WRENatives as natives } from 'wollok-ts'
 import { ENTER, buildEnvironmentForProject, buildEnvironmentIcon, failureDescription, folderIcon, gameIcon, handleError, isImageFile, programIcon, publicPath, readPackageProperties, serverError, stackTrace, successDescription, validateEnvironment, valueDescription } from '../utils'
 import { buildKeyPressEvent, canvasResolution, Image, queueEvent, visualState, VisualState, wKeyCode } from './extrasGame'
 import { getDataDiagram } from '../services/diagram-generator'
@@ -58,7 +58,7 @@ export default async function (programFQN: Name, options: Options): Promise<void
 
 
     const ioGame: Server | undefined = initializeGameClient(options)
-    const interpreter = game ? getGameInterpreter(environment, ioGame!) : interpret(environment, { ...natives })
+    const interpreter = game ? getGameInterpreter(environment) : interpret(environment, { ...natives })
     const programPackage = environment.getNodeByFQN<Package>(programFQN).parent as Package
     const dynamicDiagramClient = await initializeDynamicDiagram(programPackage, options, interpreter)
 
@@ -81,43 +81,8 @@ export default async function (programFQN: Name, options: Options): Promise<void
   }
 }
 
-export const getGameInterpreter = (environment: Environment, io: Server): Interpreter => {
-  const nativesAndDraw = {
-    ...natives,
-    draw: {
-      drawer: {
-        *apply() {
-          try {
-            const game = interpreter?.object('wollok.game.game')
-            const visuals = getVisuals(game, interpreter)
-            io.emit('visuals', visuals)
-
-            const gameSounds = game.get('sounds')?.innerCollection ?? []
-            const mappedSounds = gameSounds.map(sound =>
-              [
-                sound.id,
-                sound.get('file')!.innerString!,
-                sound.get('status')!.innerString!,
-                sound.get('volume')!.innerNumber!,
-                sound.get('loop')!.innerBoolean!,
-              ])
-            io.emit('updateSound', { soundInstances: mappedSounds })
-          } catch (error: any) {
-            logger.error(failureDescription(error instanceof WollokException ? error.message : 'Exception while executing the program'))
-            const debug = logger.getLevel() <= logger.levels.DEBUG
-            if (debug) logger.error(error)
-            interpreter.send('stop', gameSingleton)
-          }
-        },
-      },
-    },
-  }
-
-  const interpreter = interpret(environment, nativesAndDraw)
-
-  const gameSingleton = interpreter?.object(GAME_MODULE)
-  const drawer = interpreter.object('draw.drawer')
-  interpreter.send('onTick', gameSingleton, interpreter.reify(17), interpreter.reify('renderizar'), drawer)
+export const getGameInterpreter = (environment: Environment): Interpreter => {
+  const interpreter = interpret(environment, natives)
 
   return interpreter
 }
@@ -197,7 +162,7 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
       queueEvent(interpreter, buildKeyPressEvent(interpreter, wKeyCode(key.key, key.keyCode)), buildKeyPressEvent(interpreter, 'ANY'))
     })
 
-    const gameSingleton = interpreter?.object('wollok.game.game')
+    const gameSingleton = interpreter?.object(GAME_MODULE)
     const background = gameSingleton.get('boardGround') ? gameSingleton.get('boardGround')?.innerString : 'default'
 
     const baseFolder = join(project, assets)
@@ -213,11 +178,39 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
       socket.emit('background', background)
     })
 
-    const flushInterval = 100
+    const flushInterval = 17
+
+    // muestras y tEvents se utilizan para poder
+    // sacar un promedio de demora del flushEvents
+    let muestras = 0
+    let tEvents = 0
+
     const id = setInterval(() => {
       try {
+        const tsStart = performance.now()
         interpreter.send('flushEvents', gameSingleton, interpreter.reify(timer))
-        timer += flushInterval
+
+        draw(interpreter, io)
+        const elapsed = performance.now() - tsStart
+
+        // Timer contiene el timestamp enviado a flushEvent
+        // para que pueda procesar los timeEvents.
+        //
+        // En el mejor de los casos va a incrementar de a 17ms
+        // Si flushEvents demoró más del tiempo flushInterval (17ms)
+        // incrementamos el timer tomando el mayor de los tiempos
+        timer += elapsed > flushInterval ? elapsed : flushInterval
+
+        // cada 30 muestras se imprime por consola el tiempo promedio
+        // que tardó en procesar todos los eventos
+        tEvents += elapsed
+        muestras += 1
+        if(muestras >= 30) {
+          logger.debug(`flushEvents: ${(tEvents / muestras).toFixed(2)} ms`)
+          muestras = 0
+          tEvents = 0
+        }
+
         // We could pass the interpreter but a program does not change it
         dynamicDiagramClient.onReload()
         if (!gameSingleton.get('running')?.innerBoolean) {
@@ -275,11 +268,8 @@ export const getAssetsFolder = ({ game, project, assets }: Options): string => {
   return packageProperties?.resourceFolder ?? assets
 }
 
-export const buildEnvironmentForProgram = async ({ project, skipValidations, game }: Options): Promise<Environment> => {
-  let environment = await buildEnvironmentForProject(project)
-  if (game) {
-    environment = link([drawDefinition()], environment)
-  }
+export const buildEnvironmentForProgram = async ({ project, skipValidations }: Options): Promise<Environment> => {
+  const environment = await buildEnvironmentForProject(project)
   validateEnvironment(environment, skipValidations)
   return environment
 }
@@ -291,4 +281,26 @@ export const gameHost = (host: string): string => host ?? DEFAULT_HOST
 
 export const dynamicDiagramPort = (port: string): string => `${+gamePort(port) + 1}`
 
-const drawDefinition = () => parse.File('draw.wlk').tryParse('object drawer{ method apply() native }')
+const draw = (interpreter: Interpreter, io: Server) => {
+  const game = interpreter?.object(GAME_MODULE)
+  try {
+    const visuals = getVisuals(game, interpreter)
+    io.emit('visuals', visuals)
+
+    const gameSounds = game.get('sounds')?.innerCollection ?? []
+    const mappedSounds = gameSounds.map(sound =>
+      [
+        sound.id,
+        sound.get('file')!.innerString!,
+        sound.get('status')!.innerString!,
+        sound.get('volume')!.innerNumber!,
+        sound.get('loop')!.innerBoolean!,
+      ])
+    io.emit('updateSound', { soundInstances: mappedSounds })
+  } catch (error: any) {
+    logger.error(failureDescription(error instanceof WollokException ? error.message : 'Exception while executing the program'))
+    const debug = logger.getLevel() <= logger.levels.DEBUG
+    if (debug) logger.error(error)
+    interpreter.send('stop', game)
+  }
+}
