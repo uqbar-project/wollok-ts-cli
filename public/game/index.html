@@ -2,8 +2,8 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.2.0/p5.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.5.0/addons/p5.sound.js"></script>
+    <script src="./lib/p5.js"></script>
+    <script src="./lib/p5.sound.js"></script>
     <title>Wollok Game</title>
 
     <script
@@ -27,7 +27,7 @@
       let socket = 1;
     </script>
     <script type="module">
-      import { io } from "https://cdn.socket.io/4.4.1/socket.io.esm.min.js";
+      import { io } from "./lib/socket.io.esm.min.js";
 
       socket = io();
       socket.on("connect", function () {

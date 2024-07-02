@@ -7,14 +7,19 @@ import chaiAsPromised from 'chai-as-promised'
 import chai from 'chai'
 import { spyCalledWithSubstring } from './assertions'
 import { Problem, WOLLOK_EXTRA_STACK_TRACE_HEADER, validate, List } from 'wollok-ts'
+import * as wollok from 'wollok-ts'
 
 describe('build & validating environment', () => {
 
+  afterEach(() => {
+    sinon.restore()
+  })
   const badProjectPath = join('examples', 'bad-files-examples')
 
   it('should throw an exception if parsing fails', async () => {
     chai.use(chaiAsPromised)
     const expect = chai.expect
+    sinon.stub(wollok, 'buildEnvironment').throws(new Error('Failed to parse fileWithParseErrors.wlk'))
     await expect(buildEnvironmentForProject(join(badProjectPath, 'parse-errors'), ['fileWithParseErrors.wlk'])).to.eventually.be.rejectedWith(/Failed to parse fileWithParseErrors.wlk/)
   })
 
