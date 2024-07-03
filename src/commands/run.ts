@@ -6,11 +6,11 @@ import http from 'http'
 import logger from 'loglevel'
 import { join, relative } from 'path'
 import { Server, Socket } from 'socket.io'
-import { Image, VisualState, buildKeyPressEvent, canvasResolution, queueEvent, visualState, wKeyCode } from 'wollok-game-web/dist/utils'
+import { Asset, SoundState, VisualState, boardState, buildKeyPressEvent, queueEvent, soundState, visualState } from 'wollok-game-web/dist/utils'
 import { Environment, GAME_MODULE, Interpreter, Name, Package, RuntimeObject, WollokException, interpret, link, WRENatives as natives, parse } from 'wollok-ts'
 import { logger as fileLogger } from '../logger'
 import { getDataDiagram } from '../services/diagram-generator'
-import { ENTER, buildEnvironmentForProject, buildEnvironmentIcon, failureDescription, folderIcon, gameIcon, handleError, isImageFile, programIcon, publicPath, readPackageProperties, serverError, stackTrace, successDescription, validateEnvironment, valueDescription } from '../utils'
+import { ENTER, buildEnvironmentForProject, buildEnvironmentIcon, failureDescription, folderIcon, gameIcon, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readPackageProperties, serverError, stackTrace, successDescription, validateEnvironment, valueDescription } from '../utils'
 import { TimeMeasurer } from './../time-measurer'
 
 const { time, timeEnd } = console
@@ -91,17 +91,8 @@ export const getGameInterpreter = (environment: Environment, io: Server): Interp
             const game = interpreter?.object('wollok.game.game')
             const visuals = getVisuals(game, interpreter)
             io.emit('visuals', visuals)
-
-            const gameSounds = game.get('sounds')?.innerCollection ?? []
-            const mappedSounds = gameSounds.map(sound =>
-              [
-                sound.id,
-                sound.get('file')!.innerString!,
-                sound.get('status')!.innerString!,
-                sound.get('volume')!.innerNumber!,
-                sound.get('loop')!.innerBoolean!,
-              ])
-            io.emit('updateSound', { soundInstances: mappedSounds })
+            const sounds = getSounds(game)
+            io.emit('sounds', sounds)
           } catch (error: any) {
             logger.error(failureDescription(error instanceof WollokException ? error.message : 'Exception while executing the program'))
             const debug = logger.getLevel() <= logger.levels.DEBUG
@@ -149,7 +140,7 @@ export const initializeGameClient = ({ project, assets, host, port, game }: Opti
 }
 
 export async function initializeDynamicDiagram(programPackage: Package, options: Options, interpreter: Interpreter): Promise<DynamicDiagramClient> {
-  if (!options.startDiagram || !options.game) return { onReload: () => {} }
+  if (!options.startDiagram || !options.game) return { onReload: () => { } }
 
   const app = express()
   const server = http.createServer(app)
@@ -189,28 +180,31 @@ export async function initializeDynamicDiagram(programPackage: Package, options:
 
 export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramClient: DynamicDiagramClient, { game, project, assets }: Options): void => {
   if (!game) return
-  const sizeCanvas = canvasResolution(interpreter)
+  const baseFolder = join(project, assets)
+  if (!existsSync(baseFolder))
+    logger.warn(failureDescription(`Resource folder for images not found: ${assets}`))
+
+
+  const assetFiles = getAllAssets(project, assets)
 
   io.on('connection', socket => {
     logger.info(successDescription('Running game!'))
-    socket.on('keyPressed', key => {
-      queueEvent(interpreter, buildKeyPressEvent(interpreter, wKeyCode(key.key, key.keyCode)), buildKeyPressEvent(interpreter, 'ANY'))
+    socket.on('keyPressed', (events: string[]) => {
+      queueEvent(interpreter, ...events.map(code => buildKeyPressEvent(interpreter, code)))
     })
 
-    const gameSingleton = interpreter?.object('wollok.game.game')
-    const background = gameSingleton.get('boardGround') ? gameSingleton.get('boardGround')?.innerString : 'default'
-
-    const baseFolder = join(project, assets)
-    if (!existsSync(baseFolder))
-      logger.warn(failureDescription(`Resource folder for images not found: ${assets}`))
-
-    // send assets only when frontend is ready
+    const gameSingleton = interpreter.object('wollok.game.game')
+    // wait for client to be ready
     socket.on('ready', () => {
       logger.info(successDescription('Ready!'))
-      socket.emit('images', getImages(project, assets))
-      socket.emit('sizeCanvasInic', [sizeCanvas.width, sizeCanvas.height])
-      socket.emit('cellPixelSize', gameSingleton.get('cellSize')!.innerNumber!)
-      socket.emit('background', background)
+
+      // send static data
+      socket.emit('board', boardState(gameSingleton))
+      socket.emit('images', assetFiles.filter(isValidImage))
+      socket.emit('music', assetFiles.filter(isValidSound))
+
+      // then start the game
+      socket.emit('start')
     })
 
     const flushInterval = 100
@@ -239,31 +233,28 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
   })
 }
 
-export const getImages = (projectPath: string, assetsFolder: string): Image[] => {
+export const getAllAssets = (projectPath: string, assetsFolder: string): Asset[] => {
   const baseFolder = join(projectPath, assetsFolder)
   if (!existsSync(baseFolder))
     throw `Folder image ${baseFolder} does not exist`
 
   const fileRelativeFor = (fileName: string) => ({ name: fileName, url: fileName })
 
-  const loadImagesIn = (basePath: string): Image[] =>
+  const loadImagesIn = (basePath: string): Asset[] =>
     fs.readdirSync(basePath, { withFileTypes: true })
       .flatMap((file: Dirent) =>
         file.isDirectory() ? loadImagesIn(join(basePath, file.name)) :
-        isImageFile(file) ? [fileRelativeFor(relative(baseFolder, join(basePath, file.name)))] : []
+          isValidAsset(file) ? [fileRelativeFor(relative(baseFolder, join(basePath, file.name)))] : []
       )
 
   return loadImagesIn(baseFolder)
 }
 
 export const getVisuals = (game: RuntimeObject, interpreter: Interpreter): VisualState[] =>
-  (game.get('visuals')?.innerCollection ?? []).map(visual => {
-    const { image, position, message } = visualState(interpreter, visual)
-    const messageTime = Number(visual.get('messageTime')?.innerValue)
-    const messageForVisual = message != undefined && messageTime > timer ? message : undefined
-    return { 'image': image, 'position': position, 'message': messageForVisual }
-  })
+  (game.get('visuals')?.innerCollection ?? []).map(visual => visualState(interpreter, visual))
 
+export const getSounds = (game: RuntimeObject): SoundState[] =>
+  (game.get('sounds')?.innerCollection ?? []).map(soundState)
 
 export const getSoundsFolder = (projectPath: string, assetsOptions: string | undefined): string =>
   fs.readdirSync(projectPath).includes('sounds') ? 'sounds' : assetsOptions ?? 'assets'

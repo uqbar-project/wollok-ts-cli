@@ -2,7 +2,7 @@ import chai from 'chai'
 import { mkdirSync, rmdirSync } from 'fs'
 import { join } from 'path'
 import sinon from 'sinon'
-import run, { Options, buildEnvironmentForProgram, getAssetsFolder, getGameInterpreter, getImages, getSoundsFolder, getVisuals, initializeGameClient } from '../src/commands/run'
+import run, { Options, buildEnvironmentForProgram, getAssetsFolder, getGameInterpreter, getAllAssets, getSoundsFolder, getVisuals, initializeGameClient } from '../src/commands/run'
 import { spyCalledWithSubstring } from './assertions'
 import { logger as fileLogger } from '../src/logger'
 
@@ -95,7 +95,7 @@ describe('testing run', () => {
     const imageProject = join('examples', 'run-examples', 'asset-example')
 
     it('should return all images for a single assets folder', () => {
-      expect(getImages(project, 'assets')).to.deep.equal(
+      expect(getAllAssets(project, 'assets')).to.deep.equal(
         [
           {
             'name': join('pepita.png'),
@@ -106,7 +106,7 @@ describe('testing run', () => {
     })
 
     it('should return all images in assets folder recursively', () => {
-      expect(getImages(imageProject, 'assets')).to.deep.equal(
+      expect(getAllAssets(imageProject, 'assets')).to.deep.equal(
         [
           {
             'name': join('medium', '3.png'),
@@ -125,7 +125,7 @@ describe('testing run', () => {
     })
 
     it('should return all images even if assets folder is not present', () => {
-      expect(getImages(imageProject, '')).to.deep.equal(
+      expect(getAllAssets(imageProject, '')).to.deep.equal(
         [
           {
             'name': join('assets', 'medium', '3.png'),
@@ -144,7 +144,7 @@ describe('testing run', () => {
     })
 
     it('should throw error for unexistent folder', () => {
-      expect(() => { getImages(imageProject, 'unexistentFolder') }).to.throw(/does not exist/)
+      expect(() => { getAllAssets(imageProject, 'unexistentFolder') }).to.throw(/does not exist/)
     })
 
   })

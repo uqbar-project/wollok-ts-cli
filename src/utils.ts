@@ -4,6 +4,7 @@ import { readFile } from 'fs/promises'
 import globby from 'globby'
 import logger from 'loglevel'
 import path, { join } from 'path'
+import { Asset, VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-game-web/dist/utils'
 import { Environment, Problem, WOLLOK_EXTRA_STACK_TRACE_HEADER, buildEnvironment, validate } from 'wollok-ts'
 import { replNode } from './commands/repl'
 
@@ -132,8 +133,14 @@ export const readPackageProperties = (pathProject: string): any | undefined => {
   return JSON.parse(fs.readFileSync(packagePath, { encoding: 'utf-8' }))
 }
 
-const imageExtensions = ['png', 'jpg']
-export const isImageFile = (file: Dirent): boolean => imageExtensions.some(extension => file.name.endsWith(extension))
+interface Named {
+  name: string
+}
+
+const assetsExtensions = VALID_IMAGE_EXTENSIONS.concat(VALID_SOUND_EXTENSIONS)
+export const isValidAsset = (file: Named): boolean => assetsExtensions.some(extension => file.name.endsWith(extension))
+export const isValidImage = (file: Named): boolean => VALID_IMAGE_EXTENSIONS.some(extension => file.name.endsWith(extension))
+export const isValidSound = (file: Named): boolean => VALID_SOUND_EXTENSIONS.some(extension => file.name.endsWith(extension))
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // WOLLOK AST
