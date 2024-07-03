@@ -19,7 +19,7 @@
   ],
   "main": "./build/src/index.js",
   "scripts": {
-    "preinstall": "sh scripts/download-libs.sh",
+    "preinstall": "node ./scripts/download-libs.js",
     "start": "node ./build/src/index.js",
     "test": "npm run lint && npm run test:unit",
     "test-with-coverage": "npm run lint && nyc --reporter=json --lines 70 npm run test:unit",
