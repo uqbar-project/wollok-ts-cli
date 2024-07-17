@@ -244,7 +244,7 @@ export const getAllAssets = (projectPath: string, assetsFolder: string): Asset[]
     fs.readdirSync(basePath, { withFileTypes: true })
       .flatMap((file: Dirent) =>
         file.isDirectory() ? loadImagesIn(join(basePath, file.name)) :
-          isValidAsset(file) ? [fileRelativeFor(relative(baseFolder, join(basePath, file.name)))] : []
+        isValidAsset(file) ? [fileRelativeFor(relative(baseFolder, join(basePath, file.name)))] : []
       )
 
   return loadImagesIn(baseFolder)

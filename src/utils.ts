@@ -1,11 +1,11 @@
 import { blue, bold, green, italic, red, yellow, yellowBright } from 'chalk'
-import fs, { Dirent, existsSync, mkdirSync } from 'fs'
+import fs, { existsSync, mkdirSync } from 'fs'
 import { readFile } from 'fs/promises'
 import globby from 'globby'
 import logger from 'loglevel'
 import path, { join } from 'path'
-import { Asset, VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-game-web/dist/utils'
-import { Environment, Problem, WOLLOK_EXTRA_STACK_TRACE_HEADER, buildEnvironment, validate } from 'wollok-ts'
+import { VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-game-web/dist/utils'
+import { buildEnvironment, Environment, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER } from 'wollok-ts'
 import { replNode } from './commands/repl'
 
 const { time, timeEnd } = console
