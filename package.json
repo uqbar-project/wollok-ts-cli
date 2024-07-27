@@ -1,6 +1,6 @@
 {
   "name": "wollok-ts-cli",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Wollok Command Line Interface",
   "repository": "https://github.com/uqbar-project/wollok-ts-cli",
   "license": "MIT",
