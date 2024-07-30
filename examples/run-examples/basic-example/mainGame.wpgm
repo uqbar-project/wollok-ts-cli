@@ -1,4 +1,3 @@
-
 object pepita {
   var energy = 100
   var nombre = "Pepita"
@@ -21,10 +20,13 @@ object pepita {
 
 program PepitaGame {
 	game.addVisualCharacter(pepita)
-  console.println("starting...")
-	game.start()
-  game.onTick(500, "end", {
+
+  // Stop on connection (from any client)
+  game.onTick(0, "end", {
     console.println("finishing...")
     game.stop()
   })
+
+  console.println("starting...")
+	game.start()
 }

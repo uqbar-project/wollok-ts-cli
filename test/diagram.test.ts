@@ -17,6 +17,7 @@ describe('Dynamic diagram', () => {
     project: projectPath,
     skipValidations: true,
     port: '8080',
+    host: 'localhost',
     darkMode: true,
     skipDiagram: false,
   }

@@ -2,9 +2,11 @@ import chai from 'chai'
 import { mkdirSync, rmdirSync } from 'fs'
 import { join } from 'path'
 import sinon from 'sinon'
-import run, { Options, buildEnvironmentForProgram, getAssetsFolder, getGameInterpreter, getImages, getSoundsFolder, getVisuals, initializeGameClient } from '../src/commands/run'
+import run, { Options, buildEnvironmentForProgram, getAssetsFolder, getGameInterpreter, getAllAssets, getSoundsFolder, getVisuals, initializeGameClient } from '../src/commands/run'
 import { spyCalledWithSubstring } from './assertions'
 import { logger as fileLogger } from '../src/logger'
+import { io as ioc } from 'socket.io-client'
+
 
 chai.should()
 const expect = chai.expect
@@ -85,7 +87,14 @@ describe('testing run', () => {
       interpreter.send('addVisual', game, interpreter.object('mainGame.elementoVisual'))
       io.close()
       // we can't use join in the image path since it's in Wollok project
-      expect(getVisuals(game, interpreter)).to.deep.equal([{ image: 'smalls/1.png', position: { x: 0, y: 1 }, message: undefined }])
+      expect(getVisuals(game, interpreter)).to.deep.equal([{
+        image: 'smalls/1.png',
+        position: { x: 0, y: 1 },
+        message: undefined,
+        messageTime: undefined,
+        text: undefined,
+        textColor: undefined,
+      }])
     })
 
   })
@@ -95,7 +104,7 @@ describe('testing run', () => {
     const imageProject = join('examples', 'run-examples', 'asset-example')
 
     it('should return all images for a single assets folder', () => {
-      expect(getImages(project, 'assets')).to.deep.equal(
+      expect(getAllAssets(project, 'assets')).to.deep.equal(
         [
           {
             'name': join('pepita.png'),
@@ -106,7 +115,7 @@ describe('testing run', () => {
     })
 
     it('should return all images in assets folder recursively', () => {
-      expect(getImages(imageProject, 'assets')).to.deep.equal(
+      expect(getAllAssets(imageProject, 'assets')).to.deep.equal(
         [
           {
             'name': join('medium', '3.png'),
@@ -125,7 +134,7 @@ describe('testing run', () => {
     })
 
     it('should return all images even if assets folder is not present', () => {
-      expect(getImages(imageProject, '')).to.deep.equal(
+      expect(getAllAssets(imageProject, '')).to.deep.equal(
         [
           {
             'name': join('assets', 'medium', '3.png'),
@@ -144,7 +153,7 @@ describe('testing run', () => {
     })
 
     it('should throw error for unexistent folder', () => {
-      expect(() => { getImages(imageProject, 'unexistentFolder') }).to.throw(/does not exist/)
+      expect(() => { getAllAssets(imageProject, 'unexistentFolder') }).to.throw(/does not exist/)
     })
 
   })
@@ -166,7 +175,7 @@ describe('testing run', () => {
     })
 
 
-    it ('should work if program has no errors', async () => {
+    it('should work if program has no errors', async () => {
       await run('mainExample.PepitaProgram', {
         project: join('examples', 'run-examples', 'basic-example'),
         skipValidations: false,
@@ -188,7 +197,7 @@ describe('testing run', () => {
       expect(fileLoggerArg.message).to.contain('Program executed')
     })
 
-    it ('should exit if program has errors', async () => {
+    it('should exit if program has errors', async () => {
       await run('mainExample.PepitaProgram', {
         project: join('examples', 'run-examples', 'bad-example'),
         skipValidations: false,
@@ -209,28 +218,18 @@ describe('testing run', () => {
 
   describe('run a simple game', () => {
 
-    let clock: sinon.SinonFakeTimers
-
-    beforeEach(() => {
-      clock = sinon.useFakeTimers()
-    })
-
-    afterEach(() => {
-      sinon.restore()
-    })
-
-
-    it ('smoke test - should work if program has no errors', async () => {
+    it('smoke test - should work if program has no errors', done => {
       run('mainGame.PepitaGame', {
         project: join('examples', 'run-examples', 'basic-example'),
         skipValidations: false,
         game: true,
-        startDiagram: true,
+        startDiagram: false,
         assets,
-        host: 'localhost',
         port: '3000',
+        host: 'localhost',
       })
-      await clock.runAllAsync()
+      const clientSocket = ioc('http://localhost:3000')
+      clientSocket.on('connect', done) // Game finish on client connection
     })
   })
 
