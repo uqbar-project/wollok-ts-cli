@@ -75,9 +75,7 @@ export default async function (programFQN: Name, options: Options): Promise<void
   } catch (error: any) {
     handleError(error)
     fileLogger.info({ message: `${game ? gameIcon : programIcon} ${game ? 'Game' : 'Program'} executed ${programFQN} on ${project}`, timeElapsed: timeMeasurer.elapsedTime(), ok: false, error: stackTrace(error) })
-    if (!game) {
-      process.exit(21)
-    }
+    if (!game) { process.exit(21) }
   }
 }
 

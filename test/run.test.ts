@@ -5,6 +5,8 @@ import sinon from 'sinon'
 import run, { Options, buildEnvironmentForProgram, getAssetsFolder, getGameInterpreter, getAllAssets, getSoundsFolder, getVisuals, initializeGameClient } from '../src/commands/run'
 import { spyCalledWithSubstring } from './assertions'
 import { logger as fileLogger } from '../src/logger'
+import { io as ioc } from 'socket.io-client'
+
 
 chai.should()
 const expect = chai.expect
@@ -173,7 +175,7 @@ describe('testing run', () => {
     })
 
 
-    it ('should work if program has no errors', async () => {
+    it('should work if program has no errors', async () => {
       await run('mainExample.PepitaProgram', {
         project: join('examples', 'run-examples', 'basic-example'),
         skipValidations: false,
@@ -195,7 +197,7 @@ describe('testing run', () => {
       expect(fileLoggerArg.message).to.contain('Program executed')
     })
 
-    it ('should exit if program has errors', async () => {
+    it('should exit if program has errors', async () => {
       await run('mainExample.PepitaProgram', {
         project: join('examples', 'run-examples', 'bad-example'),
         skipValidations: false,
@@ -216,28 +218,18 @@ describe('testing run', () => {
 
   describe('run a simple game', () => {
 
-    let clock: sinon.SinonFakeTimers
-
-    beforeEach(() => {
-      clock = sinon.useFakeTimers()
-    })
-
-    afterEach(() => {
-      sinon.restore()
-    })
-
-
-    it ('smoke test - should work if program has no errors', async () => {
+    it('smoke test - should work if program has no errors', done => {
       run('mainGame.PepitaGame', {
         project: join('examples', 'run-examples', 'basic-example'),
         skipValidations: false,
         game: true,
-        startDiagram: true,
+        startDiagram: false,
         assets,
-        host: 'localhost',
         port: '3000',
+        host: 'localhost',
       })
-      await clock.runAllAsync()
+      const clientSocket = ioc('http://localhost:3000')
+      clientSocket.on('connect', done) // Game finish on client connection
     })
   })
 
