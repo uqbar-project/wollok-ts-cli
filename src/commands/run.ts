@@ -238,14 +238,14 @@ export const getAllAssets = (projectPath: string, assetsFolder: string): Asset[]
 
   const fileRelativeFor = (fileName: string) => ({ name: fileName, url: fileName })
 
-  const loadImagesIn = (basePath: string): Asset[] =>
+  const loadAssetsIn = (basePath: string): Asset[] =>
     fs.readdirSync(basePath, { withFileTypes: true })
       .flatMap((file: Dirent) =>
-        file.isDirectory() ? loadImagesIn(join(basePath, file.name)) :
+        file.isDirectory() ? loadAssetsIn(join(basePath, file.name)) :
         isValidAsset(file) ? [fileRelativeFor(relative(baseFolder, join(basePath, file.name)))] : []
       )
 
-  return loadImagesIn(baseFolder)
+  return loadAssetsIn(baseFolder)
 }
 
 export const getVisuals = (game: RuntimeObject, interpreter: Interpreter): VisualState[] =>
