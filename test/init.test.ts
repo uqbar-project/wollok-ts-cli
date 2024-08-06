@@ -39,6 +39,7 @@ describe('testing init', () => {
     expect(existsSync(join(project, 'package.json'))).to.be.true
     expect(existsSync(join(project, GITHUB_FOLDER, 'ci.yml'))).to.be.true
     expect(existsSync(join(project, 'README.md'))).to.be.true
+    expect(existsSync(join(project, '.gitignore'))).to.be.true
     expect(existsSync(join(project, 'mainExample.wpgm'))).to.be.false
     expect(getResourceFolder()).to.be.undefined
 
@@ -64,6 +65,7 @@ describe('testing init', () => {
     expect(existsSync(join(project, 'mainPepita.wpgm'))).to.be.true
     expect(existsSync(join(project, 'package.json'))).to.be.true
     expect(existsSync(join(project, GITHUB_FOLDER, 'ci.yml'))).to.be.true
+    expect(existsSync(join(project, '.gitignore'))).to.be.true
     expect(existsSync(join(project, 'README.md'))).to.be.true
     expect(getResourceFolder()).to.be.equal('assets')
   })
@@ -81,6 +83,7 @@ describe('testing init', () => {
     expect(existsSync(join(project, 'package.json'))).to.be.true
     expect(existsSync(join(project, 'mainPepita.wpgm'))).to.be.false
     expect(existsSync(join(project, GITHUB_FOLDER, 'ci.yml'))).to.be.false
+    expect(existsSync(join(project, '.gitignore'))).to.be.true
     expect(existsSync(join(project, 'README.md'))).to.be.true
   })
 
