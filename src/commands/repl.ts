@@ -7,13 +7,11 @@ import http from 'http'
 import logger from 'loglevel'
 import { CompleterResult, Interface, createInterface as Repl } from 'readline'
 import { Server, Socket } from 'socket.io'
-import { Entity, Environment, Evaluation, Import, link, notEmpty, Package, Reference, Sentence, WollokException, parse, TO_STRING_METHOD, RuntimeObject, linkSentenceInNode, Interpreter, ParseError, WRENatives as natives } from 'wollok-ts'
-import { getDataDiagram } from '../services/diagram-generator'
-import { buildEnvironmentForProject, failureDescription, getFQN, publicPath, successDescription, valueDescription, validateEnvironment, handleError, ENTER, serverError, stackTrace, replIcon } from '../utils'
+import { Entity, Environment, Evaluation, Interpreter, Package, REPL, interprete, link, WRENatives as natives } from 'wollok-ts'
 import { logger as fileLogger } from '../logger'
+import { getDataDiagram } from '../services/diagram-generator'
 import { TimeMeasurer } from '../time-measurer'
-
-export const REPL = 'REPL'
+import { ENTER, buildEnvironmentForProject, failureDescription, getFQN, handleError, publicPath, replIcon, serverError, sanitizeStackTrace, successDescription, validateEnvironment, valueDescription } from '../utils'
 
 // TODO:
 // - autocomplete piola
@@ -44,7 +42,7 @@ export async function replFn(autoImportPath: string | undefined, options: Option
   logger.info(`${replIcon}  Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
 
   let interpreter = await initializeInterpreter(autoImportPath, options)
-  const autoImportName = autoImportPath && replNode(interpreter.evaluation.environment).name
+  const autoImportName = autoImportPath && interpreter.evaluation.environment.replNode().name
   const repl = Repl({
     input: process.stdin,
     output: process.stdout,
@@ -92,7 +90,7 @@ export async function replFn(autoImportPath: string | undefined, options: Option
         if (line.startsWith(':')) commandHandler.parse(line.split(' '), { from: 'user' })
         else {
           history.push(line)
-          console.log(interprete(interpreter, line))
+          console.log(interpreteLine(interpreter, line))
           dynamicDiagramClient.onReload(interpreter)
         }
       }
@@ -101,6 +99,11 @@ export async function replFn(autoImportPath: string | undefined, options: Option
 
   repl.prompt()
   return repl
+}
+
+export function interpreteLine(interpreter: Interpreter, line: string): string {
+  const { errored, result, error } = interprete(interpreter, line)
+  return errored ? failureDescription(result, error) : successDescription(result)
 }
 
 export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations }: Options): Promise<Interpreter> {
@@ -128,7 +131,7 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
     return new Interpreter(Evaluation.build(environment, natives))
   } catch (error: any) {
     handleError(error)
-    fileLogger.info({ message: `${replIcon} REPL execution - build failed for ${project}`, timeElapsed: timeMeasurer.elapsedTime(), ok: false, error: stackTrace(error) })
+    fileLogger.info({ message: `${replIcon} REPL execution - build failed for ${project}`, timeElapsed: timeMeasurer.elapsedTime(), ok: false, error: sanitizeStackTrace(error) })
     return process.exit(12)
   }
 }
@@ -190,61 +193,6 @@ function defineCommands(autoImportPath: string | undefined, options: Options, re
 // EVALUATION
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-// TODO WOLLOK-TS: check if we should decouple the function
-export function interprete(interpreter: Interpreter, line: string): string {
-  try {
-    const sentenceOrImport = parse.Import.or(parse.Variable).or(parse.Assignment).or(parse.Expression).tryParse(line)
-    const error = [sentenceOrImport, ...sentenceOrImport.descendants].flatMap(_ => _.problems ?? []).find(_ => _.level === 'error')
-    if (error) throw error
-
-    if (sentenceOrImport.is(Sentence)) {
-      const environment = interpreter.evaluation.environment
-      linkSentenceInNode(sentenceOrImport, replNode(environment))
-      const unlinkedNode = [sentenceOrImport, ...sentenceOrImport.descendants].find(_ => _.is(Reference) && !_.target)
-
-      if (unlinkedNode) {
-        if (unlinkedNode.is(Reference)) {
-          if (!interpreter.evaluation.currentFrame.get(unlinkedNode.name))
-            return failureDescription(`Unknown reference ${valueDescription(unlinkedNode.name)}`)
-        } else return failureDescription(`Unknown reference at ${unlinkedNode.sourceInfo}`)
-      }
-
-      const result = interpreter.exec(sentenceOrImport)
-      const stringResult = result
-        ? showInnerValue(interpreter, result)
-        : ''
-      return successDescription(stringResult)
-    }
-
-    if (sentenceOrImport.is(Import)) {
-      if (!interpreter.evaluation.environment.getNodeOrUndefinedByFQN(sentenceOrImport.entity.name))
-        throw new Error(
-          `Unknown reference ${valueDescription(sentenceOrImport.entity.name)}`
-        )
-
-      newImport(sentenceOrImport, interpreter.evaluation.environment)
-
-      return successDescription('')
-    }
-
-    return successDescription('')
-  } catch (error: any) {
-    return (
-      error.type === 'ParsimmonError' ? failureDescription(`Syntax error:\n${error.message.split('\n').filter(notEmpty).slice(1).join('\n')}`) :
-      error instanceof WollokException ? failureDescription('Evaluation Error!', error) :
-      error instanceof ParseError ? failureDescription(`Syntax Error at offset ${error.sourceMap.start.offset}: ${line.slice(error.sourceMap.start.offset, error.sourceMap.end.offset)}`) :
-      failureDescription('Uh-oh... Unexpected TypeScript Error!', error)
-    )
-  }
-}
-
-function showInnerValue(interpreter: Interpreter, obj: RuntimeObject) {
-  if (obj!.innerValue === null) return 'null'
-  return typeof obj.innerValue === 'string'
-    ? `"${obj.innerValue}"`
-    : interpreter.send(TO_STRING_METHOD, obj)!.innerString!
-}
-
 async function autocomplete(input: string): Promise<CompleterResult> {
   const completions = ['fafafa', 'fefefe', 'fofofo']
   const hits = completions.filter((c) => c.startsWith(input))
@@ -303,16 +251,3 @@ export async function initializeClient(options: Options, repl: Interface, interp
     server,
   }
 }
-
-// TODO WOLLOK-TS: migrate it? Maybe it could be part of Environment
-// Environment.newImportFor(baseNode, importNode)
-function newImport(importNode: Import, environment: Environment) {
-  const node = replNode(environment)
-  const imported = node.scope.resolve<Package | Entity>(importNode.entity.name)!
-  if (imported.is(Package)) {
-    return node.scope.include(imported.scope)
-  }
-  return node.scope.register([imported.name!, imported])
-}
-
-export const replNode = (environment: Environment): Package => environment.getNodeByFQN<Package>(REPL)

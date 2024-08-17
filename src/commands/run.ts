@@ -7,10 +7,10 @@ import logger from 'loglevel'
 import { join, relative } from 'path'
 import { Server, Socket } from 'socket.io'
 import { Asset, SoundState, VisualState, boardState, buildKeyPressEvent, queueEvent, soundState, visualState } from 'wollok-game-web/dist/utils'
-import { Environment, GAME_MODULE, Interpreter, Name, Package, RuntimeObject, WollokException, interpret, link, WRENatives as natives, parse } from 'wollok-ts'
+import { Environment, GAME_MODULE, Name, Package, RuntimeObject, WollokException, interpret, link, WRENatives as natives, parse, Interpreter } from 'wollok-ts'
 import { logger as fileLogger } from '../logger'
 import { getDataDiagram } from '../services/diagram-generator'
-import { ENTER, buildEnvironmentForProject, buildEnvironmentIcon, failureDescription, folderIcon, gameIcon, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readPackageProperties, serverError, stackTrace, successDescription, validateEnvironment, valueDescription } from '../utils'
+import { ENTER, buildEnvironmentForProject, buildEnvironmentIcon, failureDescription, folderIcon, gameIcon, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readPackageProperties, serverError, sanitizeStackTrace, successDescription, validateEnvironment, valueDescription } from '../utils'
 import { TimeMeasurer } from './../time-measurer'
 
 const { time, timeEnd } = console
@@ -74,7 +74,7 @@ export default async function (programFQN: Name, options: Options): Promise<void
     }
   } catch (error: any) {
     handleError(error)
-    fileLogger.info({ message: `${game ? gameIcon : programIcon} ${game ? 'Game' : 'Program'} executed ${programFQN} on ${project}`, timeElapsed: timeMeasurer.elapsedTime(), ok: false, error: stackTrace(error) })
+    fileLogger.info({ message: `${game ? gameIcon : programIcon} ${game ? 'Game' : 'Program'} executed ${programFQN} on ${project}`, timeElapsed: timeMeasurer.elapsedTime(), ok: false, error: sanitizeStackTrace(error) })
     if (!game) { process.exit(21) }
   }
 }
