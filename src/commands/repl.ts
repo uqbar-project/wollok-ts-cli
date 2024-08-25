@@ -63,7 +63,7 @@ export async function replFn(autoImportPath: string | undefined, options: Option
       dynamicDiagramClient = await initializeClient(options, repl, selectedInterpreter)
     } else {
       dynamicDiagramClient.onReload(selectedInterpreter)
-      logger.info(successDescription('Dynamic diagram reloaded'))
+      logger.info(successDescription('Dynamic diagram reloaded at ' + bold(`http://${options.host}:${options.port}`)))
       repl.prompt()
     }
   }
