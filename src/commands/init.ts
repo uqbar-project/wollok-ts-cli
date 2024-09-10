@@ -58,6 +58,9 @@ export default function ({ project, name, noTest = false, noCI = false, game = f
   logger.info('Creating README')
   writeFileSync(join(project, 'README.md'), readme(exampleName))
 
+  logger.info('Creating Gitignore')
+  writeFileSync(join(project, '.gitignore'), gitignore)
+
   // Finish
   logger.info(green('✨ Project succesfully created. Happy coding!'))
 }
@@ -147,4 +150,12 @@ const readme = (exampleName: string) => `
 
 TODO
 
+`
+
+const gitignore = `
+# Local history
+.history
+
+# Wollok Log
+*.log
 `

@@ -19,6 +19,7 @@ describe('dynamic diagram client', () => {
     skipValidations: false,
     darkMode: true,
     port: '8080',
+    host: 'localhost',
     skipDiagram: false,
   }
   let interpreter: Interpreter
