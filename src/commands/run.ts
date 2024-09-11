@@ -11,7 +11,7 @@ import { Environment, GAME_MODULE, interpret, Interpreter, Name, Package, Runtim
 import { logger as fileLogger } from '../logger'
 import { getDataDiagram } from '../services/diagram-generator'
 import { buildEnvironmentForProject, buildEnvironmentIcon, ENTER, failureDescription, folderIcon, gameIcon, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readPackageProperties, serverError, stackTrace, successDescription, validateEnvironment, valueDescription } from '../utils'
-import { TimeMeasurer } from './../time-measurer'
+import { EventProfiler, TimeMeasurer } from './../time-measurer'
 
 const { time, timeEnd } = console
 
@@ -24,8 +24,6 @@ export type Options = {
   game: boolean,
   startDiagram: boolean
 }
-
-let timer = 0
 
 const DEFAULT_PORT = '4200'
 const DEFAULT_HOST = 'localhost'
@@ -163,7 +161,7 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
       queueEvent(interpreter, ...events.map(code => buildKeyPressEvent(interpreter, code)))
     })
 
-    const gameSingleton = interpreter.object('wollok.game.game')
+    const gameSingleton = interpreter.object(GAME_MODULE)
     // wait for client to be ready
     socket.on('ready', () => {
       logger.info(successDescription('Ready!'))
@@ -178,37 +176,15 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
     })
 
     const flushInterval = 17
+    const profiler = new EventProfiler(logger, "GAME")
 
-    // muestras y tEvents se utilizan para poder
-    // sacar un promedio de demora del flushEvents
-    let muestras = 0
-    let tEvents = 0
-
+    let timer = 0
     const id = setInterval(() => {
       try {
-        const tsStart = performance.now()
-        interpreter.send('flushEvents', gameSingleton, interpreter.reify(timer))
-
-        draw(interpreter, io)
-        const elapsed = performance.now() - tsStart
-
-        // Timer contiene el timestamp enviado a flushEvent
-        // para que pueda procesar los timeEvents.
-        //
-        // En el mejor de los casos va a incrementar de a 17ms
-        // Si flushEvents demoró más del tiempo flushInterval (17ms)
-        // incrementamos el timer tomando el mayor de los tiempos
-        timer += elapsed > flushInterval ? elapsed : flushInterval
-
-        // cada 30 muestras se imprime por consola el tiempo promedio
-        // que tardó en procesar todos los eventos
-        tEvents += elapsed
-        muestras += 1
-        if(muestras >= 30) {
-          logger.debug(`flushEvents: ${(tEvents / muestras).toFixed(2)} ms`)
-          muestras = 0
-          tEvents = 0
-        }
+        profiler.runEvent(() => {
+          interpreter.send('flushEvents', gameSingleton, interpreter.reify(timer))
+          draw(interpreter, io)
+        })
 
         // We could pass the interpreter but a program does not change it
         dynamicDiagramClient.onReload()
