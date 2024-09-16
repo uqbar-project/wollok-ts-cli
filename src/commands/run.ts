@@ -11,7 +11,7 @@ import { Environment, GAME_MODULE, interpret, Interpreter, Name, Package, Runtim
 import { logger as fileLogger } from '../logger'
 import { getDataDiagram } from '../services/diagram-generator'
 import { buildEnvironmentForProject, buildEnvironmentIcon, ENTER, failureDescription, folderIcon, gameIcon, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readPackageProperties, serverError, stackTrace, successDescription, validateEnvironment, valueDescription } from '../utils'
-import { EventProfiler, TimeMeasurer } from './../time-measurer'
+import { DummyProfiler, EventProfiler, TimeMeasurer } from './../time-measurer'
 
 const { time, timeEnd } = console
 
@@ -176,15 +176,17 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
     })
 
     const flushInterval = 17
-    const profiler = new EventProfiler(logger, "GAME")
+    const profiler = logger.getLevel() >= logger.levels.DEBUG
+      ? new EventProfiler(logger, 'GAME-LOOP')
+      : new DummyProfiler()
 
-    let timer = 0
+    const start = new TimeMeasurer()
     const id = setInterval(() => {
       try {
-        profiler.runEvent(() => {
-          interpreter.send('flushEvents', gameSingleton, interpreter.reify(timer))
-          draw(interpreter, io)
-        })
+        profiler.start()
+        interpreter.send('flushEvents', gameSingleton, interpreter.reify(start.elapsedTime()))
+        draw(interpreter, io)
+        profiler.stop()
 
         // We could pass the interpreter but a program does not change it
         dynamicDiagramClient.onReload()

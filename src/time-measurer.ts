@@ -20,15 +20,16 @@ const MAX_SAMPLES = 30
 export class EventProfiler {
   private samples = 0
   private elapsedTime = 0
+  private timeMeasurer = new TimeMeasurer()
 
   constructor(private logger: Logger, private label: string = 'PROFILE') { }
 
-  public runEvent = (f: () => any) => {
-    const timeMeasurer = new TimeMeasurer()
-    f()
-    this.elapsedTime += timeMeasurer.elapsedTime()
+  public start(): void {
+    this.timeMeasurer = new TimeMeasurer()
+  }
+  public stop(): void {
+    this.elapsedTime += this.timeMeasurer.elapsedTime()
     this.samples++
-
     if (this.samples >= MAX_SAMPLES) {
       this.notify()
       this.restart()
@@ -43,4 +44,9 @@ export class EventProfiler {
   private notify() {
     this.logger.debug(`${this.label}: ${(this.elapsedTime / this.samples).toFixed(2)} ms`)
   }
+}
+
+export class DummyProfiler {
+  public start(): void { }
+  public stop(): void { }
 }
