@@ -2,10 +2,10 @@ import chai from 'chai'
 import { mkdirSync, rmdirSync } from 'fs'
 import { join } from 'path'
 import sinon from 'sinon'
-import run, { Options, buildEnvironmentForProgram, getAssetsFolder, getGameInterpreter, getAllAssets, getSoundsFolder, getVisuals, initializeGameClient } from '../src/commands/run'
-import { spyCalledWithSubstring } from './assertions'
-import { logger as fileLogger } from '../src/logger'
 import { io as ioc } from 'socket.io-client'
+import run, { buildEnvironmentForProgram, getAllAssets, getAssetsFolder, getGameInterpreter, getSoundsFolder, getVisuals, Options } from '../src/commands/run'
+import { logger as fileLogger } from '../src/logger'
+import { spyCalledWithSubstring } from './assertions'
 
 
 chai.should()
@@ -80,12 +80,11 @@ describe('testing run', () => {
         project: imageProject,
       }
 
-      const io = initializeGameClient(options)!
       const environment = await buildEnvironmentForProgram(options)
-      const interpreter = getGameInterpreter(environment, io)!
+      const interpreter = getGameInterpreter(environment)!
       const game = interpreter.object('wollok.game.game')
       interpreter.send('addVisual', game, interpreter.object('mainGame.elementoVisual'))
-      io.close()
+
       // we can't use join in the image path since it's in Wollok project
       expect(getVisuals(game, interpreter)).to.deep.equal([{
         image: 'smalls/1.png',
