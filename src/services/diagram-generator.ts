@@ -16,15 +16,15 @@ const convertToCytoscapeNode = ({ id, type, label }: DynamicDiagramNode): Elemen
   },
 })
 
-const convertToCytoscapeReference = ({ id, label, sourceId, targetId, targetModule, constant }: DynamicDiagramReference): ElementDefinition => ({
+const convertToCytoscapeReference = ({ id, label, sourceId, targetId, sourceModule, constant }: DynamicDiagramReference): ElementDefinition => ({
   data: {
     id,
     label: `${label}${constant ? '🔒' : ''}`,
     source: sourceId,
     target: targetId,
-    width: 1.5,
+    width: sourceModule ? 1 : 1.5,
     fontsize: getFontSize(label),
-    style: getStyle(targetModule ?? ''),
+    style: getStyle(sourceModule ?? ''),
   },
 })
 
@@ -35,5 +35,5 @@ const getFontSize = (text: string): string => {
   return '9px'
 }
 
-const getStyle = (targetModule: string) =>
-  [LIST_MODULE, SET_MODULE].includes(targetModule) ? 'dotted' : 'solid'
+const getStyle = (sourceModule: string) =>
+  [LIST_MODULE, SET_MODULE].includes(sourceModule) ? 'dotted' : 'solid'

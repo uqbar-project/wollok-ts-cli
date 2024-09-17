@@ -84,6 +84,19 @@ describe('REPL', () => {
       result.should.includes(failureDescription('Evaluation Error!'))
     })
 
+    it('invalid message', () => {
+      interpreteLine(interpreter, 'const numeric = 1')
+      const result = interpreteLine(interpreter, 'numeric.coso()')
+      result.should.includes(failureDescription('Evaluation Error!'))
+      result.should.includes('wollok.lang.MessageNotUnderstoodException: 1 does not understand coso()')
+    })
+
+    it('invalid message inside closure', () => {
+      const result = interpreteLine(interpreter, '[1, 2, 3].map({ number => number.coso() })')
+      result.should.includes(failureDescription('Evaluation Error!'))
+      result.should.includes('wollok.lang.MessageNotUnderstoodException: 1 does not understand coso()')
+    })
+
     // TODO: Change the Runtime model
     xit('const const', () => {
       interpreteLine(interpreter, 'const a = 1')

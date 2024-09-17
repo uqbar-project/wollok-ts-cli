@@ -11,7 +11,7 @@ import { Entity, Environment, Evaluation, Interpreter, Package, REPL, interprete
 import { logger as fileLogger } from '../logger'
 import { getDataDiagram } from '../services/diagram-generator'
 import { TimeMeasurer } from '../time-measurer'
-import { ENTER, buildEnvironmentForProject, failureDescription, getFQN, handleError, publicPath, replIcon, serverError, sanitizeStackTrace, successDescription, validateEnvironment, valueDescription } from '../utils'
+import { ENTER, buildEnvironmentForProject, failureDescription, getFQN, handleError, publicPath, replIcon, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
 
 // TODO:
 // - autocomplete piola
@@ -117,6 +117,7 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
     if (autoImportPath) {
       const fqn = getFQN(project, autoImportPath)
       const entity = environment.getNodeOrUndefinedByFQN<Entity>(fqn)
+
       if (entity && entity.is(Package)) {
         environment.scope.register([REPL, entity]) // Register the auto-imported package as REPL package
       } else {
