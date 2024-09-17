@@ -188,7 +188,7 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
   io.on('connection', socket => {
     logger.info(successDescription('Running game!'))
     socket.on('keyPressed', (events: string[]) => {
-      queueEvent(interpreter, ...events.map(code => buildKeyPressEvent(interpreter, code)))
+      queueEvent(interpreter as any, ...events.map(code => buildKeyPressEvent(interpreter as any, code)))
     })
 
     const gameSingleton = interpreter.object('wollok.game.game')
@@ -197,7 +197,7 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
       logger.info(successDescription('Ready!'))
 
       // send static data
-      socket.emit('board', boardState(gameSingleton))
+      socket.emit('board', boardState(gameSingleton as any))
       socket.emit('images', assetFiles.filter(isValidImage))
       socket.emit('music', assetFiles.filter(isValidSound))
 
@@ -249,10 +249,10 @@ export const getAllAssets = (projectPath: string, assetsFolder: string): Asset[]
 }
 
 export const getVisuals = (game: RuntimeObject, interpreter: Interpreter): VisualState[] =>
-  (game.get('visuals')?.innerCollection ?? []).map(visual => visualState(interpreter, visual))
+  (game.get('visuals')?.innerCollection ?? []).map(visual => visualState(interpreter as any, visual as any))
 
 export const getSounds = (game: RuntimeObject): SoundState[] =>
-  (game.get('sounds')?.innerCollection ?? []).map(soundState)
+  (game.get('sounds')?.innerCollection ?? [] as any).map(soundState)
 
 export const getSoundsFolder = (projectPath: string, assetsOptions: string | undefined): string =>
   fs.readdirSync(projectPath).includes('sounds') ? 'sounds' : assetsOptions ?? 'assets'
