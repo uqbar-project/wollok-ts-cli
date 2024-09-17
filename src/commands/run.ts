@@ -6,11 +6,11 @@ import http from 'http'
 import logger from 'loglevel'
 import { join, relative } from 'path'
 import { Server, Socket } from 'socket.io'
-import { Asset, boardState, buildKeyPressEvent, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-game-web/dist/utils'
+import { Asset, boardState, buildKeyPressEvent, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools/dist/utils'
 import { Environment, GAME_MODULE, interpret, Interpreter, Name, Package, RuntimeObject, WollokException, WRENatives as natives } from 'wollok-ts'
 import { logger as fileLogger } from '../logger'
 import { getDataDiagram } from '../services/diagram-generator'
-import { buildEnvironmentForProject, buildEnvironmentIcon, ENTER, failureDescription, folderIcon, gameIcon, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readPackageProperties, serverError, stackTrace, successDescription, validateEnvironment, valueDescription } from '../utils'
+import { buildEnvironmentForProject, buildEnvironmentIcon, ENTER, failureDescription, folderIcon, gameIcon, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readPackageProperties, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
 import { DummyProfiler, EventProfiler, TimeMeasurer } from './../time-measurer'
 
 const { time, timeEnd } = console
@@ -72,7 +72,7 @@ export default async function (programFQN: Name, options: Options): Promise<void
     }
   } catch (error: any) {
     handleError(error)
-    fileLogger.info({ message: `${game ? gameIcon : programIcon} ${game ? 'Game' : 'Program'} executed ${programFQN} on ${project}`, timeElapsed: timeMeasurer.elapsedTime(), ok: false, error: stackTrace(error) })
+    fileLogger.info({ message: `${game ? gameIcon : programIcon} ${game ? 'Game' : 'Program'} executed ${programFQN} on ${project}`, timeElapsed: timeMeasurer.elapsedTime(), ok: false, error: sanitizeStackTrace(error) })
     if (!game) { process.exit(21) }
   }
 }
@@ -158,7 +158,7 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
   io.on('connection', socket => {
     logger.info(successDescription('Running game!'))
     socket.on('keyPressed', (events: string[]) => {
-      queueEvent(interpreter, ...events.map(code => buildKeyPressEvent(interpreter, code)))
+      queueEvent(interpreter as any, ...events.map(code => buildKeyPressEvent(interpreter as any, code)))
     })
 
     const gameSingleton = interpreter.object(GAME_MODULE)
@@ -167,7 +167,7 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
       logger.info(successDescription('Ready!'))
 
       // send static data
-      socket.emit('board', boardState(gameSingleton))
+      socket.emit('board', boardState(gameSingleton as any))
       socket.emit('images', assetFiles.filter(isValidImage))
       socket.emit('music', assetFiles.filter(isValidSound))
 
@@ -227,10 +227,10 @@ export const getAllAssets = (projectPath: string, assetsFolder: string): Asset[]
 }
 
 export const getVisuals = (game: RuntimeObject, interpreter: Interpreter): VisualState[] =>
-  (game.get('visuals')?.innerCollection ?? []).map(visual => visualState(interpreter, visual))
+  (game.get('visuals')?.innerCollection ?? []).map(visual => visualState(interpreter as any, visual as any))
 
 export const getSounds = (game: RuntimeObject): SoundState[] =>
-  (game.get('sounds')?.innerCollection ?? []).map(soundState)
+  (game.get('sounds')?.innerCollection ?? [] as any).map(soundState)
 
 export const getSoundsFolder = (projectPath: string, assetsOptions: string | undefined): string =>
   fs.readdirSync(projectPath).includes('sounds') ? 'sounds' : assetsOptions ?? 'assets'

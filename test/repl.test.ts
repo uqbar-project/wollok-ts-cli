@@ -1,12 +1,12 @@
 import { should } from 'chai'
 import { join } from 'path'
-import { initializeInterpreter, interprete, REPL, replNode } from '../src/commands/repl'
-import { failureDescription, successDescription, valueDescription } from '../src/utils'
-import { Interpreter } from 'wollok-ts'
-
-const projectPath = join('examples', 'repl-examples')
+import { Interpreter, REPL } from 'wollok-ts'
+import { initializeInterpreter, interpreteLine } from '../src/commands/repl'
+import { failureDescription, successDescription } from '../src/utils'
 
 should()
+
+const projectPath = join('examples', 'repl-examples')
 
 describe('REPL', () => {
 
@@ -18,124 +18,142 @@ describe('REPL', () => {
     host: 'localhost',
     skipDiagram: false,
   }
+
   let interpreter: Interpreter
 
   beforeEach(async () =>
     interpreter = await initializeInterpreter(undefined, options)
   )
 
-  it('value expressions', () => {
-    const result = interprete(interpreter, '1 + 2')
-    result.should.be.equal(successDescription('3'))
-  })
+  describe('expressions', () => {
 
-  it('void expressions', () => {
-    const result = interprete(interpreter, '[].add(1)')
-    result.should.be.equal(successDescription(''))
-  })
+    it('value expressions', () => {
+      const result = interpreteLine(interpreter, '1 + 2')
+      result.should.be.equal(successDescription('3'))
+    })
 
-  it('import sentences', () => {
-    const result = interprete(interpreter, 'import wollok.game.*')
-    result.should.be.equal(successDescription(''))
-  })
+    it('void expressions', () => {
+      const result = interpreteLine(interpreter, '[].add(1)')
+      result.should.be.equal(successDescription(''))
+    })
 
-  it('const sentences', () => {
-    const result = interprete(interpreter, 'const a = 1')
-    result.should.be.equal(successDescription(''))
-    const result2 = interprete(interpreter, 'a')
-    result2.should.be.equal(successDescription('1'))
-  })
+    it('import sentences', () => {
+      const result = interpreteLine(interpreter, 'import wollok.game.*')
+      result.should.be.equal(successDescription(''))
+    })
 
-  it('var sentences', () => {
-    const result = interprete(interpreter, 'var a = 1')
-    result.should.be.equal(successDescription(''))
-    const result2 = interprete(interpreter, 'a = 2')
-    result2.should.be.equal(successDescription(''))
-    const result3 = interprete(interpreter, 'a')
-    result3.should.be.equal(successDescription('2'))
-  })
+    it('const sentences', () => {
+      const result = interpreteLine(interpreter, 'const a = 1')
+      result.should.be.equal(successDescription(''))
+      const result2 = interpreteLine(interpreter, 'a')
+      result2.should.be.equal(successDescription('1'))
+    })
 
-  it('block without parameters', () => {
-    const result = interprete(interpreter, '{ 1 }.apply()')
-    result.should.be.equal(successDescription('1'))
-  })
+    it('var sentences', () => {
+      const result = interpreteLine(interpreter, 'var a = 1')
+      result.should.be.equal(successDescription(''))
+      const result2 = interpreteLine(interpreter, 'a = 2')
+      result2.should.be.equal(successDescription(''))
+      const result3 = interpreteLine(interpreter, 'a')
+      result3.should.be.equal(successDescription('2'))
+    })
 
-  it('block with parameters', () => {
-    const result = interprete(interpreter, '{ x => x + 1 }.apply(1)')
-    result.should.be.equal(successDescription('2'))
-  })
+    it('block without parameters', () => {
+      const result = interpreteLine(interpreter, '{ 1 }.apply()')
+      result.should.be.equal(successDescription('1'))
+    })
 
-  it('not parsing strings', () => {
-    const result = interprete(interpreter, '3kd3id9')
-    result.should.includes('Syntax error')
-  })
+    it('block with parameters', () => {
+      const result = interpreteLine(interpreter, '{ x => x + 1 }.apply(1)')
+      result.should.be.equal(successDescription('2'))
+    })
 
-  it('failure expressions', () => {
-    const result = interprete(interpreter, 'fakeReference')
-    result.should.be.equal(failureDescription(`Unknown reference ${valueDescription('fakeReference')}`))
-  })
+    it('not parsing strings', () => {
+      const result = interpreteLine(interpreter, '3kd3id9')
+      result.should.includes('Syntax error')
+    })
 
-  it('const assignment', () => {
-    interprete(interpreter, 'const a = 1')
-    const result = interprete(interpreter, 'a = 2')
-    result.should.includes(failureDescription('Evaluation Error!'))
-  })
+    it('failure expressions', () => {
+      const result = interpreteLine(interpreter, 'fakeReference')
+      result.should.be.equal(failureDescription('Unknown reference fakeReference'))
+    })
 
-  // TODO: Change the Runtime model
-  xit('const const', () => {
-    interprete(interpreter, 'const a = 1')
-    const result = interprete(interpreter, 'const a = 2')
-    result.should.includes(failureDescription('Evaluation Error!'))
-  })
+    it('const assignment', () => {
+      interpreteLine(interpreter, 'const a = 1')
+      const result = interpreteLine(interpreter, 'a = 2')
+      result.should.includes(failureDescription('Evaluation Error!'))
+    })
 
+    it('invalid message', () => {
+      interpreteLine(interpreter, 'const numeric = 1')
+      const result = interpreteLine(interpreter, 'numeric.coso()')
+      result.should.includes(failureDescription('Evaluation Error!'))
+      result.should.includes('wollok.lang.MessageNotUnderstoodException: 1 does not understand coso()')
+    })
+
+    it('invalid message inside closure', () => {
+      const result = interpreteLine(interpreter, '[1, 2, 3].map({ number => number.coso() })')
+      result.should.includes(failureDescription('Evaluation Error!'))
+      result.should.includes('wollok.lang.MessageNotUnderstoodException: 1 does not understand coso()')
+    })
+
+    // TODO: Change the Runtime model
+    xit('const const', () => {
+      interpreteLine(interpreter, 'const a = 1')
+      const result = interpreteLine(interpreter, 'const a = 2')
+      result.should.includes(failureDescription('Evaluation Error!'))
+    })
+
+  })
 
   describe('should print result', () => {
 
     it('for reference to wko', () => {
-      const result = interprete(interpreter, 'assert')
+      const result = interpreteLine(interpreter, 'assert')
       result.should.be.equal(successDescription('assert'))
     })
 
     it('for reference to an instance', () => {
-      const result = interprete(interpreter, 'new Object()')
+      const result = interpreteLine(interpreter, 'new Object()')
       result.should.be.equal(successDescription('an Object'))
     })
 
     it('for reference to a literal object', () => {
-      const result = interprete(interpreter, 'object { } ')
+      const result = interpreteLine(interpreter, 'object { } ')
       result.should.include('an Object#')
     })
 
     it('for number', () => {
-      const result = interprete(interpreter, '3')
+      const result = interpreteLine(interpreter, '3')
       result.should.be.equal(successDescription('3'))
     })
 
     it('for string', () => {
-      const result = interprete(interpreter, '"hola"')
+      const result = interpreteLine(interpreter, '"hola"')
       result.should.be.equal(successDescription('"hola"'))
     })
 
     it('for boolean', () => {
-      const result = interprete(interpreter, 'true')
+      const result = interpreteLine(interpreter, 'true')
       result.should.be.equal(successDescription('true'))
     })
 
     it('for list', () => {
-      const result = interprete(interpreter, '[1, 2, 3]')
+      const result = interpreteLine(interpreter, '[1, 2, 3]')
       result.should.be.equal(successDescription('[1, 2, 3]'))
     })
 
     it('for set', () => {
-      const result = interprete(interpreter, '#{1, 2, 3}')
+      const result = interpreteLine(interpreter, '#{1, 2, 3}')
       result.should.be.equal(successDescription('#{1, 2, 3}'))
     })
 
     it('for closure', () => {
-      const result = interprete(interpreter, '{1 + 2}')
+      const result = interpreteLine(interpreter, '{1 + 2}')
       result.should.be.equal(successDescription('{1 + 2}'))
     })
   })
+
 
   describe('with file', () => {
 
@@ -146,42 +164,42 @@ describe('REPL', () => {
     )
 
     it('should auto import the file and imported entities', () => {
-      const replPackage = replNode(interpreter.evaluation.environment)
+      const replPackage = interpreter.evaluation.environment.replNode()
       replPackage.fullyQualifiedName.should.be.equal('aves')
       replPackage.imports[0].entity.target!.fullyQualifiedName.should.be.equal('otros.comidas')
     })
 
     it('file definitions should be accessible', () => {
-      const result = interprete(interpreter, 'pepita')
+      const result = interpreteLine(interpreter, 'pepita')
       result.should.be.equal(successDescription('pepita'))
     })
 
     it('imported definitions should be accessible', () => {
-      const result = interprete(interpreter, 'alpiste')
+      const result = interpreteLine(interpreter, 'alpiste')
       result.should.be.equal(successDescription('alpiste'))
     })
 
     it('not imported definitions should not be accessible', () => {
-      const result = interprete(interpreter, 'ash')
-      result.should.be.equal(failureDescription(`Unknown reference ${valueDescription('ash')}`))
+      const result = interpreteLine(interpreter, 'ash')
+      result.should.be.equal(failureDescription('Unknown reference ash'))
     })
 
     it('after generic import, definitions should be accessible', () => {
-      const result = interprete(interpreter, 'import otros.personas.entrenadores.*')
+      const result = interpreteLine(interpreter, 'import otros.personas.entrenadores.*')
       result.should.be.equal(successDescription(''))
-      const result2 = interprete(interpreter, 'ash')
+      const result2 = interpreteLine(interpreter, 'ash')
       result2.should.be.equal(successDescription('ash'))
     })
 
     it('after entity import, it should be accessible', () => {
-      const result = interprete(interpreter, 'import otros.personas.entrenadores.ash')
+      const result = interpreteLine(interpreter, 'import otros.personas.entrenadores.ash')
       result.should.be.equal(successDescription(''))
-      const result2 = interprete(interpreter, 'ash')
+      const result2 = interpreteLine(interpreter, 'ash')
       result2.should.be.equal(successDescription('ash'))
     })
 
     it('should show only custom stack trace elements when an error occurs (with a file)', async () => {
-      const result = interprete(interpreter, 'pepitaRota.vola(10)')
+      const result = interpreteLine(interpreter, 'pepitaRota.vola(10)')
       const stackTrace = result.split('\n')
       stackTrace.length.should.equal(3)
       consoleCharacters(stackTrace[0]).should.be.equal('✗ Evaluation Error!')
@@ -198,18 +216,18 @@ describe('REPL', () => {
       )
 
       it('should auto import the file and relative imported entities', () => {
-        const replPackage = replNode(interpreter.evaluation.environment)
+        const replPackage = interpreter.evaluation.environment.replNode()
         replPackage.fullyQualifiedName.should.be.equal('otros.comidas')
         replPackage.imports[0].entity.target!.fullyQualifiedName.should.be.equal('otros.personas.entrenadores')
       })
 
       it('file definitions should be accessible', () => {
-        const result = interprete(interpreter, 'alpiste')
+        const result = interpreteLine(interpreter, 'alpiste')
         result.should.be.equal(successDescription('alpiste'))
       })
 
       it('imported definitions should be accessible', () => {
-        const result = interprete(interpreter, 'ash')
+        const result = interpreteLine(interpreter, 'ash')
         result.should.be.equal(successDescription('ash'))
       })
 
@@ -220,18 +238,18 @@ describe('REPL', () => {
   describe('without file', () => {
 
     it('should not auto import any file', () => {
-      const replPackage = replNode(interpreter.evaluation.environment)
+      const replPackage = interpreter.evaluation.environment.replNode()
       replPackage.fullyQualifiedName.should.be.equal(REPL)
       replPackage.imports.should.be.empty
     })
 
     it('global definitions should be accessible', () => {
-      const result = interprete(interpreter, 'assert')
+      const result = interpreteLine(interpreter, 'assert')
       result.should.be.equal(successDescription('assert'))
     })
 
     it('should show only custom stack trace elements when an error occurs (without a file)', async () => {
-      const result = interprete(interpreter, 'assert.equals(2, 1)')
+      const result = interpreteLine(interpreter, 'assert.equals(2, 1)')
       const stackTrace = result.split('\n')
       stackTrace.length.should.equal(2)
       consoleCharacters(stackTrace[0]).should.be.equal('✗ Evaluation Error!')
@@ -239,7 +257,10 @@ describe('REPL', () => {
     })
 
   })
+
+
 })
+
 
 const consoleCharacters = (value: string) =>
   // eslint-disable-next-line no-control-regex

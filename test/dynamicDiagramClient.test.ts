@@ -1,10 +1,10 @@
-import { Interpreter } from 'wollok-ts'
 import chai from 'chai'
+import chaiAsPromised from 'chai-as-promised'
 import chaiHttp from 'chai-http'
-import { initializeClient, initializeInterpreter } from '../src/commands/repl'
 import { join } from 'path'
 import { Interface, createInterface as Repl } from 'readline'
-import chaiAsPromised from 'chai-as-promised'
+import { Interpreter } from 'wollok-ts'
+import { initializeClient, initializeInterpreter } from '../src/commands/repl'
 
 chai.should()
 chai.use(chaiHttp)
