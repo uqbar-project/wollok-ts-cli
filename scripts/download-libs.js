@@ -8,11 +8,11 @@ const libsToDownload = [
     libs: [
       {
         filename: "p5.js",
-        url: "http://cdnjs.cloudflare.com/ajax/libs/p5.js/1.2.0/p5.js",
+        url: "http://cdnjs.cloudflare.com/ajax/libs/p5.js/1.2.0/p5.min.js",
       },
       {
         filename: "p5.sound.js",
-        url: "http://cdnjs.cloudflare.com/ajax/libs/p5.js/1.5.0/addons/p5.sound.js",
+        url: "http://cdnjs.cloudflare.com/ajax/libs/p5.js/1.5.0/addons/p5.sound.min.js",
       },
       {
         filename: "socket.io.esm.min.js",

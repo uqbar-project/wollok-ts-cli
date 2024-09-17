@@ -1,7 +1,7 @@
 import { should, use } from 'chai'
 import { join } from 'path'
-import { Interpreter } from 'wollok-ts'
-import { initializeInterpreter, interprete } from '../src/commands/repl'
+import { interprete, Interpreter } from 'wollok-ts'
+import { initializeInterpreter } from '../src/commands/repl'
 import { getDataDiagram } from '../src/services/diagram-generator'
 import { diagramAssertions } from './assertions'
 
@@ -74,12 +74,12 @@ describe('Dynamic diagram', () => {
 
   it('should include edges between REPL and WKOs', () => {
     interprete(interpreter, 'var x')
-    getDataDiagram(interpreter).should.connect('x', 'REPL', 'null')
+    getDataDiagram(interpreter).should.connect('x', 'REPL', 'null', 1.5)
   })
 
   it('should include constant edges between REPL and WKOs', () => {
     interprete(interpreter, 'const x = 7')
-    getDataDiagram(interpreter).should.connect('x🔒', 'REPL', '7')
+    getDataDiagram(interpreter).should.connect('x🔒', 'REPL', '7', 1.5)
   })
 
   it('should have a specific type for null object', () => {
@@ -93,9 +93,9 @@ describe('Dynamic diagram', () => {
       .include.nodeWith({ type: 'literal', label: '"blue"' }).and.to
       .include.nodeWith({ type: 'literal', label: '"orange"' }).and.to
       .include.nodeWith({ type: 'literal', label: '"grey"' }).and.to
-      .connect('0', 'List', '"blue"').and.to
-      .connect('1', 'List', '"orange"').and.to
-      .connect('2', 'List', '"grey"')
+      .connect('0', 'List', '"blue"', 1, 'dotted').and.to
+      .connect('1', 'List', '"orange"', 1, 'dotted').and.to
+      .connect('2', 'List', '"grey"', 1, 'dotted')
   })
 
   it('should include sets and their elements', () => {
@@ -104,9 +104,9 @@ describe('Dynamic diagram', () => {
       .include.nodeWith({ type: 'literal', label: '"blue"' }).and.to
       .include.nodeWith({ type: 'literal', label: '"orange"' }).and.to
       .include.nodeWith({ type: 'literal', label: '"grey"' }).and.to
-      .connect('', 'Set', '"blue"').and.to
-      .connect('', 'Set', '"orange"').and.to
-      .connect('', 'Set', '"grey"')
+      .connect('', 'Set', '"blue"', 1, 'dotted').and.to
+      .connect('', 'Set', '"orange"', 1, 'dotted').and.to
+      .connect('', 'Set', '"grey"', 1, 'dotted')
   })
 
 

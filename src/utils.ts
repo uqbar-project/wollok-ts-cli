@@ -4,9 +4,8 @@ import { readFile } from 'fs/promises'
 import globby from 'globby'
 import logger from 'loglevel'
 import path, { join } from 'path'
-import { VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-game-web/dist/utils'
+import { VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools/dist/utils'
 import { buildEnvironment, Environment, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER } from 'wollok-ts'
-import { replNode } from './commands/repl'
 
 const { time, timeEnd } = console
 
@@ -96,7 +95,7 @@ export const valueDescription = (val: any): string => italic(blue(val))
 export const successDescription = (description: string): string =>
   green(`${bold('✓')} ${description}`)
 
-export const stackTrace = (e?: Error): string[] => {
+export const sanitizeStackTrace = (e?: Error): string[] => {
   const indexOfTsStack = e?.stack?.indexOf(WOLLOK_EXTRA_STACK_TRACE_HEADER)
   const fullStack = e?.stack?.slice(0, indexOfTsStack ?? -1) ?? ''
 
@@ -109,9 +108,9 @@ export const stackTrace = (e?: Error): string[] => {
 }
 
 export const failureDescription = (description: string, e?: Error): string => {
-  const stack = stackTrace(e).join('\n  ')
-  const stackTraceSanitized = stack ? '\n  ' + stack : ''
-  return red(`${bold('✗')} ${description}${stackTraceSanitized}`)
+  const stack = sanitizeStackTrace(e).join('\n  ')
+  const sanitizedStackTrace = stack ? '\n  ' + stack : ''
+  return red(`${bold('✗')} ${description}${sanitizedStackTrace}`)
 }
 
 export const problemDescription = (problem: Problem): string => {
@@ -147,7 +146,7 @@ export const isValidSound = (file: Named): boolean => VALID_SOUND_EXTENSIONS.som
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
 export function isREPLConstant(environment: Environment, localName: string): boolean {
-  return replNode(environment).isConstant(localName)
+  return environment.replNode().isConstant(localName)
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════

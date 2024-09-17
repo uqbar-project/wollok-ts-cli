@@ -5,7 +5,7 @@ type ElementDefinitionQuery = Partial<ElementDefinition['data']>
 declare global {
     export namespace Chai {
         interface Assertion { // TODO: split into the separate modules
-            connect: (label: string, sourceLabel: string, targetLabel: string) => Assertion
+            connect: (label: string, sourceLabel: string, targetLabel: string, width?: number, style?: string ) => Assertion
         }
 
         interface Include {
@@ -34,10 +34,17 @@ export const diagramAssertions: Chai.ChaiPlugin = (chai) => {
     new Assertion(diagram).to.deep.contain(query)
   })
 
-  Assertion.addMethod('connect', function ( label: string, source: string, target: string ) {
+  Assertion.addMethod('connect', function ( label: string, source: string, target: string, width = 1, style = 'solid') {
     const { data: { id: sourceId } } = this._obj.find(({ data }: any) => data.label === source)
     const { data: { id: targetId } } = this._obj.find(({ data }: any) => data.label === target)
-    new Assertion(this._obj).to.include.nodeWith({ label, source: sourceId, target: targetId })
+    const connection = {
+      label,
+      source: sourceId,
+      target: targetId,
+      ...width && { width },
+      ...style && { style },
+    }
+    new Assertion(this._obj).to.include.nodeWith(connection)
   })
 }
 
