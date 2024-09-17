@@ -6,12 +6,12 @@ import http from 'http'
 import logger from 'loglevel'
 import { join, relative } from 'path'
 import { Server, Socket } from 'socket.io'
-import { Asset, SoundState, VisualState, boardState, buildKeyPressEvent, queueEvent, soundState, visualState } from 'wollok-web-tools/dist/utils'
-import { Environment, GAME_MODULE, Name, Package, RuntimeObject, WollokException, interpret, link, WRENatives as natives, parse, Interpreter } from 'wollok-ts'
+import { Asset, boardState, buildKeyPressEvent, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools/dist/utils'
+import { Environment, GAME_MODULE, interpret, Interpreter, Name, Package, RuntimeObject, WollokException, WRENatives as natives } from 'wollok-ts'
 import { logger as fileLogger } from '../logger'
 import { getDataDiagram } from '../services/diagram-generator'
-import { ENTER, buildEnvironmentForProject, buildEnvironmentIcon, failureDescription, folderIcon, gameIcon, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readPackageProperties, serverError, sanitizeStackTrace, successDescription, validateEnvironment, valueDescription } from '../utils'
-import { TimeMeasurer } from './../time-measurer'
+import { buildEnvironmentForProject, buildEnvironmentIcon, ENTER, failureDescription, folderIcon, gameIcon, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readPackageProperties, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
+import { DummyProfiler, EventProfiler, TimeMeasurer } from './../time-measurer'
 
 const { time, timeEnd } = console
 
@@ -24,8 +24,6 @@ export type Options = {
   game: boolean,
   startDiagram: boolean
 }
-
-let timer = 0
 
 const DEFAULT_PORT = '4200'
 const DEFAULT_HOST = 'localhost'
@@ -58,7 +56,7 @@ export default async function (programFQN: Name, options: Options): Promise<void
 
 
     const ioGame: Server | undefined = initializeGameClient(options)
-    const interpreter = game ? getGameInterpreter(environment, ioGame!) : interpret(environment, { ...natives })
+    const interpreter = game ? getGameInterpreter(environment) : interpret(environment, { ...natives })
     const programPackage = environment.getNodeByFQN<Package>(programFQN).parent as Package
     const dynamicDiagramClient = await initializeDynamicDiagram(programPackage, options, interpreter)
 
@@ -79,36 +77,8 @@ export default async function (programFQN: Name, options: Options): Promise<void
   }
 }
 
-export const getGameInterpreter = (environment: Environment, io: Server): Interpreter => {
-  const nativesAndDraw = {
-    ...natives,
-    draw: {
-      drawer: {
-        *apply() {
-          try {
-            const game = interpreter?.object('wollok.game.game')
-            const visuals = getVisuals(game, interpreter)
-            io.emit('visuals', visuals)
-            const sounds = getSounds(game)
-            io.emit('sounds', sounds)
-          } catch (error: any) {
-            logger.error(failureDescription(error instanceof WollokException ? error.message : 'Exception while executing the program'))
-            const debug = logger.getLevel() <= logger.levels.DEBUG
-            if (debug) logger.error(error)
-            interpreter.send('stop', gameSingleton)
-          }
-        },
-      },
-    },
-  }
-
-  const interpreter = interpret(environment, nativesAndDraw)
-
-  const gameSingleton = interpreter?.object(GAME_MODULE)
-  const drawer = interpreter.object('draw.drawer')
-  interpreter.send('onTick', gameSingleton, interpreter.reify(17), interpreter.reify('renderizar'), drawer)
-
-  return interpreter
+export const getGameInterpreter = (environment: Environment): Interpreter => {
+  return interpret(environment, natives)
 }
 
 export const initializeGameClient = ({ project, assets, host, port, game }: Options): Server | undefined => {
@@ -191,7 +161,7 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
       queueEvent(interpreter as any, ...events.map(code => buildKeyPressEvent(interpreter as any, code)))
     })
 
-    const gameSingleton = interpreter.object('wollok.game.game')
+    const gameSingleton = interpreter.object(GAME_MODULE)
     // wait for client to be ready
     socket.on('ready', () => {
       logger.info(successDescription('Ready!'))
@@ -205,11 +175,19 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
       socket.emit('start')
     })
 
-    const flushInterval = 100
+    const flushInterval = 17
+    const profiler = logger.getLevel() >= logger.levels.DEBUG
+      ? new EventProfiler(logger, 'GAME-LOOP')
+      : new DummyProfiler()
+
+    const start = new TimeMeasurer()
     const id = setInterval(() => {
       try {
-        interpreter.send('flushEvents', gameSingleton, interpreter.reify(timer))
-        timer += flushInterval
+        profiler.start()
+        interpreter.send('flushEvents', gameSingleton, interpreter.reify(start.elapsedTime()))
+        draw(interpreter, io)
+        profiler.stop()
+
         // We could pass the interpreter but a program does not change it
         dynamicDiagramClient.onReload()
         if (!gameSingleton.get('running')?.innerBoolean) {
@@ -264,11 +242,8 @@ export const getAssetsFolder = ({ game, project, assets }: Options): string => {
   return packageProperties?.resourceFolder ?? assets
 }
 
-export const buildEnvironmentForProgram = async ({ project, skipValidations, game }: Options): Promise<Environment> => {
-  let environment = await buildEnvironmentForProject(project)
-  if (game) {
-    environment = link([drawDefinition()], environment)
-  }
+export const buildEnvironmentForProgram = async ({ project, skipValidations }: Options): Promise<Environment> => {
+  const environment = await buildEnvironmentForProject(project)
   validateEnvironment(environment, skipValidations)
   return environment
 }
@@ -280,4 +255,17 @@ export const gameHost = (host: string): string => host ?? DEFAULT_HOST
 
 export const dynamicDiagramPort = (port: string): string => `${+gamePort(port) + 1}`
 
-const drawDefinition = () => parse.File('draw.wlk').tryParse('object drawer{ method apply() native }')
+const draw = (interpreter: Interpreter, io: Server) => {
+  const game = interpreter?.object(GAME_MODULE)
+  try {
+    const visuals = getVisuals(game, interpreter)
+    io.emit('visuals', visuals)
+    const sounds = getSounds(game)
+    io.emit('sounds', sounds)
+  } catch (error: any) {
+    logger.error(failureDescription(error instanceof WollokException ? error.message : 'Exception while executing the program'))
+    const debug = logger.getLevel() <= logger.levels.DEBUG
+    if (debug) logger.error(error)
+    interpreter.send('stop', game)
+  }
+}
