@@ -35,7 +35,7 @@ This component is part of the [Wollok language project](https://github.com/uqbar
 All contributions are welcome!
 
 - See [installation instructions for developers](https://github.com/uqbar-project/wollok-ts-cli/wiki/Developer-Environment)
-- You can also [join the Discord channel!](https://discord.gg/MWK9fafk)
+- You can also [join the Discord channel!](https://discord.gg/ZstgCPKEaa)
 - There's a list of [good first issues](https://github.com/uqbar-project/wollok-lsp-ide/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) to tackle, but in case of any hesitation you can always ping @PalumboN or @fdodino
 - You can fork the project and [create a *Pull Request*](https://help.github.com/articles/creating-a-pull-request-from-a-fork/). If you've never collaborated with an open source project before, you might want to read [this guide](https://akrabat.com/the-beginners-guide-to-contributing-to-a-github-project/)
 - Additional info is available at the [wiki](https://github.com/uqbar-project/wollok-ts-cli/wiki)
