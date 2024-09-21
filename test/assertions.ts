@@ -1,17 +1,33 @@
 import { ElementDefinition } from 'cytoscape'
+import { existsSync } from 'fs'
 
 type ElementDefinitionQuery = Partial<ElementDefinition['data']>
 
 declare global {
-    export namespace Chai {
-        interface Assertion { // TODO: split into the separate modules
-            connect: (label: string, sourceLabel: string, targetLabel: string, width?: number, style?: string ) => Assertion
-        }
-
-        interface Include {
-            nodeWith: (query: ElementDefinitionQuery) => Assertion
-        }
+  export namespace Chai {
+    interface Assertion { // TODO: split into the separate modules
+      connect: (label: string, sourceLabel: string, targetLabel: string, width?: number, style?: string) => Assertion
+      pathExists(path: string): Assertion
     }
+
+    interface Include {
+      nodeWith: (query: ElementDefinitionQuery) => Assertion
+    }
+  }
+}
+
+export const pathAssertions: Chai.ChaiPlugin = (chai) => {
+  const { Assertion } = chai
+
+  Assertion.addMethod('pathExists', function (path) {
+    const exists = existsSync(path)
+    this.assert(
+      exists,
+      'expected path #{this} to exist',
+      'expected path #{this} to not exist',
+      path
+    )
+  })
 }
 
 export const diagramAssertions: Chai.ChaiPlugin = (chai) => {
@@ -34,7 +50,7 @@ export const diagramAssertions: Chai.ChaiPlugin = (chai) => {
     new Assertion(diagram).to.deep.contain(query)
   })
 
-  Assertion.addMethod('connect', function ( label: string, source: string, target: string, width = 1, style = 'solid') {
+  Assertion.addMethod('connect', function (label: string, source: string, target: string, width = 1, style = 'solid') {
     const { data: { id: sourceId } } = this._obj.find(({ data }: any) => data.label === source)
     const { data: { id: targetId } } = this._obj.find(({ data }: any) => data.label === target)
     const connection = {

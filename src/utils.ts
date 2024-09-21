@@ -39,7 +39,7 @@ export type FileContent = {
 
 export const createFolderIfNotExists = (folder: string): void => {
   if (!existsSync(folder)) {
-    mkdirSync(folder)
+    mkdirSync(folder, { recursive: true })
   }
 }
 
@@ -67,10 +67,10 @@ export const validateEnvironment = (environment: Environment, skipValidations: b
     try {
       const problems = validate(environment)
       problems.forEach(problem => logger.info(problemDescription(problem)))
-      if(!problems.length) {
+      if (!problems.length) {
         logger.info(successDescription('No problems found building the environment!'))
       }
-      else if(problems.some(_ => _.level === 'error')) {
+      else if (problems.some(_ => _.level === 'error')) {
         throw new Error('Aborting run due to validation errors!')
       }
     } catch (error: any) {
