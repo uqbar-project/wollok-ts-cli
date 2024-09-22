@@ -14,7 +14,9 @@ export type Options = {
   game: boolean,
 }
 
-export default function ({ project, name, noTest = false, noCI = false, game = false }: Options): void {
+export default function (folder: string | undefined, { project: _project, name, noTest = false, noCI = false, game = false }: Options): void {
+  const project = join(_project, folder ?? '')
+
   // Initialization
   if (existsSync(join(project, 'package.json'))) {
     logger.info(yellow(bold(`🚨 There is already a project inside ${project} folder`)))
@@ -97,7 +99,7 @@ describe "group of tests for pepita" {
 
 }`
 
-const gameDefinition =  (exampleName: string) => `import wollok.game.*
+const gameDefinition = (exampleName: string) => `import wollok.game.*
 
 import ${exampleName}.pepita
 

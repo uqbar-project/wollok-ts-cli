@@ -5,14 +5,14 @@ import run from './commands/run'
 import test from './commands/test'
 import init from './commands/init'
 import logger from 'loglevel'
-import { version } from  '../package.json'
+import { version } from '../package.json'
 import { cyan } from 'chalk'
 
 const program = new Command()
   .name('wollok')
   .description('Wollok Language command line interpreter tool')
   .version(cyan(version))
-  .hook('preAction', (thisCommand, actionCommand) =>  {
+  .hook('preAction', (thisCommand, actionCommand) => {
     actionCommand.opts().verbose ? logger.setLevel('DEBUG') : logger.setLevel('INFO')
   })
 
@@ -55,6 +55,7 @@ program.command('repl')
 
 program.command('init')
   .description('Create a new Wollok project')
+  .argument('[folder]', 'folder name, if not provided, the current folder will be used')
   .option('-p, --project [filter]', 'path to project', process.cwd())
   .option('-n, --name [name]', 'name of the example', undefined)
   .option('-g, --game', 'adds a game program to the project', false)
