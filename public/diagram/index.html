@@ -6,7 +6,7 @@
     <script
       src="./lib/cytoscape.min.js"
     ></script>
-    <script type="text/javascript" src="./diagram.js"></script>
+    <script type="text/javascript" src="./diagram-client.js"></script>
     <link rel="stylesheet" href="./diagram.css" />
     <style>
       #cy {
@@ -44,10 +44,13 @@
         });
 
         socket.on("disconnect", function () {
-          console.log("desconectado!");
+          console.log("desconectado!")
         });
 
-        initializeCytoscape(document.getElementById("cy"));
+        // setTimeout(() => {
+          initializeCytoscape(document.getElementById("cy"))
+        // }, 1000)
+
 
         socket.on("initDiagram", function (options) {
           document.getElementById('toggle-mode').checked = options?.darkMode ?? false;

@@ -9,7 +9,7 @@ import { CompleterResult, Interface, createInterface as Repl } from 'readline'
 import { Server, Socket } from 'socket.io'
 import { Entity, Environment, Evaluation, Interpreter, Package, REPL, interprete, link, WRENatives as natives } from 'wollok-ts'
 import { logger as fileLogger } from '../logger'
-import { getDataDiagram } from '../services/diagram-generator'
+import { getDataDiagram } from 'wollok-web-tools/dist/dynamicDiagram/diagram-generator'
 import { TimeMeasurer } from '../time-measurer'
 import { ENTER, buildEnvironmentForProject, failureDescription, getFQN, handleError, publicPath, replIcon, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
 

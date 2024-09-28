@@ -3,36 +3,36 @@ let currentElements = []
 
 function initializeCytoscape(container) {
   const fontFace = {
-    "font-family": "Inter",
-    "font-weight": "normal",
-    "font-size": "data(fontsize)",
+    'font-family': 'Inter',
+    'font-weight': 'normal',
+    'font-size': 'data(fontsize)',
   }
   const nodeStyle = {
     ...fontFace,
-    "background-color": "#7cc0d8",
-    "line-color": "#000000",
-    label: "data(label)",
-    color: "#000",
-    "text-valign": "center",
-    "text-wrap": "wrap",
-    "text-max-width": "100px",
-    "border-style": "solid",
-    "border-color": "#248ac8",
-    "border-width": "1px",
+    'background-color': '#7cc0d8',
+    'line-color': '#000000',
+    label: 'data(label)',
+    color: '#000',
+    'text-valign': 'center',
+    'text-wrap': 'wrap',
+    'text-max-width': '100px',
+    'border-style': 'solid',
+    'border-color': '#248ac8',
+    'border-width': '1px',
   }
 
   const edgeStyle = {
     ...fontFace,
-    label: "data(label)",
-    width: "data(width)",
-    "line-color": "#000000",
-    "line-style": "data(style)",
-    "target-arrow-color": "#000000",
-    "target-arrow-shape": "vee",
-    "curve-style": "bezier",
-    "text-valign": "top",
-    "text-margin-y": "10px",
-    "font-size": "8px",
+    label: 'data(label)',
+    width: 'data(width)',
+    'line-color': '#000000',
+    'line-style': 'data(style)',
+    'target-arrow-color': '#000000',
+    'target-arrow-shape': 'vee',
+    'curve-style': 'bezier',
+    'text-valign': 'top',
+    'text-margin-y': '10px',
+    'font-size': '8px',
   }
 
   cy = cytoscape({
@@ -45,65 +45,63 @@ function initializeCytoscape(container) {
     style: [
       // the stylesheet for the graph
       {
-        selector: "node",
+        selector: 'node',
         style: nodeStyle,
       },
       {
-        selector: `node[mode = "dark"]`,
+        selector: 'node[mode = "dark"]',
         style: {
           ...nodeStyle,
-          "line-color": "#000000",
-          "background-color": "#4F709C",
-          "border-color": "#6F8FC0",
-          color: "#FFFFFF",
+          'line-color': '#000000',
+          'background-color': '#4F709C',
+          'border-color': '#6F8FC0',
+          color: '#FFFFFF',
         },
       },
       {
-        selector: "edge",
+        selector: 'edge',
         style: edgeStyle,
       },
       {
-        selector: `edge[mode = "dark"]`,
+        selector: 'edge[mode = "dark"]',
         style: {
           ...edgeStyle,
-          "line-color": "#FFFFFF",
-          "target-arrow-color": "#FFFFFF",
-          color: "#FFFFFF",
-        }
-      },
-      {
-        selector: `node[type = "literal"]`,
-        style: {
-          ...fontFace,
-          "background-color": "#6fdc4b",
-          "border-color": "#26a324",
+          'line-color': '#FFFFFF',
+          'target-arrow-color': '#FFFFFF',
+          color: '#FFFFFF',
         },
       },
       {
-        selector: `node[type = "literal"][mode = "dark"]`,
+        selector: 'node[type = "literal"]',
         style: {
           ...fontFace,
-          "background-color": "#BB2525",
-          "border-color": "#E53935",
-          color: "#FFFFFF",
+          'background-color': '#6fdc4b',
+          'border-color': '#26a324',
         },
       },
       {
-        selector: `node[type = "null"]`,
+        selector: 'node[type = "literal"][mode = "dark"]',
         style: {
           ...fontFace,
-          "background-color": "#FFFFFF",
-          "font-size": "10px",
-          "font-weight": "bold",
-          color: "#000000",
-          "border-color": "#000000",
+          'background-color': '#BB2525',
+          'border-color': '#E53935',
+          color: '#FFFFFF',
+        },
+      },
+      {
+        selector: 'node[type = "null"]',
+        style: {
+          ...fontFace,
+          'background-color': '#FFFFFF',
+          'font-size': '10px',
+          'font-weight': 'bold',
+          color: '#000000',
+          'border-color': '#000000',
         },
       },
       {
         selector: 'node[type = "REPL"]',
-        style: {
-          opacity: 0,
-        },
+        style: { opacity: 0 },
       },
     ],
   })
@@ -115,7 +113,7 @@ function updateLayout() {
 
 function updateNodes(elements) {
   const layout = elements.layout({
-    name: "cose",
+    name: 'cose',
     animate: false,
     nodeDimensionsIncludeLabels: true,
     fit: true,
@@ -161,7 +159,7 @@ function readyForLayoutElems(elements) {
   return elements.filter(
     (element) =>
       element.isNode() ||
-      (element.isEdge() && isInElems(element.target()) && isInElems(element.source()))
+      element.isEdge() && isInElems(element.target()) && isInElems(element.source())
   )
 }
 
@@ -170,6 +168,7 @@ function modeChanged() {
   const newTitle = toggleMode.checked ? 'Dark mode ON' : 'Light Mode ON'
   toggleMode.setAttribute('title', newTitle)
 
+  // @ts-expect-error it actually works and we need to change the background color
   document.getElementById('main').style = `background-color: ${backgroundColor()}`
   cy.elements().remove()
   reloadDiagram(currentElements)
