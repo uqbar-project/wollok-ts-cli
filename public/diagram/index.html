@@ -47,10 +47,7 @@
           console.log("desconectado!")
         });
 
-        // setTimeout(() => {
-          initializeCytoscape(document.getElementById("cy"))
-        // }, 1000)
-
+        initializeCytoscape(document.getElementById("cy"))
 
         socket.on("initDiagram", function (options) {
           document.getElementById('toggle-mode').checked = options?.darkMode ?? false;
