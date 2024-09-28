@@ -65,6 +65,7 @@
     "wollok-web-tools": "file:../wollok-web-tools"
   },
   "devDependencies": {
+    "@stylistic/eslint-plugin-ts": "^2.8.0",
     "@types/chai": "^4.3.16",
     "@types/chai-as-promised": "^7.1.7",
     "@types/cytoscape": "^3.19.7",
@@ -73,8 +74,8 @@
     "@types/node": "^18.14.5",
     "@types/p5": "^1.7.1",
     "@types/sinon": "^17.0.0",
-    "@typescript-eslint/eslint-plugin": "^6.9.1",
-    "@typescript-eslint/parser": "^6.9.1",
+    "@typescript-eslint/eslint-plugin": "^8.7.0",
+    "@typescript-eslint/parser": "^8.7.0",
     "chai": "^4.5.0",
     "chai-as-promised": "^7.1.1",
     "chai-http": "^4.4.0",
@@ -85,6 +86,6 @@
     "sinon": "^17.0.1",
     "socket.io-client": "^4.7.5",
     "ts-node": "10.9.1",
-    "typescript": "^4.9.5"
+    "typescript": "~5.5.1"
   }
 }
