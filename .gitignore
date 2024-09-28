@@ -15,3 +15,4 @@ coverage
 log/*
 /public/game/lib/*
 wollok.log
+/public/diagram/diagram-client.js

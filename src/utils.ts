@@ -5,7 +5,9 @@ import globby from 'globby'
 import logger from 'loglevel'
 import path, { join } from 'path'
 import { VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools/dist/game/utils'
-import { buildEnvironment, Environment, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER } from 'wollok-ts'
+import { buildEnvironment, Environment, getDynamicDiagramData, Interpreter, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER } from 'wollok-ts'
+import { getDataDiagram } from 'wollok-web-tools/dist/dynamicDiagram/diagram-generator'
+import { ElementDefinition } from 'cytoscape'
 
 const { time, timeEnd } = console
 
@@ -163,4 +165,13 @@ export const serverError = ({ port, code }: { port: string, code: string }): voi
     logger.info(yellow(bold(`⚡ REPL couldn't be started at port ${port}, error code ["${code}]. ⚡`)))
   }
   process.exit(13)
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// DYNAMIC DIAGRAM
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+export function getDynamicDiagram(interpreter: Interpreter, rootFQN?: Package): ElementDefinition[] {
+  const objects = getDynamicDiagramData(interpreter, rootFQN)
+  return getDataDiagram(objects)
 }

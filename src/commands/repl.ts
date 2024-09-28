@@ -9,9 +9,8 @@ import { CompleterResult, Interface, createInterface as Repl } from 'readline'
 import { Server, Socket } from 'socket.io'
 import { Entity, Environment, Evaluation, Interpreter, Package, REPL, interprete, link, WRENatives as natives } from 'wollok-ts'
 import { logger as fileLogger } from '../logger'
-import { getDataDiagram } from 'wollok-web-tools/dist/dynamicDiagram/diagram-generator'
 import { TimeMeasurer } from '../time-measurer'
-import { ENTER, buildEnvironmentForProject, failureDescription, getFQN, handleError, publicPath, replIcon, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
+import { ENTER, buildEnvironmentForProject, failureDescription, getDynamicDiagram, getFQN, handleError, publicPath, replIcon, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
 
 // TODO:
 // - autocomplete piola
@@ -223,7 +222,7 @@ export async function initializeClient(options: Options, repl: Interface, interp
   })
   const connectionListener = (interpreter: Interpreter) => (socket: Socket) => {
     socket.emit('initDiagram', options)
-    socket.emit('updateDiagram', getDataDiagram(interpreter))
+    socket.emit('updateDiagram', getDynamicDiagram(interpreter))
   }
   let currentConnectionListener = connectionListener(interpreter)
   io.on('connection', currentConnectionListener)
@@ -245,7 +244,7 @@ export async function initializeClient(options: Options, repl: Interface, interp
       currentConnectionListener = connectionListener(interpreter)
       io.on('connection', currentConnectionListener)
 
-      io.emit('updateDiagram', getDataDiagram(interpreter))
+      io.emit('updateDiagram', getDynamicDiagram(interpreter))
     },
     enabled: true,
     app,
