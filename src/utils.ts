@@ -159,7 +159,7 @@ export const serverError = ({ port, code }: { port: string, code: string }): voi
   logger.info('')
   if (code === 'EADDRINUSE') {
     logger.info(yellow(bold(`⚡ We couldn't start dynamic diagram at port ${port}, because it is already in use. ⚡`)))
-    // eslint-disable-next-line @typescript-eslint/quotes
+    // eslint-disable-next-line @stylistic/ts/quotes
     logger.info(yellow(`Please make sure you don't have another REPL session running in another terminal. \nIf you want to start another instance, you can use "--port xxxx" option, where xxxx should be any available port.`))
   } else {
     logger.info(yellow(bold(`⚡ REPL couldn't be started at port ${port}, error code ["${code}]. ⚡`)))
