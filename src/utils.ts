@@ -4,9 +4,9 @@ import { readFile } from 'fs/promises'
 import globby from 'globby'
 import logger from 'loglevel'
 import path, { join } from 'path'
-import { VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools/dist/game/utils'
+import { VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools'
 import { buildEnvironment, Environment, getDynamicDiagramData, Interpreter, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER } from 'wollok-ts'
-import { getDataDiagram } from 'wollok-web-tools/dist/dynamicDiagram/diagram-generator'
+import { getDataDiagram } from 'wollok-web-tools'
 import { ElementDefinition } from 'cytoscape'
 
 const { time, timeEnd } = console
