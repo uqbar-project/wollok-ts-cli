@@ -27,8 +27,8 @@
     "lint": "eslint . ",
     "lint:fix": "eslint . --fix",
     "test:unit": "mocha --parallel -r ts-node/register/transpile-only test/**/*.test.ts --timeout 7000",
-    "build:tools": "cp ./node_modules/wollok-web-tools/dist/dynamicDiagram/diagram-client.js ./public/diagram",
-    "build": "shx rm -rf build && shx mkdir ./build && shx cp -r ./public ./build/public && cp ./node_modules/wollok-web-tools/dist/game/index.js ./build/public/game/lib && tsc -p ./tsconfig.build.json",
+    "build:tools": "cp ./node_modules/wollok-web-tools/dist/game/game-index.js ./public/game/lib && cp ./node_modules/wollok-web-tools/dist/dynamicDiagram/diagram-index.js ./public/diagram",
+    "build": "shx rm -rf build && shx mkdir ./build && shx cp -r ./public ./build/public && tsc -p ./tsconfig.build.json",
     "watch": "npm run build -- -w",
     "pack": "pkg .",
     "prepublishOnly": "npm run build && npm run test"
