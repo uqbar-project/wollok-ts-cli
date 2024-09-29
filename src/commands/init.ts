@@ -5,6 +5,7 @@ import { basename, join } from 'node:path'
 import { userInfo } from 'os'
 import { ENTER, createFolderIfNotExists } from '../utils'
 import { PROGRAM_FILE_EXTENSION, TEST_FILE_EXTENSION, WOLLOK_FILE_EXTENSION } from 'wollok-ts'
+import { execSync } from 'node:child_process'
 
 export type Options = {
   project: string,
@@ -12,9 +13,10 @@ export type Options = {
   noTest: boolean,
   noCI: boolean,
   game: boolean,
+  git: boolean
 }
 
-export default function (folder: string | undefined, { project: _project, name, noTest = false, noCI = false, game = false }: Options): void {
+export default function (folder: string | undefined, { project: _project, name, noTest = false, noCI = false, game = false, git: initializeGitRepo = false }: Options): void {
   const project = join(_project, folder ?? '')
 
   // Initialization
@@ -62,6 +64,11 @@ export default function (folder: string | undefined, { project: _project, name, 
 
   logger.info('Creating Gitignore')
   writeFileSync(join(project, '.gitignore'), gitignore)
+
+  if (initializeGitRepo) {
+    logger.info('Initializing Git repository')
+    execSync('git init', { cwd: project })
+  }
 
   // Finish
   logger.info(green('✨ Project succesfully created. Happy coding!'))
