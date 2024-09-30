@@ -5,6 +5,8 @@ import { basename, join } from 'node:path'
 import { userInfo } from 'os'
 import { ENTER, createFolderIfNotExists } from '../utils'
 import { PROGRAM_FILE_EXTENSION, TEST_FILE_EXTENSION, WOLLOK_FILE_EXTENSION } from 'wollok-ts'
+import kebabCase from 'lodash/kebabCase'
+import camelCase from 'lodash/camelCase'
 
 export type Options = {
   project: string,
@@ -34,23 +36,26 @@ export default function (folder: string | undefined, { project: _project, name, 
 
   // Creating files
   const exampleName = name ?? 'example'
-  logger.info(`Creating definition file ${exampleName}.${WOLLOK_FILE_EXTENSION}`)
-  writeFileSync(join(project, `${exampleName}.${WOLLOK_FILE_EXTENSION}`), wlkDefinition)
+  const exampleFilename = camelCase(exampleName)
+
+  const wollokDefinitionFile = `${exampleFilename}.${WOLLOK_FILE_EXTENSION}`
+  logger.info(`Creating definition file ${wollokDefinitionFile}`)
+  writeFileSync(join(project, wollokDefinitionFile), wlkDefinition)
 
   if (!noTest) {
-    const testFile = `test${capitalizeFirstLetter(exampleName)}.${TEST_FILE_EXTENSION}`
+    const testFile = `test${capitalizeFirstLetter(exampleFilename)}.${TEST_FILE_EXTENSION}`
     logger.info(`Creating test file ${testFile}`)
-    writeFileSync(join(project, testFile), testDefinition(exampleName))
+    writeFileSync(join(project, testFile), testDefinition(exampleFilename))
   }
 
   if (game) {
-    const gameFile = `main${capitalizeFirstLetter(exampleName)}.${PROGRAM_FILE_EXTENSION}`
+    const gameFile = `main${capitalizeFirstLetter(exampleFilename)}.${PROGRAM_FILE_EXTENSION}`
     logger.info(`Creating program file ${gameFile}`)
-    writeFileSync(join(project, `${gameFile}`), gameDefinition(exampleName))
+    writeFileSync(join(project, gameFile), gameDefinition(exampleFilename))
   }
 
   logger.info('Creating package.json')
-  writeFileSync(join(project, 'package.json'), packageJsonDefinition(project, game))
+  writeFileSync(join(project, 'package.json'), packageJsonDefinition(name ?? project, game))
 
   if (!noCI) {
     logger.info('Creating CI files')
@@ -64,7 +69,7 @@ export default function (folder: string | undefined, { project: _project, name, 
   writeFileSync(join(project, '.gitignore'), gitignore)
 
   // Finish
-  logger.info(green('✨ Project succesfully created. Happy coding!'))
+  logger.info(green('✨ Project successfully created. Happy coding!'))
 }
 
 
@@ -120,7 +125,7 @@ program PepitaGame {
 `
 
 const packageJsonDefinition = (projectName: string, game: boolean) => `{
-  "name": "${basename(projectName)}",
+  "name": "${kebabCase(basename(projectName))}",
   "version": "1.0.0",
   ${game ? assetsConfiguration() : ''}"wollokVersion": "4.0.0",
   "author": "${userInfo().username}",
