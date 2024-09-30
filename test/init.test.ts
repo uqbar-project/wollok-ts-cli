@@ -140,6 +140,24 @@ describe('testing init', () => {
     expect(testFileContent).to.include('import pepitaGame.pepita')
   })
 
+  it('should sanitize especial characters', async () => {
+    init(undefined, { ...baseOptions, name: 'Some random Game :) !', game: true })
+
+    const wollokDefinitionFile = join(project, 'someRandomGame.wlk')
+    const wollokMainFile = join(project, 'mainSomeRandomGame.wpgm')
+    const wollokTestFile = join(project, 'testSomeRandomGame.wtest')
+
+    expect(wollokDefinitionFile).to.pathExists()
+    expect(wollokMainFile).to.pathExists()
+    expect(wollokTestFile).to.pathExists()
+
+    // Assert content of files
+    const mainFileContent = readFileSync(wollokMainFile, 'utf8')
+    expect(mainFileContent).to.include('import someRandomGame.pepita')
+    const testFileContent = readFileSync(wollokTestFile, 'utf8')
+    expect(testFileContent).to.include('import someRandomGame.pepita')
+  })
+
   it('should exit with code 1 if folder already exists', () => {
     init(undefined, {
       ...baseOptions,

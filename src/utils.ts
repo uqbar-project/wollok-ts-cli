@@ -6,6 +6,7 @@ import logger from 'loglevel'
 import path, { join } from 'path'
 import { VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools/dist/utils'
 import { buildEnvironment, Environment, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER } from 'wollok-ts'
+import camelCase from 'lodash/camelCase'
 
 const { time, timeEnd } = console
 
@@ -164,3 +165,14 @@ export const serverError = ({ port, code }: { port: string, code: string }): voi
   }
   process.exit(13)
 }
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// SANITIZING
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Sanitizes project name to allow it to be used as a filename and as a module name.
+ * If it doesn't start with a lowercase letter or a '_', it adds '_' at the beggining.
+ * Replaces every symbol not allowed with a '_'.
+ */
+export const sanitizeName = (name: string): string => camelCase(name[0].replace(/([^a-z_])/g, '_$1') + name.slice(1).replace(/[^a-zA-z1-9_-]/g, '_'))

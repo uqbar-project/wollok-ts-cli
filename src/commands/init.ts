@@ -3,10 +3,9 @@ import logger from 'loglevel'
 import { existsSync, writeFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { userInfo } from 'os'
-import { ENTER, createFolderIfNotExists } from '../utils'
+import { ENTER, createFolderIfNotExists, sanitizeName } from '../utils'
 import { PROGRAM_FILE_EXTENSION, TEST_FILE_EXTENSION, WOLLOK_FILE_EXTENSION } from 'wollok-ts'
 import kebabCase from 'lodash/kebabCase'
-import camelCase from 'lodash/camelCase'
 
 export type Options = {
   project: string,
@@ -36,7 +35,7 @@ export default function (folder: string | undefined, { project: _project, name, 
 
   // Creating files
   const exampleName = name ?? 'example'
-  const exampleFilename = camelCase(exampleName)
+  const exampleFilename = sanitizeName(exampleName)
 
   const wollokDefinitionFile = `${exampleFilename}.${WOLLOK_FILE_EXTENSION}`
   logger.info(`Creating definition file ${wollokDefinitionFile}`)
