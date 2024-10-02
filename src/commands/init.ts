@@ -34,7 +34,7 @@ export default function (folder: string | undefined, { project: _project, name, 
   }
 
   // Creating files
-  const exampleName = name ?? 'example'
+  const exampleName = name && name.length > 0 ? name : 'example'
   const exampleFilename = sanitizeName(exampleName)
 
   const wollokDefinitionFile = `${exampleFilename}.${WOLLOK_FILE_EXTENSION}`
