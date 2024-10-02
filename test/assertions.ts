@@ -1,5 +1,5 @@
 import { ElementDefinition } from 'cytoscape'
-import { existsSync } from 'fs'
+import { existsSync, lstatSync, readdirSync } from 'fs'
 
 type ElementDefinitionQuery = Partial<ElementDefinition['data']>
 
@@ -7,7 +7,7 @@ declare global {
   export namespace Chai {
     interface Assertion { // TODO: split into the separate modules
       connect: (label: string, sourceLabel: string, targetLabel: string, width?: number, style?: string) => Assertion
-      pathExists(path: string): Assertion
+      pathExists(): Assertion
     }
 
     interface Include {
@@ -19,13 +19,21 @@ declare global {
 export const pathAssertions: Chai.ChaiPlugin = (chai) => {
   const { Assertion } = chai
 
-  Assertion.addMethod('pathExists', function (path) {
+  Assertion.addMethod('pathExists', function () {
+    const path = this._obj
     const exists = existsSync(path)
+
+    const pathBasePath = path.split('/').slice(0, -1).join('/')
+
+    // Improve error message if path does not exist
+    const files = !exists ? lstatSync(pathBasePath).isDirectory() ? readdirSync(pathBasePath) : [] : []
+
     this.assert(
       exists,
-      'expected path #{this} to exist',
-      'expected path #{this} to not exist',
-      path
+      'expected path to exist',
+      'expected path not to exist',
+      path,
+      'Found in directory: ' + files.join(', '),
     )
   })
 }
