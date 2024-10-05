@@ -70,7 +70,7 @@ export default function (folder: string | undefined, { project: _project, name, 
     try {
       execSync('git init', { cwd: project })
     } catch {
-      logger.error(yellow('Error initializing git repository, please check if git is installed in your system.'))
+      logger.error(yellow('🚨 Error initializing git repository, please check if git is installed in your system.'))
     }
   }
 
