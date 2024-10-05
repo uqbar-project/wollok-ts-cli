@@ -67,7 +67,11 @@ export default function (folder: string | undefined, { project: _project, name, 
 
   if (!noGit) {
     logger.info('Initializing Git repository')
-    execSync('git init', { cwd: project })
+    try {
+      execSync('git init', { cwd: project })
+    } catch {
+      logger.error(yellow('Error initializing git repository, please check if git is installed in your system.'))
+    }
   }
 
   // Finish
