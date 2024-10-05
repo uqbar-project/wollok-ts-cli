@@ -13,10 +13,10 @@ export type Options = {
   noTest: boolean,
   noCI: boolean,
   game: boolean,
-  git: boolean
+  noGit: boolean
 }
 
-export default function (folder: string | undefined, { project: _project, name, noTest = false, noCI = false, game = false, git: initializeGitRepo = false }: Options): void {
+export default function (folder: string | undefined, { project: _project, name, noTest = false, noCI = false, game = false, noGit = false }: Options): void {
   const project = join(_project, folder ?? '')
 
   // Initialization
@@ -65,7 +65,7 @@ export default function (folder: string | undefined, { project: _project, name, 
   logger.info('Creating Gitignore')
   writeFileSync(join(project, '.gitignore'), gitignore)
 
-  if (initializeGitRepo) {
+  if (!noGit) {
     logger.info('Initializing Git repository')
     execSync('git init', { cwd: project })
   }
