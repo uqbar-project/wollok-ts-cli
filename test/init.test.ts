@@ -21,6 +21,7 @@ const baseOptions: Options = {
   noCI: false,
   noTest: false,
   game: false,
+  noGit: false,
 }
 
 describe('testing init', () => {
@@ -37,7 +38,7 @@ describe('testing init', () => {
     sinon.restore()
   })
 
-  it('should create files successfully for default values: ci, no game & example name', async () => {
+  it('should create files successfully for default values: ci, no game, example name & git', async () => {
     init(undefined, baseOptions)
 
     expect(join(project, 'example.wlk')).to.pathExists
@@ -47,6 +48,8 @@ describe('testing init', () => {
     expect(join(project, 'README.md')).to.pathExists
     expect(join(project, '.gitignore')).to.pathExists
     expect(join(project, 'mainExample.wpgm')).to.pathExists
+    expect(join(project, '.git')).to.pathExists
+    expect(join(project, '.git/HEAD')).to.pathExists
     expect(getResourceFolder()).to.be.undefined
 
     await test(undefined, {
@@ -103,6 +106,21 @@ describe('testing init', () => {
     expect(join(customFolderProject, GITHUB_FOLDER, 'ci.yml')).to.pathExists
     expect(join(customFolderProject, 'README.md')).to.pathExists
     expect(join(customFolderProject, '.gitignore')).to.pathExists
+  })
+
+  it('should skip the initialization of a git repository if notGit flag es enabled', async () => {
+    init(undefined, { ...baseOptions, noGit: true })
+
+    expect(join(project, '.git')).not.to.pathExists
+    expect(join(project, '.git/HEAD')).not.to.pathExists
+    expect(join(project, 'example.wlk')).to.pathExists
+    expect(join(project, 'testExample.wtest')).to.pathExists
+    expect(join(project, 'package.json')).to.pathExists
+    expect(join(project, GITHUB_FOLDER, 'ci.yml')).to.pathExists
+    expect(join(project, 'README.md')).to.pathExists
+    expect(join(project, '.gitignore')).to.pathExists
+    expect(join(project, 'mainExample.wpgm')).to.pathExists
+    expect(getResourceFolder()).to.be.undefined
   })
 
   it('should exit with code 1 if folder already exists', () => {
