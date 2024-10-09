@@ -6,11 +6,10 @@ import http from 'http'
 import logger from 'loglevel'
 import { join, relative } from 'path'
 import { Server, Socket } from 'socket.io'
-import { Asset, boardState, buildKeyPressEvent, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools/dist/utils'
+import { Asset, boardState, buildKeyPressEvent, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools'
 import { Environment, GAME_MODULE, interpret, Interpreter, Name, Package, RuntimeObject, WollokException, WRENatives as natives } from 'wollok-ts'
 import { logger as fileLogger } from '../logger'
-import { getDataDiagram } from '../services/diagram-generator'
-import { buildEnvironmentForProject, buildEnvironmentIcon, ENTER, failureDescription, folderIcon, gameIcon, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readPackageProperties, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
+import { buildEnvironmentForProject, buildEnvironmentIcon, ENTER, failureDescription, folderIcon, gameIcon, getDynamicDiagram, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readPackageProperties, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
 import { DummyProfiler, EventProfiler, TimeMeasurer } from './../time-measurer'
 
 const { time, timeEnd } = console
@@ -123,7 +122,7 @@ export async function initializeDynamicDiagram(programPackage: Package, options:
   })
   const connectionListener = (interpreter: Interpreter) => (socket: Socket) => {
     socket.emit('initDiagram', options)
-    socket.emit('updateDiagram', getDataDiagram(interpreter, programPackage))
+    socket.emit('updateDiagram', getDynamicDiagram(interpreter, programPackage))
   }
   const currentConnectionListener = connectionListener(interpreter)
   io.on('connection', currentConnectionListener)
@@ -141,7 +140,7 @@ export async function initializeDynamicDiagram(programPackage: Package, options:
 
   return {
     onReload: () => {
-      io.emit('updateDiagram', getDataDiagram(interpreter, programPackage))
+      io.emit('updateDiagram', getDynamicDiagram(interpreter, programPackage))
     },
   }
 }

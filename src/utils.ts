@@ -4,8 +4,9 @@ import { readFile } from 'fs/promises'
 import globby from 'globby'
 import logger from 'loglevel'
 import path, { join } from 'path'
-import { VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools/dist/utils'
-import { buildEnvironment, Environment, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER } from 'wollok-ts'
+import { getDataDiagram, VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools'
+import { buildEnvironment, Environment, getDynamicDiagramData, Interpreter, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER } from 'wollok-ts'
+import { ElementDefinition } from 'cytoscape'
 
 const { time, timeEnd } = console
 
@@ -157,10 +158,19 @@ export const serverError = ({ port, code }: { port: string, code: string }): voi
   logger.info('')
   if (code === 'EADDRINUSE') {
     logger.info(yellow(bold(`⚡ We couldn't start dynamic diagram at port ${port}, because it is already in use. ⚡`)))
-    // eslint-disable-next-line @typescript-eslint/quotes
+    // eslint-disable-next-line @stylistic/ts/quotes
     logger.info(yellow(`Please make sure you don't have another REPL session running in another terminal. \nIf you want to start another instance, you can use "--port xxxx" option, where xxxx should be any available port.`))
   } else {
     logger.info(yellow(bold(`⚡ REPL couldn't be started at port ${port}, error code ["${code}]. ⚡`)))
   }
   process.exit(13)
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// DYNAMIC DIAGRAM
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+export function getDynamicDiagram(interpreter: Interpreter, rootFQN?: Package): ElementDefinition[] {
+  const objects = getDynamicDiagramData(interpreter, rootFQN)
+  return getDataDiagram(objects)
 }
