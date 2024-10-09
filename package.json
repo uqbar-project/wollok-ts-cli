@@ -61,8 +61,8 @@
     "pkg": "^5.8.1",
     "socket.io": "^4.5.1",
     "winston": "^3.11.0",
-    "wollok-ts": "4.1.6",
-    "wollok-web-tools": "file:../wollok-web-tools"
+    "wollok-ts": "^4.1.8",
+    "wollok-web-tools": "^1.1.4"
   },
   "devDependencies": {
     "@stylistic/eslint-plugin-ts": "^2.8.0",
