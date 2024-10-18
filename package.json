@@ -1,6 +1,6 @@
 {
   "name": "wollok-ts-cli",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "description": "Wollok Command Line Interface",
   "repository": "https://github.com/uqbar-project/wollok-ts-cli",
   "license": "MIT",
@@ -19,7 +19,7 @@
   ],
   "main": "./build/src/index.js",
   "scripts": {
-    "preinstall": "node ./scripts/download-libs.js && npm run build:tools",
+    "prepare": "node ./scripts/download-libs.js && npm run build:tools",
     "start": "node ./build/src/index.js",
     "test": "npm run lint && npm run test:unit",
     "test:diagram": "mocha -r ts-node/register/transpile-only test/**/diagram.test.ts --timeout 7000",
@@ -27,7 +27,7 @@
     "lint": "eslint . ",
     "lint:fix": "eslint . --fix",
     "test:unit": "mocha --parallel -r ts-node/register/transpile-only test/**/*.test.ts --timeout 7000",
-    "build:tools": "cp ./node_modules/wollok-web-tools/dist/web/game-index.js ./public/game/lib && cp ./node_modules/wollok-web-tools/dist/dynamicDiagram/diagram-index.js ./public/diagram",
+    "build:tools": "shx cp ./node_modules/wollok-web-tools/dist/game/game-index.js ./public/game/lib && shx cp ./node_modules/wollok-web-tools/dist/dynamicDiagram/diagram-index.js ./public/diagram",
     "build": "shx rm -rf build && shx mkdir ./build && shx cp -r ./public ./build/public && tsc -p ./tsconfig.build.json",
     "watch": "npm run build -- -w",
     "pack": "pkg .",
@@ -39,10 +39,10 @@
   "pkg": {
     "scripts": "build/**/*.js",
     "targets": [
-      "node18-linux-x64",
-      "node18-macos-x64",
-      "node18-macos-arm64",
-      "node18-win-x64"
+      "node20-linux-x64",
+      "node20-macos-x64",
+      "node20-macos-arm64",
+      "node20-win-x64"
     ],
     "assets": [
       "./build/public/**/*"
@@ -62,7 +62,7 @@
     "socket.io": "^4.5.1",
     "winston": "^3.11.0",
     "wollok-ts": "^4.1.8",
-    "wollok-web-tools": "^1.1.4"
+    "wollok-web-tools": "^1.1.5"
   },
   "devDependencies": {
     "@stylistic/eslint-plugin-ts": "^2.8.0",
