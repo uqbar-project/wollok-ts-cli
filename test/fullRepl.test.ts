@@ -43,7 +43,7 @@ describe('REPL integration test for valid project', () => {
     darkMode: true,
     host: 'localhost',
     port: '8080',
-    skipDiagram: false,
+    skipDiagram: true,
   }
   let processExitSpy: sinon.SinonStub
   let consoleLogSpy: sinon.SinonStub
