@@ -30,10 +30,6 @@ const buildOptionsFor = (path: string, skipValidations = false) => ({
 const callRepl = (autoImportPath: string, options: Options) =>
   replFn(join(options.project, autoImportPath), options)
 
-// Be careful, if you are in developing mode
-// and some of these tests fail it will lead to exit code 13
-// because an active session of the dynamic diagram
-// will remain running in background
 describe('REPL integration test for valid project', () => {
   const projectPath = join('examples', 'repl-examples')
 
