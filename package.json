@@ -27,7 +27,7 @@
     "lint": "eslint . ",
     "lint:fix": "eslint . --fix",
     "test:unit": "mocha --parallel -r ts-node/register/transpile-only test/**/*.test.ts --timeout 7000",
-    "build:tools": "shx cp ./node_modules/wollok-web-tools/dist/game/game-index.js ./public/game/lib && shx cp ./node_modules/wollok-web-tools/dist/dynamicDiagram/diagram-index.js ./public/diagram",
+    "build:tools": "shx cp ./node_modules/wollok-web-tools/dist/web/game-index.js ./public/game/lib && shx cp ./node_modules/wollok-web-tools/dist/dynamicDiagram/diagram-index.js ./public/diagram",
     "build": "shx rm -rf build && shx mkdir ./build && shx cp -r ./public ./build/public && tsc -p ./tsconfig.build.json",
     "watch": "npm run build -- -w",
     "pack": "pkg .",
@@ -62,7 +62,7 @@
     "socket.io": "^4.5.1",
     "winston": "^3.11.0",
     "wollok-ts": "^4.1.8",
-    "wollok-web-tools": "^1.1.5"
+    "wollok-web-tools": "^1.1.7"
   },
   "devDependencies": {
     "@stylistic/eslint-plugin-ts": "^2.8.0",
