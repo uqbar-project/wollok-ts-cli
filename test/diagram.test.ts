@@ -19,7 +19,7 @@ describe('Dynamic diagram', () => {
     port: '8080',
     host: 'localhost',
     darkMode: true,
-    skipDiagram: false,
+    skipDiagram: true, // we don't want to open a socket
   }
   let interpreter: Interpreter
 

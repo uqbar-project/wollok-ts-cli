@@ -1,0 +1,14 @@
+import example.pepita
+
+program PepitaProgram {
+
+	pepita.fly(10)
+	console.println("Pepita empieza con " + pepita.energy())
+	console.println("Vuela")
+	pepita.fly(10)
+	console.println(pepita.energy())
+	console.println("Come")
+	pepita.eat(25)
+	console.println(pepita.energy())
+
+}

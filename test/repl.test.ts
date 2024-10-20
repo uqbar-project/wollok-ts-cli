@@ -16,7 +16,7 @@ describe('REPL', () => {
     darkMode: true,
     port: '8080',
     host: 'localhost',
-    skipDiagram: false,
+    skipDiagram: true,
   }
 
   let interpreter: Interpreter

@@ -27,7 +27,7 @@ program.command('run')
   .option('-g, --game', 'sets the program as a game', false)
   .option('-v, --verbose', 'print debugging information', false)
   .option('-d, --startDiagram', 'activate the dynamic diagram (only for games)', false)
-  .action(run)
+  .action((programFQN, options) => { run(programFQN, options) })
 
 program.command('test')
   .description('Run Wollok tests')

@@ -1,0 +1,8 @@
+{
+  "name": "existing-folder",
+  "version": "1.0.0",
+  "resourceFolder": "specialAssets",
+  "wollokVersion": "4.0.0",
+  "author": "dodain",
+  "license": "ISC"
+}

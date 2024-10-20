@@ -36,10 +36,13 @@ describe('dynamic diagram client', () => {
 
   it('should work for root path', async () => {
     const { enabled, app, server } = await initializeClient(options, repl, interpreter)
-    expect(enabled).to.be.true
-    const result = await chai.request(app).get('/index.html')
-    expect(result).to.have.status(200)
-    server!.close()
+    try {
+      expect(enabled).to.be.true
+      const result = await chai.request(app).get('/index.html')
+      expect(result).to.have.status(200)
+    } finally {
+      server!.close()
+    }
   })
 
   it('should return a fake client if skipDiagram is set', async () => {

@@ -1,0 +1,32 @@
+object pepita {
+  var energy = 100
+  var nombre = "Pepita"
+  var property image = "pepita.png"
+  var property position = new MutablePosition(x = 0, y = 1)
+  var height = 10
+  var width = 10
+
+  method energy() = energy
+
+  method eat(grams) {
+    energy = energy + grams * 10
+  }
+
+  method fly(minutes) {
+    energy = energy - minutes * 3
+  }
+
+}
+
+program PepitaGame {
+	game.addVisualCharacter(pepita)
+
+  // Stop on connection (from any client)
+  game.onTick(0, "end", {
+    console.println("finishing...")
+    game.stop()
+  })
+
+  console.println("starting...")
+	game.start()
+}
