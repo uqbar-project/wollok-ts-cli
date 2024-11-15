@@ -51,8 +51,11 @@
     "outputPath": "dist"
   },
   "dependencies": {
+    "@badisi/latest-version": "^7.0.10",
     "chalk": "^4.1.2",
+    "cli-box": "^6.0.10",
     "commander": "^11.1.0",
+    "compare-versions": "^6.1.1",
     "cors": "^2.8.5",
     "cytoscape": "^3.15.2",
     "express": "^4.18.1",
@@ -60,6 +63,7 @@
     "loglevel": "^1.8.1",
     "p5": "^1.8.0",
     "pkg": "^5.8.1",
+    "print-message": "^3.0.1",
     "socket.io": "^4.5.1",
     "winston": "^3.11.0",
     "wollok-ts": "^4.1.8",
@@ -69,6 +73,7 @@
     "@stylistic/eslint-plugin-ts": "^2.8.0",
     "@types/chai": "^4.3.16",
     "@types/chai-as-promised": "^7.1.7",
+    "@types/cli-box": "^6.0.4",
     "@types/cytoscape": "^3.19.7",
     "@types/express": "^4.17.20",
     "@types/mocha": "^10.0.7",
