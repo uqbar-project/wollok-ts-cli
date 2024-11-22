@@ -2,11 +2,10 @@ import { bold, red } from 'chalk'
 import { time, timeEnd } from 'console'
 import logger from 'loglevel'
 import { Entity, Environment, Node, Test, is, match, when, WRENatives as natives, interpret, Describe, count } from 'wollok-ts'
-import { buildEnvironmentForProject, failureDescription, successDescription, valueDescription, validateEnvironment, handleError, ENTER, sanitizeStackTrace, buildEnvironmentIcon, testIcon } from '../utils'
+import { buildEnvironmentForProject, failureDescription, successDescription, valueDescription, validateEnvironment, handleError, ENTER, sanitizeStackTrace, buildEnvironmentIcon, testIcon, assertionError, warningDescription } from '../utils'
 import { logger as fileLogger } from '../logger'
 import { TimeMeasurer } from '../time-measurer'
 import { Package } from 'wollok-ts'
-import { AssertionError } from 'chai'
 
 const { log } = console
 
@@ -118,19 +117,20 @@ export default async function (filter: string | undefined, options: Options): Pr
     let successes = 0
 
     environment.forEach((node: Node) => match(node)(
-      when(Test)((node: Test) => {
-        if (targets.includes(node)) {
-          const tabulation = tabulationForNode(node)
+      when(Test)((test: Test) => {
+        if (targets.includes(test)) {
+          const tabulation = tabulationForNode(test)
           try {
-            interpreter.fork().exec(node)
-            logger.info(tabulation, successDescription(node.name))
+            interpreter.fork().exec(test)
+            logger.info(tabulation, successDescription(test.name))
             successes++
           } catch (error: unknown) {
-            logger.info(tabulation, failureDescription(node.name))
+            const isAssertionError = assertionError(error as Error)
+            logger.info(tabulation, isAssertionError ? warningDescription(test.name) : failureDescription(test.name))
             testsFailed.push({
-              test: node,
+              test,
               error: error as Error,
-              result: error instanceof AssertionError ? TestResult.failure : TestResult.error
+              result: isAssertionError ? TestResult.failure : TestResult.error
             })
           }
         }
@@ -166,7 +166,7 @@ export default async function (filter: string | undefined, options: Options): Pr
     logger.info(
       ENTER,
       successDescription(`${successes} passed`),
-      failures ? failureDescription(`${failures} failed`) : '',
+      failures ? warningDescription(`${failures} failed`) : '',
       errors ? failureDescription(`${errors} errored`) : '',
       ENTER
     )
