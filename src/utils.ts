@@ -7,6 +7,7 @@ import path, { join } from 'path'
 import { getDataDiagram, VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools'
 import { buildEnvironment, Environment, getDynamicDiagramData, Interpreter, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER } from 'wollok-ts'
 import { ElementDefinition } from 'cytoscape'
+import { AssertionError } from 'chai'
 
 const { time, timeEnd } = console
 
@@ -108,10 +109,14 @@ export const sanitizeStackTrace = (e?: Error): string[] => {
     .filter(stackTraceElement => stackTraceElement.trim())
 }
 
+export const warningDescription = (description: string): string =>
+  yellow(`${bold('⚠️')} ${description}`)
+
 export const failureDescription = (description: string, e?: Error): string => {
+  const color = e instanceof AssertionError ? yellowBright : red
   const stack = sanitizeStackTrace(e).join('\n  ')
   const sanitizedStackTrace = stack ? '\n  ' + stack : ''
-  return red(`${bold('✗')} ${description}${sanitizedStackTrace}`)
+  return color(`${bold('✗')} ${description}${sanitizedStackTrace}`)
 }
 
 export const problemDescription = (problem: Problem): string => {
