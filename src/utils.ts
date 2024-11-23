@@ -111,7 +111,7 @@ export const sanitizeStackTrace = (e?: Error): string[] => {
 export const warningDescription = (description: string): string =>
   yellow(`${bold('⚠️')} ${description}`)
 
-export const assertionError = (error: Error) =>
+export const assertionError = (error: Error): boolean =>
   error instanceof WollokException && error.instance?.module?.name === 'AssertionException'
 
 export const failureDescription = (description: string, error?: Error): string => {

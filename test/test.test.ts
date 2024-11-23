@@ -33,9 +33,10 @@ describe('Test', () => {
       describe('using filter option', () => {
         it('should filter by test using filter option', () => {
           const tests = getTarget(environment, 'another test', emptyOptions)
-          expect(tests.length).to.equal(2)
+          expect(tests.length).to.equal(3)
           expect(tests[0].name).to.equal('"another test"')
           expect(tests[1].name).to.equal('"another test with longer name"')
+          expect(tests[2].name).to.equal('"just another test"')
         })
 
         it('should filter by test using filter option - case insensitive', () => {
@@ -334,10 +335,11 @@ describe('Test', () => {
 
       expect(processExitSpy.callCount).to.equal(0)
       expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 3 tests')).to.be.true
-      expect(spyCalledWithSubstring(loggerInfoSpy, '3 passing')).to.be.true
-      expect(spyCalledWithSubstring(loggerInfoSpy, '0 failing')).to.be.false // old version
+      expect(spyCalledWithSubstring(loggerInfoSpy, '3 passed')).to.be.true
+      expect(spyCalledWithSubstring(loggerInfoSpy, '0 failed')).to.be.false
+      expect(spyCalledWithSubstring(loggerInfoSpy, '0 errored')).to.be.false
       expect(fileLoggerInfoSpy.calledOnce).to.be.true
-      expect(fileLoggerInfoSpy.firstCall.firstArg.result).to.deep.equal({ ok: 3, failed: 0 })
+      expect(fileLoggerInfoSpy.firstCall.firstArg.result).to.deep.equal({ ok: 3, failed: 0, errored: 0 })
     })
 
     it('passing a wrong filename runs no tests and logs a warning', async () => {
@@ -363,17 +365,56 @@ describe('Test', () => {
       expect(spyCalledWithSubstring(loggerErrorSpy, 'Describe \'non-existing-describe\' not found')).to.be.true
     })
 
-    it('returns exit code 2 if one or more tests fail', async () => {
+    it('returns exit code 2 if one or more tests fail or have errors', async () => {
       await test(undefined, emptyOptions)
 
       expect(processExitSpy.calledWith(2)).to.be.true
-      expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 6 tests')).to.be.true
-      expect(spyCalledWithSubstring(loggerInfoSpy, '5 passing')).to.be.true
-      expect(spyCalledWithSubstring(loggerInfoSpy, '1 failing')).to.be.true
+      expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 7 tests')).to.be.true
+      expect(spyCalledWithSubstring(loggerInfoSpy, '4 passed')).to.be.true
+      expect(spyCalledWithSubstring(loggerInfoSpy, '2 failed')).to.be.true
+      expect(spyCalledWithSubstring(loggerInfoSpy, '1 errored')).to.be.true
       expect(fileLoggerInfoSpy.calledOnce).to.be.true
       const fileLoggerArg = fileLoggerInfoSpy.firstCall.firstArg
-      expect(fileLoggerArg.result).to.deep.equal({ ok: 5, failed: 1 })
-      expect(fileLoggerArg.failures.length).to.equal(1)
+      expect(fileLoggerArg.result).to.deep.equal({ ok: 4, failed: 2, errored: 1 })
+      expect(fileLoggerArg.testsFailed.length).to.equal(3)
+    })
+
+    it('returns exit code 2 if one or more tests fail', async () => {
+      await test(undefined, {
+        ...emptyOptions,
+        file: 'test-two.wtest',
+        describe: 'third describe',
+        test: 'just a test',
+      })
+
+      expect(processExitSpy.calledWith(2)).to.be.true
+      expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 1 test')).to.be.true
+      expect(spyCalledWithSubstring(loggerInfoSpy, '0 passed')).to.be.true
+      expect(spyCalledWithSubstring(loggerInfoSpy, '1 failed')).to.be.true
+      expect(spyCalledWithSubstring(loggerInfoSpy, '0 errored')).to.be.false
+      expect(fileLoggerInfoSpy.calledOnce).to.be.true
+      const fileLoggerArg = fileLoggerInfoSpy.firstCall.firstArg
+      expect(fileLoggerArg.result).to.deep.equal({ ok: 0, failed: 1, errored: 0 })
+      expect(fileLoggerArg.testsFailed.length).to.equal(1)
+    })
+
+    it('returns exit code 2 if one or more tests have errors', async () => {
+      await test(undefined, {
+        ...emptyOptions,
+        file: 'test-two.wtest',
+        describe: 'second describe',
+        test: 'second test',
+      })
+
+      expect(processExitSpy.calledWith(2)).to.be.true
+      expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 1 test')).to.be.true
+      expect(spyCalledWithSubstring(loggerInfoSpy, '0 passed')).to.be.true
+      expect(spyCalledWithSubstring(loggerInfoSpy, '0 failed')).to.be.false
+      expect(spyCalledWithSubstring(loggerInfoSpy, '1 errored')).to.be.true
+      expect(fileLoggerInfoSpy.calledOnce).to.be.true
+      const fileLoggerArg = fileLoggerInfoSpy.firstCall.firstArg
+      expect(fileLoggerArg.result).to.deep.equal({ ok: 0, failed: 0, errored: 1 })
+      expect(fileLoggerArg.testsFailed.length).to.equal(1)
     })
 
     it('returns exit code 1 if tests has parse errors', async () => {

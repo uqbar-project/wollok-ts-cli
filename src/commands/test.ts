@@ -130,7 +130,7 @@ export default async function (filter: string | undefined, options: Options): Pr
             testsFailed.push({
               test,
               error: error as Error,
-              result: isAssertionError ? TestResult.failure : TestResult.error
+              result: isAssertionError ? TestResult.failure : TestResult.error,
             })
           }
         }
