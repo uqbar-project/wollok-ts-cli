@@ -5,7 +5,7 @@ import globby from 'globby'
 import logger from 'loglevel'
 import path, { join } from 'path'
 import { getDataDiagram, VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools'
-import { buildEnvironment, Environment, getDynamicDiagramData, Interpreter, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER } from 'wollok-ts'
+import { buildEnvironment, Environment, getDynamicDiagramData, Interpreter, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException } from 'wollok-ts'
 import { ElementDefinition } from 'cytoscape'
 
 const { time, timeEnd } = console
@@ -108,10 +108,17 @@ export const sanitizeStackTrace = (e?: Error): string[] => {
     .filter(stackTraceElement => stackTraceElement.trim())
 }
 
-export const failureDescription = (description: string, e?: Error): string => {
-  const stack = sanitizeStackTrace(e).join('\n  ')
+export const warningDescription = (description: string): string =>
+  yellow(`${bold('⚠️')} ${description}`)
+
+export const assertionError = (error: Error): boolean =>
+  error instanceof WollokException && error.instance?.module?.name === 'AssertionException'
+
+export const failureDescription = (description: string, error?: Error): string => {
+  const color = error && assertionError(error) ? yellowBright : red
+  const stack = sanitizeStackTrace(error).join('\n  ')
   const sanitizedStackTrace = stack ? '\n  ' + stack : ''
-  return red(`${bold('✗')} ${description}${sanitizedStackTrace}`)
+  return color(`${bold('✗')} ${description}${sanitizedStackTrace}`)
 }
 
 export const problemDescription = (problem: Problem): string => {
