@@ -203,8 +203,8 @@ describe('REPL', () => {
       const stackTrace = result.split('\n')
       stackTrace.length.should.equal(3)
       consoleCharacters(stackTrace[0]).should.be.equal('✗ Evaluation Error!')
-      consoleCharacters(stackTrace[1]).should.be.equal('wollok.lang.EvaluationError wrapping TypeScript TypeError: Expected an instance of wollok.lang.Number but got a wollok.lang.String instead')
-      consoleCharacters(stackTrace[2]).should.be.equal('at aves.pepitaRota.vola(distancia) [aves.wlk:22]')
+      consoleCharacters(stackTrace[1]).should.be.equal('wollok.lang.EvaluationError: TypeError: Message (+): parameter "papa" should be a number')
+      consoleCharacters(stackTrace[2]).should.be.equal('at aves.pepitaRota.vola(distancia) [aves.wlk:23]')
     })
 
     describe('in a sub-folder', () => {
