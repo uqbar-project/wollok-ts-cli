@@ -41,15 +41,15 @@ describe('testing init', () => {
   it('should create files successfully for default values: ci, no game, example name & git', async () => {
     init(undefined, baseOptions)
 
-    expect(join(project, 'example.wlk')).to.pathExists
-    expect(join(project, 'testExample.wtest')).to.pathExists
-    expect(join(project, 'package.json')).to.pathExists
-    expect(join(project, GITHUB_FOLDER, 'ci.yml')).to.pathExists
-    expect(join(project, 'README.md')).to.pathExists
-    expect(join(project, '.gitignore')).to.pathExists
-    expect(join(project, 'mainExample.wpgm')).to.pathExists
-    expect(join(project, '.git')).to.pathExists
-    expect(join(project, '.git/HEAD')).to.pathExists
+    expect(join(project, 'example.wlk')).to.pathExists()
+    expect(join(project, 'testExample.wtest')).to.pathExists()
+    expect(join(project, 'package.json')).to.pathExists()
+    expect(join(project, GITHUB_FOLDER, 'ci.yml')).to.pathExists()
+    expect(join(project, 'README.md')).to.pathExists()
+    expect(join(project, '.gitignore')).to.pathExists()
+    expect(join(project, 'mainExample.wpgm')).not.to.pathExists()
+    expect(join(project, '.git')).to.pathExists()
+    expect(join(project, '.git/HEAD')).to.pathExists()
     expect(getResourceFolder()).to.be.undefined
 
     await test(undefined, {
@@ -69,13 +69,13 @@ describe('testing init', () => {
       name: 'pepita',
     })
 
-    expect(join(project, 'pepita.wlk')).to.pathExists
-    expect(join(project, 'testPepita.wtest')).to.pathExists
-    expect(join(project, 'mainPepita.wpgm')).to.pathExists
-    expect(join(project, 'package.json')).to.pathExists
-    expect(join(project, GITHUB_FOLDER, 'ci.yml')).to.pathExists
-    expect(join(project, 'README.md')).to.pathExists
-    expect(join(project, '.gitignore')).to.pathExists
+    expect(join(project, 'pepita.wlk')).to.pathExists()
+    expect(join(project, 'testPepita.wtest')).to.pathExists()
+    expect(join(project, 'mainPepita.wpgm')).to.pathExists()
+    expect(join(project, 'package.json')).to.pathExists()
+    expect(join(project, GITHUB_FOLDER, 'ci.yml')).to.pathExists()
+    expect(join(project, 'README.md')).to.pathExists()
+    expect(join(project, '.gitignore')).to.pathExists()
     expect(getResourceFolder()).to.be.equal('assets')
   })
 
@@ -84,42 +84,41 @@ describe('testing init', () => {
       ...baseOptions,
       noCI: true,
       noTest: true,
+      game: true,
       name: 'pepita',
     })
 
-    expect(join(project, 'pepita.wlk')).to.pathExists
-    expect(join(project, 'testPepita.wtest')).to.pathExists
-    expect(join(project, 'package.json')).to.pathExists
-    expect(join(project, 'mainPepita.wpgm')).to.pathExists
-    expect(join(project, GITHUB_FOLDER, 'ci.yml')).to.pathExists
-    expect(join(project, '.gitignore')).to.pathExists
-    expect(join(project, 'README.md')).to.pathExists
+    expect(join(project, 'pepita.wlk')).to.pathExists()
+    expect(join(project, 'testPepita.wtest')).not.to.pathExists()
+    expect(join(project, 'package.json')).to.pathExists()
+    expect(join(project, 'mainPepita.wpgm')).to.pathExists()
+    expect(join(project, GITHUB_FOLDER, 'ci.yml')).not.pathExists()
+    expect(join(project, '.gitignore')).to.pathExists()
+    expect(join(project, 'README.md')).to.pathExists()
   })
 
   it('should create files successfully with an argument for the folder name working in combination with project option', async () => {
     init(customFolderName, baseOptions)
 
-    expect(join(customFolderProject, 'pepita.wlk')).to.pathExists
-    expect(join(customFolderProject, 'testPepita.wtest')).to.pathExists
-    expect(join(customFolderProject, 'mainPepita.wpgm')).to.pathExists
-    expect(join(customFolderProject, 'package.json')).to.pathExists
-    expect(join(customFolderProject, GITHUB_FOLDER, 'ci.yml')).to.pathExists
-    expect(join(customFolderProject, 'README.md')).to.pathExists
-    expect(join(customFolderProject, '.gitignore')).to.pathExists
+    expect(join(customFolderProject, 'example.wlk')).to.pathExists()
+    expect(join(customFolderProject, 'testExample.wtest')).to.pathExists()
+    expect(join(customFolderProject, 'package.json')).to.pathExists()
+    expect(join(customFolderProject, GITHUB_FOLDER, 'ci.yml')).to.pathExists()
+    expect(join(customFolderProject, 'README.md')).to.pathExists()
+    expect(join(customFolderProject, '.gitignore')).to.pathExists()
   })
 
   it('should skip the initialization of a git repository if notGit flag es enabled', async () => {
     init(undefined, { ...baseOptions, noGit: true })
 
-    expect(join(project, '.git')).not.to.pathExists
-    expect(join(project, '.git/HEAD')).not.to.pathExists
-    expect(join(project, 'example.wlk')).to.pathExists
-    expect(join(project, 'testExample.wtest')).to.pathExists
-    expect(join(project, 'package.json')).to.pathExists
-    expect(join(project, GITHUB_FOLDER, 'ci.yml')).to.pathExists
-    expect(join(project, 'README.md')).to.pathExists
-    expect(join(project, '.gitignore')).to.pathExists
-    expect(join(project, 'mainExample.wpgm')).to.pathExists
+    expect(join(project, '.git')).not.to.pathExists()
+    expect(join(project, '.git/HEAD')).not.to.pathExists()
+    expect(join(project, 'example.wlk')).to.pathExists()
+    expect(join(project, 'testExample.wtest')).to.pathExists()
+    expect(join(project, 'package.json')).to.pathExists()
+    expect(join(project, GITHUB_FOLDER, 'ci.yml')).to.pathExists()
+    expect(join(project, 'README.md')).to.pathExists()
+    expect(join(project, '.gitignore')).to.pathExists()
     expect(getResourceFolder()).to.be.undefined
   })
 
