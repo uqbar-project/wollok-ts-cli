@@ -8,8 +8,8 @@
       "type": "node-terminal"
     },
     {
-      "command": "npm run start -- run 'mainValidaciones.Validaciones' --skipValidations -p '/home/leo/workspaces/obj1unq/validaciones' ",
-      "name": "Run Wollok CLI ?",
+      "command": "npm run test:file ${file}",
+      "name": "Run a single test file",
       "request": "launch",
       "type": "node-terminal"
     }
