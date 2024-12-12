@@ -1,0 +1,5 @@
+import model.myModel
+
+test "call a native method used by user" {
+    assert.equals(1, myModel.nativemodelOne())
+}

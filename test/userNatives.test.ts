@@ -35,8 +35,10 @@ describe('UserNatives', () => {
     })
 
     afterEach(() => {
+      console.log('Error logs:', loggerErrorSpy.getCalls()) //No commitear, quitar cuando ya ande!!!
       sinon.restore()
     })
+
 
     it('passes all the tests successfully and exits normally', async () => {
       await test(undefined, {
