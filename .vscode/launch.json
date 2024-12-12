@@ -6,6 +6,13 @@
       "name": "Run Wollok CLI tests",
       "request": "launch",
       "type": "node-terminal"
+    },
+    {
+      "command": "npm run start -- run 'mainValidaciones.Validaciones' --skipValidations -p '/home/leo/workspaces/obj1unq/validaciones' ",
+      "name": "Run Wollok CLI ?",
+      "request": "launch",
+      "type": "node-terminal"
     }
   ]
 }
+
