@@ -42,7 +42,11 @@ export class BaseOptions {
   }
 
   get nativesFolder(): string {
-    return this.natives ? join(this.project, this.natives) : this.project
+    return this.natives
+      ? path.isAbsolute(this.natives)
+        ? this.natives
+        : join(this.project, this.natives)
+      : this.project
   }
 
 }

@@ -3,7 +3,7 @@ import logger from 'loglevel'
 import { existsSync, writeFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { userInfo } from 'os'
-import { ENTER, createFolderIfNotExists , BaseOptions} from '../utils'
+import { ENTER, createFolderIfNotExists, BaseOptions } from '../utils'
 import { PROGRAM_FILE_EXTENSION, TEST_FILE_EXTENSION, WOLLOK_FILE_EXTENSION } from 'wollok-ts'
 import { execSync } from 'node:child_process'
 
@@ -16,7 +16,7 @@ export class Options extends BaseOptions {
 }
 
 
-export default function (folder: string | undefined, { project: _project, name, noTest = false, noCI = false, game = false, noGit = false }: Options): void {
+export default function (folder: string | undefined, { project: _project, name, noTest = false, noCI = false, game = false, noGit = false, nativesFolder }: Options): void {
   const project = join(_project, folder ?? '')
 
   // Initialization
@@ -28,6 +28,7 @@ export default function (folder: string | undefined, { project: _project, name, 
 
   // Creating folders
   createFolderIfNotExists(project)
+  createFolderIfNotExists(nativesFolder)
   createFolderIfNotExists(join(project, '.github'))
   createFolderIfNotExists(join(project, '.github', 'workflows'))
   if (game) {
