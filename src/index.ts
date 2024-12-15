@@ -68,7 +68,7 @@ updateNotifier().finally(() => {
     .action((folder, options) => {
       const customOptions = InitOptions.new(options)
       if (folder) customOptions.folder = folder
-      init(folder, customOptions)
+      init(customOptions)
     })
 
   program.parseAsync()
