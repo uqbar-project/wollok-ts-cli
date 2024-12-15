@@ -2,57 +2,55 @@ import { expect } from 'chai'
 import logger from 'loglevel'
 import { join } from 'path'
 import sinon from 'sinon'
-import { Environment } from 'wollok-ts'
-import test, { getTarget, matchingTestDescription, sanitize, tabulationForNode, validateParameters } from '../src/commands/test'
+import test from '../src/commands/test'
 import { logger as fileLogger } from '../src/logger'
-import { buildEnvironmentForProject } from '../src/utils'
 import { spyCalledWithSubstring } from './assertions'
 
 describe('UserNatives', () => {
+  let fileLoggerInfoSpy: sinon.SinonStub
+  let loggerInfoSpy: sinon.SinonStub
+  let loggerErrorSpy: sinon.SinonStub
+  let processExitSpy: sinon.SinonStub
 
-  describe('smoke test for test default function', () => {
+  const projectPath = join('examples', 'user-natives')
 
-    let fileLoggerInfoSpy: sinon.SinonStub
-    let loggerInfoSpy: sinon.SinonStub
-    let loggerErrorSpy: sinon.SinonStub
-    let processExitSpy: sinon.SinonStub
+  const emptyOptions = {
+    project: projectPath,
+    skipValidations: true,
+    file: undefined,
+    describe: undefined,
+    test: undefined,
+  }
 
-    const projectPath = join('examples', 'user-natives')
+  beforeEach(() => {
+    loggerInfoSpy = sinon.stub(logger, 'info')
+    fileLoggerInfoSpy = sinon.stub(fileLogger, 'info')
+    processExitSpy = sinon.stub(process, 'exit')
+    loggerErrorSpy = sinon.stub(logger, 'error')
+  })
 
-    const emptyOptions = {
-      project: projectPath,
-      skipValidations: true,
-      file: undefined,
-      describe: undefined,
-      test: undefined,
-    }
+  afterEach(() => {
+    console.log('Error logs:', loggerErrorSpy.getCalls()) //No commitear, quitar cuando ya ande!!!
+    sinon.restore()
+  });
 
-    beforeEach(() => {
-      loggerInfoSpy = sinon.stub(logger, 'info')
-      fileLoggerInfoSpy = sinon.stub(fileLogger, 'info')
-      processExitSpy = sinon.stub(process, 'exit')
-      loggerErrorSpy = sinon.stub(logger, 'error')
+  it('passes all the tests successfully and exits normally', async () => {
+    await test(undefined, {
+      ...emptyOptions,
+      file: 'userNatives.wtest',
+      natives: 'myNativesFolder',
     })
 
-    afterEach(() => {
-      console.log('Error logs:', loggerErrorSpy.getCalls()) //No commitear, quitar cuando ya ande!!!
-      sinon.restore()
-    })
-
-
-    it('passes all the tests successfully and exits normally', async () => {
-      await test(undefined, {
-        ...emptyOptions,
-        file: 'userNatives.wtest',
-      })
-
-      expect(processExitSpy.callCount).to.equal(0)
-      expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 1 tests')).to.be.true
-      expect(spyCalledWithSubstring(loggerInfoSpy, '1 passed')).to.be.true
-      expect(spyCalledWithSubstring(loggerInfoSpy, '0 failed')).to.be.false
-      expect(spyCalledWithSubstring(loggerInfoSpy, '0 errored')).to.be.false
-      expect(fileLoggerInfoSpy.calledOnce).to.be.true
-      expect(fileLoggerInfoSpy.firstCall.firstArg.result).to.deep.equal({ ok: 1, failed: 0, errored: 0 })
+    expect(processExitSpy.callCount).to.equal(0)
+    expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 1 tests')).to.be.true
+    expect(spyCalledWithSubstring(loggerInfoSpy, '1 passed')).to.be.true
+    expect(spyCalledWithSubstring(loggerInfoSpy, '0 failed')).to.be.false
+    expect(spyCalledWithSubstring(loggerInfoSpy, '0 errored')).to.be.false
+    expect(fileLoggerInfoSpy.calledOnce).to.be.true
+    expect(fileLoggerInfoSpy.firstCall.firstArg.result).to.deep.equal({
+      ok: 1,
+      failed: 0,
+      errored: 0,
     })
   })
 })

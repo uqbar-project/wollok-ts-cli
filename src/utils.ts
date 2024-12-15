@@ -5,7 +5,7 @@ import globby from 'globby'
 import logger from 'loglevel'
 import path, { join } from 'path'
 import { getDataDiagram, VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools'
-import { buildEnvironment, Environment, getDynamicDiagramData, Interpreter, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException } from 'wollok-ts'
+import { buildEnvironment, Environment, getDynamicDiagramData, Interpreter, Natives, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException, natives, List } from 'wollok-ts'
 import { ElementDefinition } from 'cytoscape'
 
 const { time, timeEnd } = console
@@ -86,6 +86,30 @@ export const handleError = (error: any): void => {
   logger.error(red(error.message.replaceAll(WOLLOK_EXTRA_STACK_TRACE_HEADER, '')))
   logger.debug(failureDescription('ℹ️ Stack trace:', error))
 }
+
+
+
+
+export async function readNatives(nativeFolder: string): Promise<Natives> {
+  const paths = await globby('**/*.@(ts|js)', { cwd: nativeFolder })
+  const debug = logger.getLevel() <= logger.levels.DEBUG
+
+  if (debug) time('Reading natives files')
+
+  const nativesObjects: List<Natives> = await Promise.all(
+    paths.map(async (filePath) => {
+      const fullPath = path.resolve(nativeFolder, filePath)
+      const importedModule = await import(fullPath)
+      const segments = filePath.replace(/\.(ts|js)$/, '').split(path.sep)
+
+      return segments.reduceRight((acc, segment) => {  return { [segment]: acc }}, importedModule.default || importedModule)
+    })
+  )
+
+  return natives(nativesObjects)  // Ahora `natives` recibe un array de objetos
+}
+
+
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // PRINTING

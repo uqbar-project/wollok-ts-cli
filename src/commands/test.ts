@@ -2,10 +2,12 @@ import { bold, red } from 'chalk'
 import { time, timeEnd } from 'console'
 import logger from 'loglevel'
 import { Entity, Environment, Node, Test, is, match, when, WRENatives as natives, interpret, Describe, count } from 'wollok-ts'
-import { buildEnvironmentForProject, failureDescription, successDescription, valueDescription, validateEnvironment, handleError, ENTER, sanitizeStackTrace, buildEnvironmentIcon, testIcon, assertionError, warningDescription } from '../utils'
+import { buildEnvironmentForProject, failureDescription, successDescription, valueDescription, validateEnvironment, handleError, ENTER, sanitizeStackTrace, buildEnvironmentIcon, testIcon, assertionError, warningDescription, readNatives } from '../utils'
 import { logger as fileLogger } from '../logger'
 import { TimeMeasurer } from '../time-measurer'
 import { Package } from 'wollok-ts'
+import path, { join } from 'path'
+
 
 const { log } = console
 
@@ -15,6 +17,7 @@ export type Options = {
   test: string | undefined,
   project: string
   skipValidations: boolean
+  natives: string | undefined
 }
 
 class TestSearchMissError extends Error{}
@@ -112,7 +115,7 @@ export default async function (filter: string | undefined, options: Options): Pr
 
     const debug = logger.getLevel() <= logger.levels.DEBUG
     if (debug) time('Run finished')
-    const interpreter = interpret(environment, natives)
+    const interpreter = interpret(environment, await readNatives(options.natives ? join(options.project, options.natives) : options.project))
     const testsFailed: TestExecutionError[] = []
     let successes = 0
 
