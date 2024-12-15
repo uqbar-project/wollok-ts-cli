@@ -15,10 +15,8 @@ export class Options extends BaseOptions {
   noGit!: boolean
 }
 
-
-export default function (folder: string | undefined, { project: _project, name, noTest = false, noCI = false, game = false, noGit = false, nativesFolder }: Options): void {
-  const project = join(_project, folder ?? '')
-
+export default function ({ project: _project, name,  noTest = false, noCI = false, game = false, noGit = false, nativesFolder, sourceFolder  }: Options): void {
+  const project = sourceFolder
   // Initialization
   if (existsSync(join(project, 'package.json'))) {
     logger.info(yellow(bold(`🚨 There is already a project inside ${project} folder`)))

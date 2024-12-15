@@ -28,6 +28,7 @@ export const folderIcon = '🗂️'
 export class BaseOptions {
   project!: string
   natives?: string
+  folder?: string
 
   static new<T extends BaseOptions>(this: new () => T, config: Partial<T> = {}): T {
     const instance = new this()
@@ -41,11 +42,15 @@ export class BaseOptions {
     return clone
   }
 
+  get sourceFolder() : string {
+    return this.folder ? join(this.project, this.folder) : this.project
+  }
+
   get nativesFolder(): string {
     return this.natives
       ? path.isAbsolute(this.natives)
         ? this.natives
-        : join(this.project, this.natives)
+        : join(this.sourceFolder, this.natives)
       : this.project
   }
 

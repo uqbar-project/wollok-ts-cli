@@ -3,7 +3,7 @@ import { Command } from 'commander'
 import repl from './commands/repl'
 import run from './commands/run'
 import test from './commands/test'
-import init from './commands/init'
+import init, { Options as InitOptions } from './commands/init'
 import logger from 'loglevel'
 import pkg from '../package.json'
 import { cyan } from 'chalk'
@@ -65,7 +65,11 @@ updateNotifier().finally(() => {
     .option('-c, --noCI', 'avoids creating a file for CI', false)
     .option('-ng, --noGit', 'avoids initializing a git repository', false)
     .allowUnknownOption()
-    .action(init)
+    .action((folder, options) => {
+      const customOptions = InitOptions.new(options)
+      if (folder) customOptions.folder = folder
+      init(folder, customOptions)
+    })
 
   program.parseAsync()
 })
