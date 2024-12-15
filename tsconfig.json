@@ -14,5 +14,8 @@
     "experimentalDecorators": true
   },
   "include": ["test/**/*.ts", "src/**/*.ts", "examples/**/*.ts"],
-  "exclude": ["**/*.js", "node_modules"]
+  "exclude": ["**/*.js", "node_modules"],
+  "references": [
+    { "path": "../wollok-ts" }
+  ]
 }

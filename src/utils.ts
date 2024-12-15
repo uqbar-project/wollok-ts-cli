@@ -25,6 +25,29 @@ export const folderIcon = '🗂️'
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // FILE / PATH HANDLING
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+export class BaseOptions {
+  project!: string
+  natives?: string
+
+  static new<T extends BaseOptions>(this: new () => T, config: Partial<T> = {}): T {
+    const instance = new this()
+    Object.assign(instance, config)
+    return instance
+  }
+
+  new<T extends BaseOptions>(this: T, config: Partial<T>): T {
+    const clone = Object.assign(Object.create(Object.getPrototypeOf(this)), this)
+    Object.assign(clone, config)
+    return clone
+  }
+
+  get nativesFolder(): string {
+    return this.natives ? join(this.project, this.natives) : this.project
+  }
+
+}
+
+
 export function relativeFilePath(project: string, filePath: string): string {
   return path.relative(project, filePath).split('.')[0]
 }
@@ -87,14 +110,11 @@ export const handleError = (error: any): void => {
   logger.debug(failureDescription('ℹ️ Stack trace:', error))
 }
 
-
-
-
 export async function readNatives(nativeFolder: string): Promise<Natives> {
   const paths = await globby('**/*.@(ts|js)', { cwd: nativeFolder })
   const debug = logger.getLevel() <= logger.levels.DEBUG
 
-  if (debug) time('Reading natives files')
+  if (debug) time('Loading natives files')
 
   const nativesObjects: List<Natives> = await Promise.all(
     paths.map(async (filePath) => {
@@ -105,11 +125,10 @@ export async function readNatives(nativeFolder: string): Promise<Natives> {
       return segments.reduceRight((acc, segment) => {  return { [segment]: acc }}, importedModule.default || importedModule)
     })
   )
+  if (debug) timeEnd('Loading natives files')
 
-  return natives(nativesObjects)  // Ahora `natives` recibe un array de objetos
+  return natives(nativesObjects)
 }
-
-
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // PRINTING

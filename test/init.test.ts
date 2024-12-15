@@ -3,7 +3,7 @@ import { join } from 'path'
 import { readFileSync, rmSync } from 'fs'
 import sinon from 'sinon'
 import init, { Options } from '../src/commands/init'
-import test from '../src/commands/test'
+import test, {Options as TestOptions }from '../src/commands/test'
 import { pathAssertions } from './assertions'
 
 chai.should()
@@ -16,13 +16,13 @@ const customFolderName = 'custom-folder'
 const customFolderProject = join(project, customFolderName)
 const GITHUB_FOLDER = join('.github', 'workflows')
 
-const baseOptions: Options = {
-  project,
+const baseOptions = Options.new({
+  project: project,
   noCI: false,
   noTest: false,
   game: false,
   noGit: false,
-}
+})
 
 describe('testing init', () => {
 
@@ -52,22 +52,18 @@ describe('testing init', () => {
     expect(join(project, '.git/HEAD')).to.pathExists()
     expect(getResourceFolder()).to.be.undefined
 
-    await test(undefined, {
-      project,
+    await test(undefined, TestOptions.new({
+      project: project,
       skipValidations: false,
-      file: undefined,
-      describe: undefined,
-      test: undefined,
-    })
+    }))
     expect(processExitSpy.callCount).to.equal(0)
   })
 
   it('should create files successfully for game project with ci & custom example name', () => {
-    init(undefined, {
-      ...baseOptions,
+    init(undefined, baseOptions.new({
       game: true,
       name: 'pepita',
-    })
+    }))
 
     expect(join(project, 'pepita.wlk')).to.pathExists()
     expect(join(project, 'testPepita.wtest')).to.pathExists()
@@ -80,13 +76,12 @@ describe('testing init', () => {
   })
 
   it('should create files successfully for game project with no ci & no test custom example name', async () => {
-    init(undefined, {
-      ...baseOptions,
+    init(undefined, baseOptions.new({
       noCI: true,
       noTest: true,
       game: true,
       name: 'pepita',
-    })
+    }))
 
     expect(join(project, 'pepita.wlk')).to.pathExists()
     expect(join(project, 'testPepita.wtest')).not.to.pathExists()
@@ -109,7 +104,7 @@ describe('testing init', () => {
   })
 
   it('should skip the initialization of a git repository if notGit flag es enabled', async () => {
-    init(undefined, { ...baseOptions, noGit: true })
+    init(undefined, baseOptions.new({ noGit: true }))
 
     expect(join(project, '.git')).not.to.pathExists()
     expect(join(project, '.git/HEAD')).not.to.pathExists()
@@ -123,10 +118,7 @@ describe('testing init', () => {
   })
 
   it('should exit with code 1 if folder already exists', () => {
-    init(undefined, {
-      ...baseOptions,
-      project: join('examples', 'init-examples', 'existing-folder'),
-    })
+    init(undefined, baseOptions.new({ project: join('examples', 'init-examples', 'existing-folder') }))
 
     expect(processExitSpy.calledWith(1)).to.be.true
   })

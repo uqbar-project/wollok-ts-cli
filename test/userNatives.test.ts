@@ -2,44 +2,33 @@ import { expect } from 'chai'
 import logger from 'loglevel'
 import { join } from 'path'
 import sinon from 'sinon'
-import test from '../src/commands/test'
+import test, { Options } from '../src/commands/test'
 import { logger as fileLogger } from '../src/logger'
 import { spyCalledWithSubstring } from './assertions'
 
 describe('UserNatives', () => {
   let fileLoggerInfoSpy: sinon.SinonStub
   let loggerInfoSpy: sinon.SinonStub
-  let loggerErrorSpy: sinon.SinonStub
   let processExitSpy: sinon.SinonStub
 
-  const projectPath = join('examples', 'user-natives')
 
-  const emptyOptions = {
-    project: projectPath,
-    skipValidations: true,
-    file: undefined,
-    describe: undefined,
-    test: undefined,
-  }
+  const options = Options.new({
+    project: join('examples', 'user-natives'),
+    natives: 'myNativesFolder',
+  })
 
   beforeEach(() => {
     loggerInfoSpy = sinon.stub(logger, 'info')
     fileLoggerInfoSpy = sinon.stub(fileLogger, 'info')
     processExitSpy = sinon.stub(process, 'exit')
-    loggerErrorSpy = sinon.stub(logger, 'error')
   })
 
   afterEach(() => {
-    console.log('Error logs:', loggerErrorSpy.getCalls()) //No commitear, quitar cuando ya ande!!!
     sinon.restore()
-  });
+  })
 
   it('passes all the tests successfully and exits normally', async () => {
-    await test(undefined, {
-      ...emptyOptions,
-      file: 'userNatives.wtest',
-      natives: 'myNativesFolder',
-    })
+    await test(undefined, options)
 
     expect(processExitSpy.callCount).to.equal(0)
     expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 1 tests')).to.be.true
