@@ -4,18 +4,17 @@ import { readFileSync, rmSync } from 'fs'
 import sinon from 'sinon'
 import init, { Options } from '../src/commands/init'
 import test, { Options as TestOptions } from '../src/commands/test'
-import { pathAssertions } from './assertions'
-import { homedir } from 'os'
+import { pathAssertions, jsonAssertions } from './assertions'
 
 chai.should()
 
 const expect = chai.expect
 use(pathAssertions)
+use(jsonAssertions)
 
 const project = join('examples', 'init-examples', 'basic-example')
 const customFolderName = 'custom-folder'
 const customFolderProject = join(project, customFolderName)
-const absoluteFolder = join(homedir(), '_____folder_for_wollok_unit_test_please_remove_it______')
 const GITHUB_FOLDER = join('.github', 'workflows')
 
 const baseOptions = Options.new({
@@ -37,7 +36,6 @@ describe('testing init', () => {
   afterEach(() => {
     rmSync(project, { recursive: true, force: true })
     rmSync(customFolderProject, { recursive: true, force: true })
-    rmSync(absoluteFolder, { recursive: true, force: true })
 
     sinon.restore()
   })
@@ -133,20 +131,21 @@ describe('testing init', () => {
   it('should create a natives folder when it is required', () => {
     init(baseOptions.new({ natives: 'myNatives' }))
     expect(join(project, 'myNatives')).to.pathExists
+    expect('package.json')
+    expect(join(project, 'package.json')).jsonMatch({ natives: 'myNatives' })
 
   })
 
   it('should create a natives nested folders when it is required', () => {
     const nativesFolder =join('myNatives', 'myReallyNatives')
     init(baseOptions.new({ natives: nativesFolder }))
-    expect(join(project, nativesFolder)).to.pathExists
+    expect(join(project, 'package.json')).jsonMatch({ natives: nativesFolder })
 
   })
 
-  it('should create a native folders event it is an absolute path', () => {
-    init(baseOptions.new({ natives: absoluteFolder }))
-    expect(absoluteFolder).to.pathExists
-
+  it('should not create a natives folders when it is not specified', () => {
+    init(baseOptions)
+    expect(join(project, 'package.json')).not.jsonKeys(['natives'])
   })
 
 

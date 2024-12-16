@@ -47,15 +47,10 @@ export class BaseOptions {
   }
 
   get nativesFolder(): string {
-    return this.natives
-      ? path.isAbsolute(this.natives)
-        ? this.natives
-        : join(this.sourceFolder, this.natives)
-      : this.project
+    return this.natives ? join(this.sourceFolder, this.natives) : this.sourceFolder
   }
 
 }
-
 
 export function relativeFilePath(project: string, filePath: string): string {
   return path.relative(project, filePath).split('.')[0]

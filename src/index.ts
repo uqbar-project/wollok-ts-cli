@@ -2,7 +2,7 @@
 import { Command } from 'commander'
 import repl from './commands/repl'
 import run from './commands/run'
-import test from './commands/test'
+import test, { Options as TestOptions } from './commands/test'
 import init, { Options as InitOptions } from './commands/init'
 import logger from 'loglevel'
 import pkg from '../package.json'
@@ -40,7 +40,7 @@ updateNotifier().finally(() => {
     .option('-t, --test [test]', 'test to run', '')
     .option('--skipValidations', 'skip code validation', false)
     .option('-v, --verbose', 'print debugging information', false)
-    .action(test)
+    .action((filter, options) => {test(filter, TestOptions.new(options))})
 
   program.command('repl')
     .description('Start Wollok interactive console')
@@ -66,9 +66,9 @@ updateNotifier().finally(() => {
     .option('-ng, --noGit', 'avoids initializing a git repository', false)
     .allowUnknownOption()
     .action((folder, options) => {
-      const customOptions = InitOptions.new(options)
-      if (folder) customOptions.folder = folder
-      init(customOptions)
+      const initOptions = InitOptions.new(options)
+      if (folder) initOptions.folder = folder
+      init(initOptions)
     })
 
   program.parseAsync()

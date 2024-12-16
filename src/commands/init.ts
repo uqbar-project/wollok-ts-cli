@@ -15,7 +15,7 @@ export class Options extends BaseOptions {
   noGit!: boolean
 }
 
-export default function ({ project: _project, name,  noTest = false, noCI = false, game = false, noGit = false, nativesFolder, sourceFolder  }: Options): void {
+export default function ({ project: _project, name,  noTest = false, noCI = false, game = false, noGit = false, nativesFolder, sourceFolder, natives  }: Options): void {
   const project = sourceFolder
   // Initialization
   if (existsSync(join(project, 'package.json'))) {
@@ -51,7 +51,7 @@ export default function ({ project: _project, name,  noTest = false, noCI = fals
   }
 
   logger.info('Creating package.json')
-  writeFileSync(join(project, 'package.json'), packageJsonDefinition(project, game))
+  writeFileSync(join(project, 'package.json'), packageJsonDefinition(project, game, natives ))
 
   if (!noCI) {
     logger.info('Creating CI files')
@@ -129,16 +129,16 @@ program PepitaGame {
 }
 `
 
-const packageJsonDefinition = (projectName: string, game: boolean) => `{
+const packageJsonDefinition = (projectName: string, game: boolean, natives: string) => `{
   "name": "${basename(projectName)}",
   "version": "1.0.0",
   ${game ? assetsConfiguration() : ''}"wollokVersion": "4.0.0",
-  "author": "${userInfo().username}",
+  "author": "${userInfo().username}",${nativesConfiguration(natives)}
   "license": "ISC"
 }
 `
-
 const assetsConfiguration = () => `"resourceFolder": "assets",${ENTER}  `
+const nativesConfiguration = (natives: string) =>  natives ? `${ENTER}"natives": "${natives}",` : ''
 
 const ymlForCI = `name: build
 
