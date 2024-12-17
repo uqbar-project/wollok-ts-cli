@@ -95,7 +95,7 @@ describe('testing init', () => {
   })
 
   it('should create files successfully with an argument for the folder name working in combination with project option', async () => {
-    init(baseOptions.new({ name: 'pepita' , folder: customFolderName}))
+    init(baseOptions.new({ name: 'pepita', folder: customFolderName }))
 
 
     expect(join(customFolderProject, 'pepita.wlk')).to.pathExists

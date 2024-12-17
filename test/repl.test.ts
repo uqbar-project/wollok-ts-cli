@@ -1,7 +1,7 @@
 import { should } from 'chai'
 import { join } from 'path'
 import { Interpreter, REPL } from 'wollok-ts'
-import { initializeInterpreter, interpreteLine } from '../src/commands/repl'
+import { initializeInterpreter, interpreteLine, Options } from '../src/commands/repl'
 import { failureDescription, successDescription } from '../src/utils'
 
 should()
@@ -10,14 +10,14 @@ const projectPath = join('examples', 'repl-examples')
 
 describe('REPL', () => {
 
-  const options = {
+  const options = Options.new({
     project: projectPath,
     skipValidations: false,
     darkMode: true,
     port: '8080',
     host: 'localhost',
     skipDiagram: true,
-  }
+  })
 
   let interpreter: Interpreter
 
@@ -258,6 +258,26 @@ describe('REPL', () => {
 
   })
 
+  describe('User Natives', () => {
+
+    const project = join('examples', 'user-natives' )
+    const userNativesOptions = options.new({ project: project, natives: 'myNativesFolder' })
+
+    it('should execute user natives', async () => {
+      interpreter = await initializeInterpreter(join(project, 'rootFile.wlk'), userNativesOptions)
+
+      const result = interpreteLine(interpreter, 'myModel.nativeOne()')
+      result.should.be.equal(successDescription('1'))
+    })
+
+    it('should execute user natives in package', async () => {
+      interpreter = await initializeInterpreter(join(project, 'myPackage', 'myInnerFile.wlk'), userNativesOptions)
+
+      const result = interpreteLine(interpreter, 'packageModel.nativeTwo()')
+      result.should.be.equal(successDescription('2'))
+    })
+
+  })
 
 })
 

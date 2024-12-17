@@ -89,7 +89,7 @@ export const jsonAssertions: Chai.ChaiPlugin = (chai) => {
   const { Assertion } = chai
 
   const getNestedValue = (obj: Record<string, any>, path: string): any =>
-    path.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), obj)
+    path.split('.').reduce((acc, key) => acc ? acc[key] : undefined, obj)
 
   const matchPartial = (
     expected: Record<string, any>,

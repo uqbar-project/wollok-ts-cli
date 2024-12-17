@@ -7,21 +7,20 @@ import http from 'http'
 import logger from 'loglevel'
 import { CompleterResult, Interface, createInterface as Repl } from 'readline'
 import { Server, Socket } from 'socket.io'
-import { Entity, Environment, Evaluation, Interpreter, Package, REPL, interprete, link, WRENatives as natives } from 'wollok-ts'
+import { Entity, Environment, Evaluation, Interpreter, Package, REPL, interprete, link } from 'wollok-ts'
 import { logger as fileLogger } from '../logger'
 import { TimeMeasurer } from '../time-measurer'
-import { ENTER, buildEnvironmentForProject, failureDescription, getDynamicDiagram, getFQN, handleError, publicPath, replIcon, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
+import { BaseOptions, ENTER, buildEnvironmentForProject, failureDescription, getDynamicDiagram, getFQN, handleError, publicPath, replIcon, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription, readNatives } from '../utils'
 
 // TODO:
 // - autocomplete piola
 
-export type Options = {
-  project: string
-  skipValidations: boolean,
-  darkMode: boolean,
-  host: string,
-  port: string,
-  skipDiagram: boolean,
+export class Options extends BaseOptions {
+  skipValidations!: boolean
+  darkMode!: boolean
+  host!: string
+  port!: string
+  skipDiagram!: boolean
 }
 
 type DynamicDiagramClient = {
@@ -105,7 +104,7 @@ export function interpreteLine(interpreter: Interpreter, line: string): string {
   return errored ? failureDescription(result, error) : successDescription(result)
 }
 
-export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations }: Options): Promise<Interpreter> {
+export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations, nativesFolder }: Options): Promise<Interpreter> {
   let environment: Environment
   const timeMeasurer = new TimeMeasurer()
 
@@ -128,7 +127,7 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
       const replPackage = new Package({ name: REPL })
       environment = link([replPackage], environment)
     }
-    return new Interpreter(Evaluation.build(environment, natives))
+    return new Interpreter(Evaluation.build(environment, await readNatives(nativesFolder)))
   } catch (error: any) {
     handleError(error)
     fileLogger.info({ message: `${replIcon} REPL execution - build failed for ${project}`, timeElapsed: timeMeasurer.elapsedTime(), ok: false, error: sanitizeStackTrace(error) })

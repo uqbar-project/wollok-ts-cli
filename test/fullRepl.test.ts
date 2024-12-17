@@ -14,18 +14,19 @@ chai.use(chaiHttp)
 chai.use(chaiAsPromised)
 const expect = chai.expect
 
-const baseOptions = {
+const baseOptions = Options.new({
   darkMode: true,
   port: '8080',
   host: 'localhost',
   skipDiagram: true,
-}
-
-const buildOptionsFor = (path: string, skipValidations = false) => ({
-  ...baseOptions,
-  project: join('examples', 'bad-files-examples', path),
-  skipValidations,
 })
+
+const buildOptionsFor = (path: string, skipValidations = false) =>
+  baseOptions.new({
+    project: join('examples', 'bad-files-examples', path),
+    skipValidations: skipValidations,
+  })
+
 
 const callRepl = (autoImportPath: string, options: Options) =>
   replFn(join(options.project, autoImportPath), options)
@@ -33,14 +34,14 @@ const callRepl = (autoImportPath: string, options: Options) =>
 describe('REPL integration test for valid project', () => {
   const projectPath = join('examples', 'repl-examples')
 
-  const options = {
+  const options = Options.new({
     project: projectPath,
     skipValidations: false,
     darkMode: true,
     host: 'localhost',
     port: '8080',
     skipDiagram: true,
-  }
+  })
   let processExitSpy: sinon.SinonStub
   let consoleLogSpy: sinon.SinonStub
   let repl: Interface

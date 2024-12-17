@@ -129,7 +129,7 @@ program PepitaGame {
 }
 `
 
-const packageJsonDefinition = (projectName: string, game: boolean, natives: string) => `{
+const packageJsonDefinition = (projectName: string, game: boolean, natives?: string) => `{
   "name": "${basename(projectName)}",
   "version": "1.0.0",
   ${game ? assetsConfiguration() : ''}"wollokVersion": "4.0.0",
@@ -138,7 +138,7 @@ const packageJsonDefinition = (projectName: string, game: boolean, natives: stri
 }
 `
 const assetsConfiguration = () => `"resourceFolder": "assets",${ENTER}  `
-const nativesConfiguration = (natives: string) =>  natives ? `${ENTER}"natives": "${natives}",` : ''
+const nativesConfiguration = (natives?: string) =>  natives ? `${ENTER}"natives": "${natives}",` : ''
 
 const ymlForCI = `name: build
 

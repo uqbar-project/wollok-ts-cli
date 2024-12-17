@@ -12,6 +12,12 @@
       "name": "Run a single test file",
       "request": "launch",
       "type": "node-terminal"
+    },
+    {
+      "command": "npm start init -- -p pirulitoProject",
+      "name": "wollok init",
+      "request": "launch",
+      "type": "node-terminal"
     }
   ]
 }
