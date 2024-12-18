@@ -81,7 +81,7 @@ describe('testing run', () => {
       const options = buildOptions(true, 'assets').new({ project: imageProject })
 
       const environment = await buildEnvironmentForProgram(options)
-      const interpreter = getGameInterpreter(environment)!
+      const interpreter = getGameInterpreter(environment, await utils.readNatives(options.nativesFolder))!
       const game = interpreter.object('wollok.game.game')
       interpreter.send('addVisual', game, interpreter.object('mainGame.elementoVisual'))
 
@@ -234,30 +234,26 @@ describe('testing run', () => {
     })
 
     it('smoke test - should work if program has no errors', async () => {
-      const ioGame = await run('mainGame.PepitaGame', {
+      const ioGame = await run('mainGame.PepitaGame', buildOptions(true, 'specialAssets').new({
         project: join('examples', 'run-examples', 'basic-game'),
         skipValidations: false,
-        game: true,
         startDiagram: false,
-        assets: 'specialAssets',
         port: '3000',
         host: 'localhost',
-      })
+      }))
       ioGame?.close()
       expect(processExitSpy.calledWith(0)).to.be.false
       expect(errorReturned).to.be.undefined
     })
 
     it('smoke test - should not work if program has errors', async () => {
-      const ioGame = await run('mainGame.PepitaGame', {
+      const ioGame = await run('mainGame.PepitaGame', buildOptions(true, 'specialAssets').new({
         project: join('examples', 'run-examples', 'basic-example'),
         skipValidations: false,
-        game: true,
         startDiagram: false,
-        assets: 'specialAssets',
         port: '3000',
         host: 'localhost',
-      })
+      }))
       ioGame?.close()
       expect(processExitSpy.calledWith(21)).to.be.false
       expect(errorReturned).to.equal('Folder image examples/run-examples/basic-example/specialAssets does not exist')

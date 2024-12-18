@@ -7,6 +7,9 @@ import path, { join } from 'path'
 import { getDataDiagram, VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools'
 import { buildEnvironment, Environment, getDynamicDiagramData, Interpreter, Natives, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException, natives, List } from 'wollok-ts'
 import { ElementDefinition } from 'cytoscape'
+import { register } from 'ts-node'
+
+register({ transpileOnly: true })
 
 const { time, timeEnd } = console
 
@@ -42,8 +45,7 @@ export class BaseOptions {
       const jsonData = JSON.parse(rawData)
 
       Object.entries(jsonData)
-        .filter(([key]) => key in this)
-        .forEach(([key, value]) => {
+        .forEach(([key, value]) => { //TODO! I want filter just for this properties, but 'in'operator doesn't work. et all properties work fine
           try {
             this[key as keyof T] = value as T[keyof T]
             // eslint-disable-next-line @typescript-eslint/no-unused-vars

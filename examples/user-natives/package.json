@@ -4,5 +4,6 @@
   "resourceFolder": "assets",
   "wollokVersion": "4.0.0",
   "author": "leo",
-  "license": "ISC"
+  "license": "ISC",
+  "natives": "myNativesFolder"
 }

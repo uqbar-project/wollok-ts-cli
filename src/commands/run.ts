@@ -7,15 +7,15 @@ import logger from 'loglevel'
 import { join, relative } from 'path'
 import { Server, Socket } from 'socket.io'
 import { Asset, boardState, buildKeyPressEvent, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools'
-import { Environment, GAME_MODULE, interpret, Interpreter, Name, Package, RuntimeObject, WollokException, WRENatives as natives } from 'wollok-ts'
+import { Environment, GAME_MODULE, interpret, Interpreter, Name, Natives, Package, RuntimeObject, WollokException } from 'wollok-ts'
 import { logger as fileLogger } from '../logger'
-import { BaseOptions, buildEnvironmentForProject, buildEnvironmentIcon, ENTER, failureDescription, folderIcon, gameIcon, getDynamicDiagram, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readPackageProperties, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
+import { BaseOptions, buildEnvironmentForProject, buildEnvironmentIcon, ENTER, failureDescription, folderIcon, gameIcon, getDynamicDiagram, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readNatives, readPackageProperties, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
 import { DummyProfiler, EventProfiler, TimeMeasurer } from './../time-measurer'
 
 const { time, timeEnd } = console
 
 export class Options extends BaseOptions {
-  assets!: string //TODO: move to base options optional and remove logic to read package json?
+  assets!: string //TODO: move to base options optional and remove logic to read package j?
   skipValidations!: boolean
   host!: string
   port!: string
@@ -52,8 +52,8 @@ export default async function (programFQN: Name, options: Options): Promise<Serv
     const debug = logger.getLevel() <= logger.levels.DEBUG
     if (debug) time(successDescription('Run initiated successfully'))
     const assetFiles = getAllAssets(project, assets)
-
-    const interpreter = game ? getGameInterpreter(environment) : interpret(environment, { ...natives })
+    const natives = await readNatives(options.nativesFolder)
+    const interpreter = game ? getGameInterpreter(environment, natives) : interpret(environment, natives )
     const programPackage = environment.getNodeByFQN<Package>(programFQN).parent as Package
     const dynamicDiagramClient = await initializeDynamicDiagram(programPackage, options, interpreter)
     const ioGame: Server | undefined = initializeGameClient(options)
@@ -79,7 +79,7 @@ export default async function (programFQN: Name, options: Options): Promise<Serv
   }
 }
 
-export const getGameInterpreter = (environment: Environment): Interpreter => {
+export const getGameInterpreter = (environment: Environment, natives:Natives): Interpreter => {
   return interpret(environment, natives)
 }
 

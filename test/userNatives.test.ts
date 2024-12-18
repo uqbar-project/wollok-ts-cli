@@ -12,9 +12,8 @@ describe('UserNatives', () => {
   let processExitSpy: sinon.SinonStub
 
 
-  const options = Options.new({
+  const options = Options.load({ //load package.json
     project: join('examples', 'user-natives'),
-    natives: 'myNativesFolder',
   })
 
   beforeEach(() => {
