@@ -9,19 +9,18 @@ import { Server, Socket } from 'socket.io'
 import { Asset, boardState, buildKeyPressEvent, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools'
 import { Environment, GAME_MODULE, interpret, Interpreter, Name, Package, RuntimeObject, WollokException, WRENatives as natives } from 'wollok-ts'
 import { logger as fileLogger } from '../logger'
-import { buildEnvironmentForProject, buildEnvironmentIcon, ENTER, failureDescription, folderIcon, gameIcon, getDynamicDiagram, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readPackageProperties, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
+import { BaseOptions, buildEnvironmentForProject, buildEnvironmentIcon, ENTER, failureDescription, folderIcon, gameIcon, getDynamicDiagram, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readPackageProperties, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
 import { DummyProfiler, EventProfiler, TimeMeasurer } from './../time-measurer'
 
 const { time, timeEnd } = console
 
-export type Options = {
-  project: string
-  assets: string
-  skipValidations: boolean
-  host: string,
-  port: string
-  game: boolean,
-  startDiagram: boolean,
+export class Options extends BaseOptions {
+  assets!: string //TODO: move to base options optional and remove logic to read package json?
+  skipValidations!: boolean
+  host!: string
+  port!: string
+  game!: boolean
+  startDiagram!: boolean
 }
 
 const DEFAULT_PORT = '4200'

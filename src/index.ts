@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { Command } from 'commander'
 import repl, { Options as ReplOptions } from './commands/repl'
-import run from './commands/run'
+import run, { Options as RunOptions } from './commands/run'
 import test, { Options as TestOptions } from './commands/test'
 import init, { Options as InitOptions } from './commands/init'
 import logger from 'loglevel'
@@ -29,7 +29,7 @@ updateNotifier().finally(() => {
     .option('-g, --game', 'sets the program as a game', false)
     .option('-v, --verbose', 'print debugging information', false)
     .option('-d, --startDiagram', 'activate the dynamic diagram (only for games)', false)
-    .action((programFQN, options) => { run(programFQN, options) })
+    .action((programFQN, options) => { run(programFQN, RunOptions.load(options)) })
 
   program.command('test')
     .description('Run Wollok tests')
