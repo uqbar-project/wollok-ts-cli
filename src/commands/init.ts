@@ -138,7 +138,7 @@ const packageJsonDefinition = (projectName: string, game: boolean, natives?: str
 }
 `
 const assetsConfiguration = () => `"resourceFolder": "assets",${ENTER}  `
-const nativesConfiguration = (natives?: string) =>  natives ? `${ENTER}"natives": "${natives}",` : ''
+const nativesConfiguration = (natives?: string) =>  natives ? `${ENTER}  "natives": "${natives}",` : ''
 
 const ymlForCI = `name: build
 
