@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { Command } from 'commander'
-import repl from './commands/repl'
+import repl, { Options as ReplOptions } from './commands/repl'
 import run from './commands/run'
 import test, { Options as TestOptions } from './commands/test'
 import init, { Options as InitOptions } from './commands/init'
@@ -40,7 +40,7 @@ updateNotifier().finally(() => {
     .option('-t, --test [test]', 'test to run', '')
     .option('--skipValidations', 'skip code validation', false)
     .option('-v, --verbose', 'print debugging information', false)
-    .action((filter, options) => {test(filter, TestOptions.new(options))})
+    .action((filter, options) => {test(filter, TestOptions.load(options))})
 
   program.command('repl')
     .description('Start Wollok interactive console')
@@ -53,6 +53,7 @@ updateNotifier().finally(() => {
     .option('--port [port]', 'port to run the server', '3000')
     .option('-v, --verbose', 'print debugging information', false)
     .action(repl)
+    .action((file, options) => {repl(file, ReplOptions.load(options))})
 
 
   program.command('init')
@@ -66,10 +67,13 @@ updateNotifier().finally(() => {
     .option('-ng, --noGit', 'avoids initializing a git repository', false)
     .allowUnknownOption()
     .action((folder, options) => {
-      const initOptions = InitOptions.new(options)
-      if (folder) initOptions.folder = folder
-      init(initOptions)
+      //init(InitOptions.new({ ...options, folder }))
+      const actionOptions = InitOptions.new( options )
+      if ( folder ) { actionOptions.folder = folder }
+      init(actionOptions)
+
     })
+
 
   program.parseAsync()
 })

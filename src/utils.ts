@@ -36,6 +36,40 @@ export class BaseOptions {
     return instance
   }
 
+  private safeLoadJson<T extends BaseOptions>(this: T, path: string) {
+    try {
+      const rawData = fs.readFileSync(path, 'utf-8')
+      const jsonData = JSON.parse(rawData)
+
+      Object.entries(jsonData)
+        .filter(([key]) => key in this)
+        .forEach(([key, value]) => {
+          try {
+            this[key as keyof T] = value as T[keyof T]
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          } catch (_error) {
+            // This is not a real error, if package.json has a value of different type then it is a non important value
+            // Silence here or log?
+          }
+        })
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
+      // No package.json or it is invalid. This is not a real problem.
+      // Silence here or log?
+    }
+  }
+
+  static load<T extends BaseOptions>(this: new () => T, partial: Partial<T>): T {
+    const instance = new this()
+
+    if ('project' in partial) {
+      const packageJsonPath = path.join(partial.project as string, 'package.json')
+      instance.safeLoadJson(packageJsonPath)
+    }
+    Object.assign(instance, partial)
+    return instance // Devolver la instancia creada
+  }
+
   new<T extends BaseOptions>(this: T, config: Partial<T>): T {
     const clone = Object.assign(Object.create(Object.getPrototypeOf(this)), this)
     Object.assign(clone, config)

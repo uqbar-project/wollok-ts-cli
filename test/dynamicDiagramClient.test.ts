@@ -4,7 +4,7 @@ import chaiHttp from 'chai-http'
 import { join } from 'path'
 import { Interface, createInterface as Repl } from 'readline'
 import { Interpreter } from 'wollok-ts'
-import { initializeClient, initializeInterpreter } from '../src/commands/repl'
+import { initializeClient, initializeInterpreter, Options } from '../src/commands/repl'
 
 chai.should()
 chai.use(chaiHttp)
@@ -14,14 +14,14 @@ const expect = chai.expect
 describe('dynamic diagram client', () => {
   const projectPath = join('examples', 'repl-examples')
 
-  const options = {
+  const options = Options.new({
     project: projectPath,
     skipValidations: false,
     darkMode: true,
     port: '8080',
     host: 'localhost',
     skipDiagram: false,
-  }
+  })
   let interpreter: Interpreter
   let repl: Interface
 
@@ -46,10 +46,7 @@ describe('dynamic diagram client', () => {
   })
 
   it('should return a fake client if skipDiagram is set', async () => {
-    const skipDiagramOptions = {
-      ...options,
-      skipDiagram: true,
-    }
+    const skipDiagramOptions = options.new({ skipDiagram: true })
     const { enabled, app, server } = await initializeClient(skipDiagramOptions, repl, interpreter)
     expect(enabled).to.be.false
     expect(app).to.be.undefined
