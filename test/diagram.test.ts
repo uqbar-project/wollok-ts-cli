@@ -1,7 +1,7 @@
 import { should, use } from 'chai'
 import { join } from 'path'
 import { interprete, Interpreter } from 'wollok-ts'
-import { initializeInterpreter, Options } from '../src/commands/repl'
+import { initializeInterpreter } from '../src/commands/repl'
 import { getDynamicDiagram } from '../src/utils'
 import { diagramAssertions } from './assertions'
 
@@ -13,14 +13,14 @@ const simpleFile = join(projectPath, 'fish.wlk')
 const fileWithImports = join(projectPath, 'using-imports', 'base.wlk')
 
 describe('Dynamic diagram', () => {
-  const options = Options.new({
+  const options = {
     project: projectPath,
     skipValidations: true,
     port: '8080',
     host: 'localhost',
     darkMode: true,
     skipDiagram: true, // we don't want to open a socket
-  })
+  }
   let interpreter: Interpreter
 
 

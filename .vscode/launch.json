@@ -14,8 +14,8 @@
       "type": "node-terminal"
     },
     {
-      "command": "npm start init -- -p pirulitoProject",
-      "name": "wollok init",
+      "command": " npm start -- test -p /home/leo/workspaces/wollok-dev/wollok-ts-cli/examples/user-natives -f userNatives.wtest -v",
+      "name": "wollok prueba",
       "request": "launch",
       "type": "node-terminal"
     }

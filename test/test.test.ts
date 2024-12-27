@@ -3,7 +3,7 @@ import logger from 'loglevel'
 import { join } from 'path'
 import sinon from 'sinon'
 import { Environment } from 'wollok-ts'
-import test, { getTarget, matchingTestDescription, sanitize, tabulationForNode, validateParameters, Options } from '../src/commands/test'
+import test, { getTarget, matchingTestDescription, sanitize, tabulationForNode, validateParameters } from '../src/commands/test'
 import { logger as fileLogger } from '../src/logger'
 import { buildEnvironmentForProject } from '../src/utils'
 import { spyCalledWithSubstring } from './assertions'
@@ -18,13 +18,13 @@ describe('Test', () => {
 
       const projectPath = join('examples', 'test-examples', 'normal-case')
 
-      const emptyOptions = Options.new({
+      const emptyOptions = {
         project: projectPath,
         skipValidations: false,
         file: undefined,
         describe: undefined,
         test: undefined,
-      })
+      }
 
       beforeEach(async () => {
         environment = await buildEnvironmentForProject(projectPath)
@@ -83,34 +83,47 @@ describe('Test', () => {
 
       describe('with file/describe/test options', () => {
         it('should filter by test using test option', () => {
-          const tests = getTarget(environment, undefined, emptyOptions.new({ test: 'another test' }))
+          const tests = getTarget(environment, undefined, {
+            ...emptyOptions,
+            test: 'another test',
+          })
           expect(tests.length).to.equal(1)
           expect(tests[0].name).to.equal('"another test"')
         })
 
         it('should filter by test using test option - case sensitive', () => {
-          const tests = getTarget(environment, undefined, emptyOptions.new({ test: 'aNother Test' }))
+          const tests = getTarget(environment, undefined, {
+            ...emptyOptions,
+            test: 'aNother Test',
+          })
           expect(tests.length).to.equal(0)
         })
 
         it('should filter by describe using describe option', () => {
-          const tests = getTarget(environment, undefined, emptyOptions.new({ describe: 'second describe' }))
+          const tests = getTarget(environment, undefined, {
+            ...emptyOptions,
+            describe: 'second describe',
+          })
           expect(tests.length).to.equal(2)
           expect(tests[0].name).to.equal('"second test"')
           expect(tests[1].name).to.equal('"another second test"')
         })
 
         it('should filter by describe & test using describe & test option', () => {
-          const tests = getTarget(environment, undefined, emptyOptions.new({
+          const tests = getTarget(environment, undefined, {
+            ...emptyOptions,
             describe: 'second describe',
             test: 'another second test',
-          }))
+          })
           expect(tests.length).to.equal(1)
           expect(tests[0].name).to.equal('"another second test"')
         })
 
         it('should filter by file using file option', () => {
-          const tests = getTarget(environment, undefined, emptyOptions.new({ file: 'test-one.wtest' }))
+          const tests = getTarget(environment, undefined, {
+            ...emptyOptions,
+            file: 'test-one.wtest',
+          })
           expect(tests.length).to.equal(3)
           expect(tests[0].name).to.equal('"a test"')
           expect(tests[1].name).to.equal('"another test"')
@@ -118,22 +131,23 @@ describe('Test', () => {
         })
 
         it('should filter by file & describe using file & describe option', () => {
-          const tests = getTarget(environment, undefined, emptyOptions.new({
+          const tests = getTarget(environment, undefined, {
+            ...emptyOptions,
             file: 'test-one.wtest',
             describe: 'this describe',
-          }))
+          })
           expect(tests.length).to.equal(3)
           expect(tests[0].name).to.equal('"a test"')
           expect(tests[1].name).to.equal('"another test"')
           expect(tests[2].name).to.equal('"another test with longer name"')
         })
-
         it('should filter by file & describe & test using file & describe & test option', () => {
-          const tests = getTarget(environment, undefined, emptyOptions.new({
+          const tests = getTarget(environment, undefined, {
+            ...emptyOptions,
             file: 'test-one.wtest',
             describe: 'this describe',
             test: 'another test',
-          }))
+          })
           expect(tests.length).to.equal(1)
           expect(tests[0].name).to.equal('"another test"')
         })
@@ -145,13 +159,13 @@ describe('Test', () => {
 
       const projectPath = join('examples', 'test-examples', 'only-case')
 
-      const emptyOptions = Options.new({
+      const emptyOptions = {
         project: projectPath,
         skipValidations: false,
         file: undefined,
         describe: undefined,
         test: undefined,
-      })
+      }
 
       beforeEach(async () => {
         environment = await buildEnvironmentForProject(projectPath)
@@ -164,7 +178,10 @@ describe('Test', () => {
       })
 
       it('should execute single test when running a describe using file option', () => {
-        const tests = getTarget(environment, undefined, emptyOptions.new({ describe: 'only describe' }))
+        const tests = getTarget(environment, undefined, {
+          ...emptyOptions,
+          describe: 'only describe',
+        })
         expect(tests.length).to.equal(1)
         expect(tests[0].name).to.equal('"this is the one"')
       })
@@ -176,7 +193,10 @@ describe('Test', () => {
       })
 
       it('should execute single test when running a file using file option', () => {
-        const tests = getTarget(environment, undefined, emptyOptions.new({ file: 'only-file.wtest' }))
+        const tests = getTarget(environment, undefined, {
+          ...emptyOptions,
+          file: 'only-file.wtest',
+        })
         expect(tests.length).to.equal(1)
         expect(tests[0].name).to.equal('"this is the one"')
       })
@@ -198,13 +218,13 @@ describe('Test', () => {
 
   describe('validateParameters', () => {
 
-    const emptyOptions = Options.new({
+    const emptyOptions = {
       skipValidations: false,
       project: '',
       file: undefined,
       describe: undefined,
       test: undefined,
-    })
+    }
 
     it('should pass if no filter and no options passed', () => {
       expect(() => { validateParameters(undefined, emptyOptions) }).not.to.throw()
@@ -215,27 +235,29 @@ describe('Test', () => {
     })
 
     it('should pass if options is passed and no filter is passed', () => {
-      expect(() => { validateParameters(undefined,
-        emptyOptions.new({ test: 'some test' }))
-      }).not.to.throw()
+      expect(() => { validateParameters(undefined, {
+        ...emptyOptions,
+        test: 'some test',
+      }) }).not.to.throw()
     })
 
     it('should fail if filter and options are passed', () => {
-      expect(() => { validateParameters('some describe',
-        emptyOptions.new({ test: 'some test' }))
-      }).to.throw(/You should either use filter by full name or file/)
+      expect(() => { validateParameters('some describe', {
+        ...emptyOptions,
+        test: 'some test',
+      }) }).to.throw(/You should either use filter by full name or file/)
     })
 
   })
 
   describe('matching test description', () => {
-    const emptyOptions = Options.new({
+    const emptyOptions = {
       project: '',
       skipValidations: false,
       file: undefined,
       describe: undefined,
       test: undefined,
-    })
+    }
 
 
     it('should return empty string if no filter or options are passed', () => {
@@ -247,19 +269,21 @@ describe('Test', () => {
     })
 
     it('should return options descriptions if options are passed', () => {
-      expect(matchingTestDescription(undefined, emptyOptions.new({
+      expect(matchingTestDescription(undefined, {
+        ...emptyOptions,
         file: 'test-one.wtest',
         describe: 'this describe',
         test: 'another test',
-      }))).to.include('\'test-one.wtest\'.\'this describe\'.\'another test\'')
-    })
+      })).to.include('\'test-one.wtest\'.\'this describe\'.\'another test\'')
+   })
 
     it('should return options descriptions with wildcards if options are missing', () => {
-      expect(matchingTestDescription(undefined, emptyOptions.new({
+      expect(matchingTestDescription(undefined, {
+        ...emptyOptions,
         file: undefined,
         describe: 'this discribe',
         test: undefined,
-      }))).to.include('*.\'this discribe\'.*')
+      })).to.include('*.\'this discribe\'.*')
     })
   })
 
@@ -283,13 +307,13 @@ describe('Test', () => {
 
     const projectPath = join('examples', 'test-examples', 'normal-case')
 
-    const emptyOptions = Options.new({
+    const emptyOptions = {
       project: projectPath,
       skipValidations: true,
       file: undefined,
       describe: undefined,
       test: undefined,
-    })
+    }
 
     beforeEach(() => {
       loggerInfoSpy = sinon.stub(logger, 'info')
@@ -303,8 +327,10 @@ describe('Test', () => {
     })
 
     it('passes all the tests successfully and exits normally', async () => {
-      await test(undefined, emptyOptions.new({ file: 'test-one.wtest' }))
-
+      await test(undefined, {
+        ...emptyOptions,
+        file: 'test-one.wtest',
+      })
       expect(processExitSpy.callCount).to.equal(0)
       expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 3 tests')).to.be.true
       expect(spyCalledWithSubstring(loggerInfoSpy, '3 passed')).to.be.true
@@ -315,18 +341,21 @@ describe('Test', () => {
     })
 
     it('passing a wrong filename runs no tests and logs a warning', async () => {
-      await test(undefined, emptyOptions.new({ file: 'non-existing-file.wtest' }))
-
+      await test(undefined, {
+        ...emptyOptions,
+        file: 'non-existing-file.wtest',
+      })
       expect(processExitSpy.callCount).to.equal(0)
       expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 0 tests')).to.be.true
       expect(spyCalledWithSubstring(loggerErrorSpy, 'File \'non-existing-file.wtest\' not found')).to.be.true
     })
 
     it('passing a wrong describe runs no tests and logs a warning', async () => {
-      await test(undefined, emptyOptions.new({
+      await test(undefined, {
+        ...emptyOptions,
         file: 'test-one.wtest',
         describe: 'non-existing-describe',
-      }))
+      })
 
       expect(processExitSpy.callCount).to.equal(0)
       expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 0 tests')).to.be.true
@@ -348,11 +377,12 @@ describe('Test', () => {
     })
 
     it('returns exit code 2 if one or more tests fail', async () => {
-      await test(undefined, emptyOptions.new({
+      await test(undefined, {
+        ...emptyOptions,
         file: 'test-two.wtest',
         describe: 'third describe',
         test: 'just a test',
-      }))
+      })
 
       expect(processExitSpy.calledWith(2)).to.be.true
       expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 1 test')).to.be.true
@@ -366,11 +396,12 @@ describe('Test', () => {
     })
 
     it('returns exit code 2 if one or more tests have errors', async () => {
-      await test(undefined, emptyOptions.new({
+      await test(undefined, {
+        ...emptyOptions,
         file: 'test-two.wtest',
         describe: 'second describe',
         test: 'second test',
-      }))
+      })
 
       expect(processExitSpy.calledWith(2)).to.be.true
       expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 1 test')).to.be.true
@@ -384,10 +415,11 @@ describe('Test', () => {
     })
 
     it('returns exit code 1 if tests has parse errors', async () => {
-      await test(undefined, emptyOptions.new({
+      await test(undefined, {
+        ...emptyOptions,
         skipValidations: false,
         project: join('examples', 'test-examples', 'failing-case'),
-      }))
+      })
 
       expect(processExitSpy.calledWith(1)).to.be.true
     })

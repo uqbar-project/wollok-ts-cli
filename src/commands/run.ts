@@ -9,18 +9,20 @@ import { Server, Socket } from 'socket.io'
 import { Asset, boardState, buildKeyPressEvent, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools'
 import { Environment, GAME_MODULE, interpret, Interpreter, Name, Natives, Package, RuntimeObject, WollokException } from 'wollok-ts'
 import { logger as fileLogger } from '../logger'
-import { BaseOptions, buildEnvironmentForProject, buildEnvironmentIcon, ENTER, failureDescription, folderIcon, gameIcon, getDynamicDiagram, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readNatives, readPackageProperties, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
+import { buildEnvironmentForProject, buildEnvironmentIcon, ENTER, failureDescription, folderIcon, gameIcon, getDynamicDiagram, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readNatives, readPackageProperties, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
 import { DummyProfiler, EventProfiler, TimeMeasurer } from './../time-measurer'
 
 const { time, timeEnd } = console
 
-export class Options extends BaseOptions {
-  assets!: string //TODO: move to base options optional and remove logic to read package j?
-  skipValidations!: boolean
-  host!: string
-  port!: string
-  game!: boolean
-  startDiagram!: boolean
+export type Options = {
+  project: string
+  assets: string
+  skipValidations: boolean
+  host: string,
+  port: string
+  game: boolean,
+  startDiagram: boolean,
+  natives?: string,
 }
 
 const DEFAULT_PORT = '4200'
@@ -31,8 +33,10 @@ type DynamicDiagramClient = {
 }
 
 export default async function (programFQN: Name, options: Options): Promise<Server | undefined> {
-  const { game, project, assets } = options
+  const { game, project, assets, natives } = options
   const timeMeasurer = new TimeMeasurer()
+  const nativesFolder = join(project, natives || '')
+
   try {
     logger.info(`${game ? gameIcon : programIcon} Running program ${valueDescription(programFQN)} ${runner(game)} on ${valueDescription(project)}`)
     options.assets = game ? getAssetsFolder(options) : ''
@@ -52,7 +56,7 @@ export default async function (programFQN: Name, options: Options): Promise<Serv
     const debug = logger.getLevel() <= logger.levels.DEBUG
     if (debug) time(successDescription('Run initiated successfully'))
     const assetFiles = getAllAssets(project, assets)
-    const natives = await readNatives(options.nativesFolder)
+    const natives = await readNatives(nativesFolder)
     const interpreter = game ? getGameInterpreter(environment, natives) : interpret(environment, natives )
     const programPackage = environment.getNodeByFQN<Package>(programFQN).parent as Package
     const dynamicDiagramClient = await initializeDynamicDiagram(programPackage, options, interpreter)

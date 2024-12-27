@@ -3,20 +3,24 @@ import logger from 'loglevel'
 import { existsSync, writeFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { userInfo } from 'os'
-import { ENTER, createFolderIfNotExists, BaseOptions } from '../utils'
+import { ENTER, createFolderIfNotExists } from '../utils'
 import { PROGRAM_FILE_EXTENSION, TEST_FILE_EXTENSION, WOLLOK_FILE_EXTENSION } from 'wollok-ts'
 import { execSync } from 'node:child_process'
 
-export class Options extends BaseOptions {
-  name?: string
-  noTest!: boolean
-  noCI!: boolean
-  game!: boolean
-  noGit!: boolean
+export type Options = {
+  project: string,
+  name?: string | undefined,
+  noTest: boolean,
+  noCI: boolean,
+  game: boolean,
+  noGit: boolean,
+  natives?: string
 }
 
-export default function ({ project: _project, name,  noTest = false, noCI = false, game = false, noGit = false, nativesFolder, sourceFolder, natives  }: Options): void {
-  const project = sourceFolder
+export default function (folder: string | undefined, { project: _project, name, noTest = false, noCI = false, game = false, noGit = false, natives = undefined }: Options): void {
+  const project = join(_project, folder ?? '')
+  const nativesFolder = join(project, natives ?? '')
+
   // Initialization
   if (existsSync(join(project, 'package.json'))) {
     logger.info(yellow(bold(`🚨 There is already a project inside ${project} folder`)))

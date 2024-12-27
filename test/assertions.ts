@@ -129,9 +129,11 @@ export const jsonAssertions: Chai.ChaiPlugin = (chai) => {
     expectedKeys.forEach((key) =>
       this.assert(
         getNestedValue(jsonContent, key) !== undefined,
-        `Expected JSON to have key "${key}"`,
+        `Expected JSON to have key "${key} but"`,
         `Expected JSON not to have key "${key}"`,
-        key
+        key,
+        jsonContent,
+        jsonContent
       )
     )
   })

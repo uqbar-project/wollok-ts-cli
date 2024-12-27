@@ -10,17 +10,19 @@ import { Server, Socket } from 'socket.io'
 import { Entity, Environment, Evaluation, Interpreter, Package, REPL, interprete, link } from 'wollok-ts'
 import { logger as fileLogger } from '../logger'
 import { TimeMeasurer } from '../time-measurer'
-import { BaseOptions, ENTER, buildEnvironmentForProject, failureDescription, getDynamicDiagram, getFQN, handleError, publicPath, replIcon, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription, readNatives } from '../utils'
-
+import { ENTER, buildEnvironmentForProject, failureDescription, getDynamicDiagram, getFQN, handleError, publicPath, replIcon, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription, readNatives } from '../utils'
+import { join } from 'path'
 // TODO:
 // - autocomplete piola
 
-export class Options extends BaseOptions {
-  skipValidations!: boolean
-  darkMode!: boolean
-  host!: string
-  port!: string
-  skipDiagram!: boolean
+export type Options = {
+  project: string
+  skipValidations: boolean,
+  darkMode: boolean,
+  host: string,
+  port: string,
+  skipDiagram: boolean,
+  natives?: string
 }
 
 type DynamicDiagramClient = {
@@ -104,9 +106,10 @@ export function interpreteLine(interpreter: Interpreter, line: string): string {
   return errored ? failureDescription(result, error) : successDescription(result)
 }
 
-export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations, nativesFolder }: Options): Promise<Interpreter> {
+export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations, natives }: Options): Promise<Interpreter> {
   let environment: Environment
   const timeMeasurer = new TimeMeasurer()
+  const nativesFolder = join(project, natives || '')
 
   try {
     environment = await buildEnvironmentForProject(project)

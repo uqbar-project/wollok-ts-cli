@@ -1,7 +1,7 @@
 import { should } from 'chai'
 import { join } from 'path'
 import { Interpreter, REPL } from 'wollok-ts'
-import { initializeInterpreter, interpreteLine, Options } from '../src/commands/repl'
+import { initializeInterpreter, interpreteLine } from '../src/commands/repl'
 import { failureDescription, successDescription } from '../src/utils'
 
 should()
@@ -10,14 +10,14 @@ const projectPath = join('examples', 'repl-examples')
 
 describe('REPL', () => {
 
-  const options = Options.new({
+  const options = {
     project: projectPath,
     skipValidations: false,
     darkMode: true,
     port: '8080',
     host: 'localhost',
     skipDiagram: true,
-  })
+  }
 
   let interpreter: Interpreter
 
@@ -261,7 +261,7 @@ describe('REPL', () => {
   describe('User Natives', () => {
 
     const project = join('examples', 'user-natives' )
-    const userNativesOptions = options.new({ project: project, natives: 'myNativesFolder' })
+    const userNativesOptions = { ...options, project: project, natives: 'myNativesFolder' }
 
     it('should execute user natives', async () => {
       interpreter = await initializeInterpreter(join(project, 'rootFile.wlk'), userNativesOptions)

@@ -19,10 +19,10 @@ const assets = 'assets'
 
 describe('testing run', () => {
 
-  const buildOptions = (game: boolean, assets: string) => Options.new({
-    game: game,
-    project: project,
-    assets: assets,
+  const buildOptions = (game: boolean, assets: string): Options => ({
+    game,
+    project,
+    assets,
     skipValidations: false,
     startDiagram: false,
     host: 'localhost',
@@ -78,10 +78,13 @@ describe('testing run', () => {
     it('should return all visuals for a simple project', async () => {
       const imageProject = join('examples', 'run-examples', 'asset-example')
 
-      const options = buildOptions(true, 'assets').new({ project: imageProject })
+      const options = {
+        ...buildOptions(true, 'assets'),
+        project: imageProject,
+      }
 
       const environment = await buildEnvironmentForProgram(options)
-      const interpreter = getGameInterpreter(environment, await utils.readNatives(options.nativesFolder))!
+      const interpreter = getGameInterpreter(environment, await utils.readNatives(options.project))!
       const game = interpreter.object('wollok.game.game')
       interpreter.send('addVisual', game, interpreter.object('mainGame.elementoVisual'))
 
@@ -175,7 +178,7 @@ describe('testing run', () => {
 
 
     it('should work if program has no errors', async () => {
-      await run('mainExample.PepitaProgram', Options.new({
+      await run('mainExample.PepitaProgram', {
         project: join('examples', 'run-examples', 'basic-example'),
         skipValidations: false,
         game: false,
@@ -183,7 +186,7 @@ describe('testing run', () => {
         assets,
         host: 'localhost',
         port: '3000',
-      }))
+      })
       expect(spyCalledWithSubstring(consoleLogSpy, 'Pepita empieza con 70')).to.be.true
       expect(spyCalledWithSubstring(consoleLogSpy, 'Vuela')).to.be.true
       expect(spyCalledWithSubstring(consoleLogSpy, '40')).to.be.true
@@ -197,7 +200,7 @@ describe('testing run', () => {
     })
 
     it('should exit if program has errors', async () => {
-      await run('mainExample.PepitaProgram', Options.new({
+      await run('mainExample.PepitaProgram', {
         project: join('examples', 'run-examples', 'bad-example'),
         skipValidations: false,
         game: false,
@@ -205,7 +208,7 @@ describe('testing run', () => {
         assets,
         host: 'localhost',
         port: '3000',
-      }))
+      })
       expect(processExitSpy.calledWith(21)).to.be.true
       expect(fileLoggerInfoSpy.calledOnce).to.be.true
       const fileLoggerArg = fileLoggerInfoSpy.firstCall.firstArg
@@ -234,26 +237,30 @@ describe('testing run', () => {
     })
 
     it('smoke test - should work if program has no errors', async () => {
-      const ioGame = await run('mainGame.PepitaGame', buildOptions(true, 'specialAssets').new({
+      const ioGame = await run('mainGame.PepitaGame', {
         project: join('examples', 'run-examples', 'basic-game'),
         skipValidations: false,
+        game: true,
         startDiagram: false,
+        assets: 'specialAssets',
         port: '3000',
         host: 'localhost',
-      }))
+      })
       ioGame?.close()
       expect(processExitSpy.calledWith(0)).to.be.false
       expect(errorReturned).to.be.undefined
     })
 
     it('smoke test - should not work if program has errors', async () => {
-      const ioGame = await run('mainGame.PepitaGame', buildOptions(true, 'specialAssets').new({
+      const ioGame = await run('mainGame.PepitaGame', {
         project: join('examples', 'run-examples', 'basic-example'),
         skipValidations: false,
+        game: true,
         startDiagram: false,
+        assets: 'specialAssets',
         port: '3000',
         host: 'localhost',
-      }))
+      })
       ioGame?.close()
       expect(processExitSpy.calledWith(21)).to.be.false
       expect(errorReturned).to.equal('Folder image examples/run-examples/basic-example/specialAssets does not exist')

@@ -2,7 +2,7 @@ import { expect } from 'chai'
 import logger from 'loglevel'
 import { join } from 'path'
 import sinon from 'sinon'
-import test, { Options } from '../src/commands/test'
+import test from '../src/commands/test'
 import { logger as fileLogger } from '../src/logger'
 import { spyCalledWithSubstring } from './assertions'
 
@@ -12,9 +12,14 @@ describe('UserNatives', () => {
   let processExitSpy: sinon.SinonStub
 
 
-  const options = Options.load({ //load package.json
+  const options = {
     project: join('examples', 'user-natives'),
-  })
+    skipValidations: false,
+    file: undefined,
+    describe: undefined,
+    test: undefined,
+  }
+
 
   beforeEach(() => {
     loggerInfoSpy = sinon.stub(logger, 'info')
@@ -27,7 +32,7 @@ describe('UserNatives', () => {
   })
 
   it('passes all the tests successfully and exits normally', async () => {
-    await test(undefined, options)
+    await test(undefined, { ...options, natives: 'myNativesFolder' })
 
     expect(processExitSpy.callCount).to.equal(0)
     expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 1 tests')).to.be.true

@@ -9,7 +9,13 @@ import { buildEnvironment, Environment, getDynamicDiagramData, Interpreter, Nati
 import { ElementDefinition } from 'cytoscape'
 import { register } from 'ts-node'
 
-register({ transpileOnly: true })
+register({
+  transpileOnly: true,
+  compilerOptions: {
+    module: 'NodeNext',
+    moduleResolution: 'NodeNext',
+  },
+})
 
 const { time, timeEnd } = console
 
@@ -28,58 +34,49 @@ export const folderIcon = '🗂️'
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // FILE / PATH HANDLING
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-export class BaseOptions {
-  project!: string
-  natives?: string
-  folder?: string
 
-  static new<T extends BaseOptions>(this: new () => T, config: Partial<T> = {}): T {
-    const instance = new this()
-    Object.assign(instance, config)
-    return instance
+export class Project {
+  project!: string
+  folder?: string
+  properties: any = {}
+
+  constructor(project: string, folder?: string) {
+    this.project = project
+    this.folder = folder
+    this.safeLoadJson()
   }
 
-  private safeLoadJson<T extends BaseOptions>(this: T, path: string) {
-    try {
-      const rawData = fs.readFileSync(path, 'utf-8')
-      const jsonData = JSON.parse(rawData)
+  get sourceFolder() : string {
+    return this.folder ? join(this.project, this.folder) : this.project
+  }
 
-      Object.entries(jsonData)
-        .forEach(([key, value]) => { //TODO! I want filter just for this properties, but 'in'operator doesn't work. et all properties work fine
-          try {
-            this[key as keyof T] = value as T[keyof T]
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          } catch (_error) {
-            // This is not a real error, if package.json has a value of different type then it is a non important value
-            // Silence here or log?
-          }
-        })
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  get packageJsonPath(): string {
+    return path.join(this.sourceFolder, 'package.json')
+  }
+
+  save(): void {
+    const jsonContent = JSON.stringify(this.properties, null, 2)
+    fs.writeFileSync(this.packageJsonPath, jsonContent, 'utf8')
+  }
+
+  private safeLoadJson() {
+    try {
+      const rawData = fs.readFileSync(this.packageJsonPath, 'utf-8')
+      this.properties = JSON.parse(rawData)
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_error) {
       // No package.json or it is invalid. This is not a real problem.
       // Silence here or log?
     }
   }
 
-  static load<T extends BaseOptions>(this: new () => T, partial: Partial<T>): T {
-    const instance = new this()
-
-    if ('project' in partial) {
-      const packageJsonPath = path.join(partial.project as string, 'package.json')
-      instance.safeLoadJson(packageJsonPath)
-    }
-    Object.assign(instance, partial)
-    return instance // Devolver la instancia creada
+  get natives() : string | undefined {
+    return this.properties.natives
   }
 
-  new<T extends BaseOptions>(this: T, config: Partial<T>): T {
-    const clone = Object.assign(Object.create(Object.getPrototypeOf(this)), this)
-    Object.assign(clone, config)
-    return clone
-  }
-
-  get sourceFolder() : string {
-    return this.folder ? join(this.project, this.folder) : this.project
+  set natives(value: string|undefined) {
+    this.properties.natives = value
   }
 
   get nativesFolder(): string {
@@ -152,6 +149,7 @@ export const handleError = (error: any): void => {
 
 export async function readNatives(nativeFolder: string): Promise<Natives> {
   const paths = await globby('**/*.@(ts|js)', { cwd: nativeFolder })
+
   const debug = logger.getLevel() <= logger.levels.DEBUG
 
   if (debug) time('Loading natives files')

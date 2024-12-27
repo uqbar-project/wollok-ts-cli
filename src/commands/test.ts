@@ -2,19 +2,22 @@ import { bold, red } from 'chalk'
 import { time, timeEnd } from 'console'
 import logger from 'loglevel'
 import { Entity, Environment, Node, Test, is, match, when, interpret, Describe, count } from 'wollok-ts'
-import { buildEnvironmentForProject, failureDescription, successDescription, valueDescription, validateEnvironment, handleError, ENTER, sanitizeStackTrace, buildEnvironmentIcon, testIcon, assertionError, warningDescription, readNatives, BaseOptions } from '../utils'
+import { buildEnvironmentForProject, failureDescription, successDescription, valueDescription, validateEnvironment, handleError, ENTER, sanitizeStackTrace, buildEnvironmentIcon, testIcon, assertionError, warningDescription, readNatives } from '../utils'
 import { logger as fileLogger } from '../logger'
 import { TimeMeasurer } from '../time-measurer'
 import { Package } from 'wollok-ts'
+import { join } from 'path'
 
 
 const { log } = console
 
-export class Options extends BaseOptions {
-  file?: string
-  describe?: string
-  test?: string
-  skipValidations?: boolean
+export type Options = {
+  file: string | undefined,
+  describe: string | undefined,
+  test: string | undefined,
+  project: string
+  skipValidations: boolean,
+  natives?: string
 }
 
 class TestSearchMissError extends Error{}
@@ -93,6 +96,7 @@ type TestExecutionError = {
 export default async function (filter: string | undefined, options: Options): Promise<void> {
   try {
     validateParameters(filter, options)
+    const nativesFolder = join(options.project, options.natives || '')
 
     const timeMeasurer = new TimeMeasurer()
     const { project, skipValidations } = options
@@ -112,7 +116,7 @@ export default async function (filter: string | undefined, options: Options): Pr
 
     const debug = logger.getLevel() <= logger.levels.DEBUG
     if (debug) time('Run finished')
-    const interpreter = interpret(environment, await readNatives(options.nativesFolder))
+    const interpreter = interpret(environment, await readNatives(nativesFolder))
     const testsFailed: TestExecutionError[] = []
     let successes = 0
 

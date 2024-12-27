@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 import { Command } from 'commander'
-import repl, { Options as ReplOptions } from './commands/repl'
-import run, { Options as RunOptions } from './commands/run'
-import test, { Options as TestOptions } from './commands/test'
-import init, { Options as InitOptions } from './commands/init'
+import repl from './commands/repl'
+import run from './commands/run'
+import test from './commands/test'
+import init from './commands/init'
+//import dependencies from './commands/dependencies'
 import logger from 'loglevel'
 import pkg from '../package.json'
 import { cyan } from 'chalk'
@@ -29,7 +30,7 @@ updateNotifier().finally(() => {
     .option('-g, --game', 'sets the program as a game', false)
     .option('-v, --verbose', 'print debugging information', false)
     .option('-d, --startDiagram', 'activate the dynamic diagram (only for games)', false)
-    .action((programFQN, options) => { run(programFQN, RunOptions.load(options)) })
+    .action((programFQN, options) => { run(programFQN, options) })
 
   program.command('test')
     .description('Run Wollok tests')
@@ -40,7 +41,7 @@ updateNotifier().finally(() => {
     .option('-t, --test [test]', 'test to run', '')
     .option('--skipValidations', 'skip code validation', false)
     .option('-v, --verbose', 'print debugging information', false)
-    .action((filter, options) => {test(filter, TestOptions.load(options))})
+    .action(test)
 
   program.command('repl')
     .description('Start Wollok interactive console')
@@ -53,8 +54,6 @@ updateNotifier().finally(() => {
     .option('--port [port]', 'port to run the server', '3000')
     .option('-v, --verbose', 'print debugging information', false)
     .action(repl)
-    .action((file, options) => {repl(file, ReplOptions.load(options))})
-
 
   program.command('init')
     .description('Create a new Wollok project')
@@ -67,14 +66,42 @@ updateNotifier().finally(() => {
     .option('-ng, --noGit', 'avoids initializing a git repository', false)
     .option('-N, --natives [natives]', 'folder name for natives files', undefined)
     .allowUnknownOption()
-    .action((folder, options) => {
-      //init(InitOptions.new({ ...options, folder }))
-      const actionOptions = InitOptions.new( options )
-      if ( folder ) { actionOptions.folder = folder }
-      init(actionOptions)
+    .action(init)
 
-    })
+  // const dependencyCommand = new Command('dependency')
+  //   .description('Manage dependencies for a Wollok project')
 
+  // dependencyCommand
+  //   .command('add')
+  //   .description('Add one or more dependencies to the project')
+  //   .argument('<packages...>', 'Names of the packages to add (e.g., lodash@latest)')
+  //   .option('-p, --project [path]', 'Path to project', process.cwd())
+  //   .option('-v, --verbose', 'Print debugging information', false)
+  //   .option('-u, --update', 'Update dependencies after they are added', false)
+  //   .action((packages, options) => {
+  //     dependencies.add(options, packages )
+  //   })
 
+  // dependencyCommand
+  //   .command('remove')
+  //   .description('Remove one or more dependencies from the project')
+  //   .argument('<packages...>', 'Names of the packages to remove (e.g., lodash)')
+  //   .option('-p, --project [path]', 'Path to project', process.cwd())
+  //   .option('-v, --verbose', 'Print debugging information', false)
+  //   .option('-u, --update', 'Update dependencies after they are removed', false)
+  //   .action((packages, options) => {
+  //     dependencies.remove(DependenciesOptions.load({ ...options, packages }))
+  //   })
+
+  // dependencyCommand
+  //   .command('download')
+  //   .description('Download and synchronize all dependencies')
+  //   .option('-p, --project [path]', 'Path to project', process.cwd())
+  //   .option('-v, --verbose', 'Print debugging information', false)
+  //   .action((packages, options) => {
+  //     dependencies.add(DependenciesOptions.load({ ...options, packages }))
+  //   })
+
+  // program.addCommand(dependencyCommand)
   program.parseAsync()
 })

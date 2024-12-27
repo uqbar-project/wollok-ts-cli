@@ -3,7 +3,7 @@ import { join } from 'path'
 import { readFileSync, rmSync } from 'fs'
 import sinon from 'sinon'
 import init, { Options } from '../src/commands/init'
-import test, { Options as TestOptions } from '../src/commands/test'
+import test from '../src/commands/test'
 import { pathAssertions, jsonAssertions } from './assertions'
 
 chai.should()
@@ -17,13 +17,13 @@ const customFolderName = 'custom-folder'
 const customFolderProject = join(project, customFolderName)
 const GITHUB_FOLDER = join('.github', 'workflows')
 
-const baseOptions = Options.new({
-  project: project,
+const baseOptions: Options = {
+  project,
   noCI: false,
   noTest: false,
   game: false,
   noGit: false,
-})
+}
 
 describe('testing init', () => {
 
@@ -41,7 +41,7 @@ describe('testing init', () => {
   })
 
   it('should create files successfully for default values: ci, no game, example name & git', async () => {
-    init(baseOptions)
+    init(undefined, baseOptions)
 
     expect(join(project, 'example.wlk')).to.pathExists
     expect(join(project, 'testExample.wtest')).to.pathExists
@@ -54,18 +54,22 @@ describe('testing init', () => {
     expect(join(project, '.git/HEAD')).to.pathExists
     expect(getResourceFolder()).to.be.undefined
 
-    await test(undefined, TestOptions.new({
-      project: project,
+    await test(undefined, {
+      project,
       skipValidations: false,
-    }))
+      file: undefined,
+      describe: undefined,
+      test: undefined,
+    })
     expect(processExitSpy.callCount).to.equal(0)
   })
 
   it('should create files successfully for game project with ci & custom example name', () => {
-    init(baseOptions.new({
+    init(undefined, {
+      ...baseOptions,
       game: true,
       name: 'pepita',
-    }))
+    })
 
     expect(join(project, 'pepita.wlk')).to.pathExists()
     expect(join(project, 'testPepita.wtest')).to.pathExists()
@@ -78,12 +82,13 @@ describe('testing init', () => {
   })
 
   it('should create files successfully for game project with no ci & no test custom example name', async () => {
-    init(baseOptions.new({
+    init(undefined, {
+      ...baseOptions,
       noCI: true,
       noTest: true,
       game: true,
       name: 'pepita',
-    }))
+    })
 
     expect(join(project, 'pepita.wlk')).to.pathExists
     expect(join(project, 'testPepita.wtest')).to.not.pathExists
@@ -95,7 +100,7 @@ describe('testing init', () => {
   })
 
   it('should create files successfully with an argument for the folder name working in combination with project option', async () => {
-    init(baseOptions.new({ name: 'pepita', folder: customFolderName }))
+    init(customFolderName, { ...baseOptions, name:'pepita' } )
 
 
     expect(join(customFolderProject, 'pepita.wlk')).to.pathExists
@@ -108,7 +113,7 @@ describe('testing init', () => {
   })
 
   it('should skip the initialization of a git repository if notGit flag es enabled', async () => {
-    init(baseOptions.new({ noGit: true }))
+    init(undefined, { ...baseOptions, noGit: true })
 
     expect(join(project, '.git')).not.to.pathExists
     expect(join(project, '.git/HEAD')).not.to.pathExists
@@ -123,13 +128,17 @@ describe('testing init', () => {
   })
 
   it('should exit with code 1 if folder already exists', () => {
-    init(baseOptions.new({ project: join('examples', 'init-examples', 'existing-folder') }))
+    init(undefined, {
+      ...baseOptions,
+      project: join('examples', 'init-examples', 'existing-folder'),
+    })
 
     expect(processExitSpy.calledWith(1)).to.be.true
   })
 
   it('should create a natives folder when it is required', () => {
-    init(baseOptions.new({ natives: 'myNatives' }))
+    init(undefined, { ...baseOptions, natives: 'myNatives' })
+
     expect(join(project, 'myNatives')).to.pathExists
     expect('package.json')
     expect(join(project, 'package.json')).jsonMatch({ natives: 'myNatives' })
@@ -138,13 +147,13 @@ describe('testing init', () => {
 
   it('should create a natives nested folders when it is required', () => {
     const nativesFolder =join('myNatives', 'myReallyNatives')
-    init(baseOptions.new({ natives: nativesFolder }))
+    init(undefined, { ...baseOptions, natives: nativesFolder })
     expect(join(project, 'package.json')).jsonMatch({ natives: nativesFolder })
 
   })
 
   it('should not create a natives folders when it is not specified', () => {
-    init(baseOptions)
+    init(undefined, baseOptions)
     expect(join(project, 'package.json')).not.jsonKeys(['natives'])
   })
 
