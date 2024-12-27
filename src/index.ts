@@ -64,7 +64,7 @@ updateNotifier().finally(() => {
     .option('-t, --noTest', 'avoids creating a test file', false)
     .option('-c, --noCI', 'avoids creating a file for CI', false)
     .option('-ng, --noGit', 'avoids initializing a git repository', false)
-    .option('-N, --natives [natives]', 'folder name for natives files', undefined)
+    .option('-N, --natives [natives]', 'Folder name for native files and dependencies (defaults to root project).', undefined)
     .allowUnknownOption()
     .action(init)
 

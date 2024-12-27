@@ -9,7 +9,7 @@ import { Server, Socket } from 'socket.io'
 import { Asset, boardState, buildKeyPressEvent, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools'
 import { Environment, GAME_MODULE, interpret, Interpreter, Name, Natives, Package, RuntimeObject, WollokException } from 'wollok-ts'
 import { logger as fileLogger } from '../logger'
-import { buildEnvironmentForProject, buildEnvironmentIcon, ENTER, failureDescription, folderIcon, gameIcon, getDynamicDiagram, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readNatives, readPackageProperties, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
+import { buildEnvironmentForProject, buildEnvironmentIcon, ENTER, failureDescription, folderIcon, gameIcon, getDynamicDiagram, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readPackageProperties, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription, Project } from '../utils'
 import { DummyProfiler, EventProfiler, TimeMeasurer } from './../time-measurer'
 
 const { time, timeEnd } = console
@@ -22,7 +22,6 @@ export type Options = {
   port: string
   game: boolean,
   startDiagram: boolean,
-  natives?: string,
 }
 
 const DEFAULT_PORT = '4200'
@@ -33,9 +32,9 @@ type DynamicDiagramClient = {
 }
 
 export default async function (programFQN: Name, options: Options): Promise<Server | undefined> {
-  const { game, project, assets, natives } = options
+  const { game, project, assets } = options
   const timeMeasurer = new TimeMeasurer()
-  const nativesFolder = join(project, natives || '')
+  const proj = new Project(project)
 
   try {
     logger.info(`${game ? gameIcon : programIcon} Running program ${valueDescription(programFQN)} ${runner(game)} on ${valueDescription(project)}`)
@@ -56,8 +55,8 @@ export default async function (programFQN: Name, options: Options): Promise<Serv
     const debug = logger.getLevel() <= logger.levels.DEBUG
     if (debug) time(successDescription('Run initiated successfully'))
     const assetFiles = getAllAssets(project, assets)
-    const natives = await readNatives(nativesFolder)
-    const interpreter = game ? getGameInterpreter(environment, natives) : interpret(environment, natives )
+    const natives = await proj.readNatives()
+    const interpreter = game ? getGameInterpreter(environment, natives) : interpret(environment, natives)
     const programPackage = environment.getNodeByFQN<Package>(programFQN).parent as Package
     const dynamicDiagramClient = await initializeDynamicDiagram(programPackage, options, interpreter)
     const ioGame: Server | undefined = initializeGameClient(options)

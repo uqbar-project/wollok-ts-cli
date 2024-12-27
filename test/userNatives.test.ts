@@ -32,7 +32,7 @@ describe('UserNatives', () => {
   })
 
   it('passes all the tests successfully and exits normally', async () => {
-    await test(undefined, { ...options, natives: 'myNativesFolder' })
+    await test(undefined, options )
 
     expect(processExitSpy.callCount).to.equal(0)
     expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 1 tests')).to.be.true

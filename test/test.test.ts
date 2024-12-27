@@ -275,7 +275,7 @@ describe('Test', () => {
         describe: 'this describe',
         test: 'another test',
       })).to.include('\'test-one.wtest\'.\'this describe\'.\'another test\'')
-   })
+    })
 
     it('should return options descriptions with wildcards if options are missing', () => {
       expect(matchingTestDescription(undefined, {

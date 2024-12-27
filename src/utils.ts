@@ -47,16 +47,17 @@ export class Project {
   }
 
   get sourceFolder() : string {
-    return this.folder ? join(this.project, this.folder) : this.project
+    return join(this.project, this.folder || '')
   }
 
   get packageJsonPath(): string {
     return path.join(this.sourceFolder, 'package.json')
   }
 
-  save(): void {
+  public save(): void {
     const jsonContent = JSON.stringify(this.properties, null, 2)
     fs.writeFileSync(this.packageJsonPath, jsonContent, 'utf8')
+    //TODO debería hacerlo safe? me parece que no
   }
 
   private safeLoadJson() {
@@ -71,16 +72,12 @@ export class Project {
     }
   }
 
-  get natives() : string | undefined {
-    return this.properties.natives
-  }
-
-  set natives(value: string|undefined) {
-    this.properties.natives = value
-  }
-
   get nativesFolder(): string {
-    return this.natives ? join(this.sourceFolder, this.natives) : this.sourceFolder
+    return join(this.sourceFolder, this.properties.natives || '')
+  }
+
+  public async readNatives(): Promise<Natives>{
+    return readNatives(this.nativesFolder)
   }
 
 }
