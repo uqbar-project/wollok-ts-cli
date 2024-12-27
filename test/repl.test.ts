@@ -261,17 +261,17 @@ describe('REPL', () => {
   describe('User Natives', () => {
 
     const project = join('examples', 'user-natives' )
-    const userNativesOptions = { ...options, project: project, natives: 'myNativesFolder' }
+    const opt = { ...options, project: project }
 
     it('should execute user natives', async () => {
-      interpreter = await initializeInterpreter(join(project, 'rootFile.wlk'), userNativesOptions)
+      interpreter = await initializeInterpreter(join(project, 'rootFile.wlk'), opt)
 
       const result = interpreteLine(interpreter, 'myModel.nativeOne()')
       result.should.be.equal(successDescription('1'))
     })
 
     it('should execute user natives in package', async () => {
-      interpreter = await initializeInterpreter(join(project, 'myPackage', 'myInnerFile.wlk'), userNativesOptions)
+      interpreter = await initializeInterpreter(join(project, 'myPackage', 'myInnerFile.wlk'), opt)
 
       const result = interpreteLine(interpreter, 'packageModel.nativeTwo()')
       result.should.be.equal(successDescription('2'))

@@ -105,7 +105,7 @@ export function interpreteLine(interpreter: Interpreter, line: string): string {
   return errored ? failureDescription(result, error) : successDescription(result)
 }
 
-export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations, natives }: Options): Promise<Interpreter> {
+export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations }: Options): Promise<Interpreter> {
   let environment: Environment
   const timeMeasurer = new TimeMeasurer()
   const proj = new Project(project)

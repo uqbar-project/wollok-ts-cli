@@ -4,7 +4,7 @@ import repl from './commands/repl'
 import run from './commands/run'
 import test from './commands/test'
 import init from './commands/init'
-//import dependencies from './commands/dependencies'
+import { addDependency, removeDependency, synchronizeDependencies } from './commands/dependencies'
 import logger from 'loglevel'
 import pkg from '../package.json'
 import { cyan } from 'chalk'
@@ -68,40 +68,34 @@ updateNotifier().finally(() => {
     .allowUnknownOption()
     .action(init)
 
-  // const dependencyCommand = new Command('dependency')
-  //   .description('Manage dependencies for a Wollok project')
+  const dependencyCommand = new Command('dependency')
+    .description('Manage dependencies for a Wollok project')
 
-  // dependencyCommand
-  //   .command('add')
-  //   .description('Add one or more dependencies to the project')
-  //   .argument('<packages...>', 'Names of the packages to add (e.g., lodash@latest)')
-  //   .option('-p, --project [path]', 'Path to project', process.cwd())
-  //   .option('-v, --verbose', 'Print debugging information', false)
-  //   .option('-u, --update', 'Update dependencies after they are added', false)
-  //   .action((packages, options) => {
-  //     dependencies.add(options, packages )
-  //   })
+  dependencyCommand
+    .command('add')
+    .description('Add a dependency to the project')
+    .argument('<package>', 'Name of the package to add (e.g., lodash@latest)')
+    .option('-p, --project [path]', 'Path to project', process.cwd())
+    .option('-v, --verbose', 'Print debugging information', false)
+    .allowUnknownOption()
+    .action(addDependency)
 
-  // dependencyCommand
-  //   .command('remove')
-  //   .description('Remove one or more dependencies from the project')
-  //   .argument('<packages...>', 'Names of the packages to remove (e.g., lodash)')
-  //   .option('-p, --project [path]', 'Path to project', process.cwd())
-  //   .option('-v, --verbose', 'Print debugging information', false)
-  //   .option('-u, --update', 'Update dependencies after they are removed', false)
-  //   .action((packages, options) => {
-  //     dependencies.remove(DependenciesOptions.load({ ...options, packages }))
-  //   })
+  dependencyCommand
+    .command('remove')
+    .description('Remove a dependency from the project')
+    .argument('<package>', 'Name of the package to remove (e.g., lodash)')
+    .option('-p, --project [path]', 'Path to project', process.cwd())
+    .option('-v, --verbose', 'Print debugging information', false)
+    .allowUnknownOption()
+    .action(removeDependency)
 
-  // dependencyCommand
-  //   .command('download')
-  //   .description('Download and synchronize all dependencies')
-  //   .option('-p, --project [path]', 'Path to project', process.cwd())
-  //   .option('-v, --verbose', 'Print debugging information', false)
-  //   .action((packages, options) => {
-  //     dependencies.add(DependenciesOptions.load({ ...options, packages }))
-  //   })
+  dependencyCommand
+    .command('sync')
+    .description('Synchronize all dependencies')
+    .option('-p, --project [path]', 'Path to project', process.cwd())
+    .option('-v, --verbose', 'Print debugging information', false)
+    .action(synchronizeDependencies)
 
-  // program.addCommand(dependencyCommand)
+  program.addCommand(dependencyCommand)
   program.parseAsync()
 })
