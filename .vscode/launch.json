@@ -12,12 +12,6 @@
       "name": "Run a single test file",
       "request": "launch",
       "type": "node-terminal"
-    },
-    {
-      "command": " npm start -- run -g --port 4200 'mainDolarito.Doralito' --skipValidations -p 'examples/dolarito' ",
-      "name": "wollok prueba",
-      "request": "launch",
-      "type": "node-terminal"
     }
   ]
 }

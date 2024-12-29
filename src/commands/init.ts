@@ -175,5 +175,9 @@ const gitignore = `
 .history
 
 # Wollok Log
+log
 *.log
+
+# Dependencies
+node_modules
 `

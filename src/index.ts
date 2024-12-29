@@ -68,7 +68,7 @@ updateNotifier().finally(() => {
     .allowUnknownOption()
     .action(init)
 
-  const dependencyCommand = new Command('dependency')
+  const dependencyCommand = new Command('dependencies')
     .description('Manage dependencies for a Wollok project')
 
   dependencyCommand
