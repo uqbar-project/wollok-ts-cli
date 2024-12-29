@@ -14,7 +14,7 @@
       "type": "node-terminal"
     },
     {
-      "command": " npm start -- test -p /home/leo/workspaces/wollok-dev/wollok-ts-cli/examples/user-natives -f userNatives.wtest -v",
+      "command": " npm start -- run -g --port 4200 'mainDolarito.Doralito' --skipValidations -p 'examples/dolarito' ",
       "name": "wollok prueba",
       "request": "launch",
       "type": "node-terminal"
