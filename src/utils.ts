@@ -37,27 +37,19 @@ export const folderIcon = '🗂️'
 
 export class Project {
   project!: string
-  folder?: string
   properties: any = {}
 
-  constructor(project: string, folder?: string) {
+  constructor(project: string) {
     this.project = project
-    this.folder = folder
     this.safeLoadJson()
   }
 
   get sourceFolder() : string {
-    return join(this.project, this.folder || '')
+    return this.project
   }
 
   get packageJsonPath(): string {
     return path.join(this.sourceFolder, 'package.json')
-  }
-
-  public save(): void {
-    const jsonContent = JSON.stringify(this.properties, null, 2)
-    fs.writeFileSync(this.packageJsonPath, jsonContent, 'utf8')
-    //TODO debería hacerlo safe? me parece que no
   }
 
   private safeLoadJson() {
