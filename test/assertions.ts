@@ -1,5 +1,5 @@
 import { ElementDefinition } from 'cytoscape'
-import { existsSync, lstatSync, readdirSync } from 'fs'
+import { existsSync } from 'fs'
 
 type ElementDefinitionQuery = Partial<ElementDefinition['data']>
 
