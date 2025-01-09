@@ -6,6 +6,7 @@ import { userInfo } from 'os'
 import { ENTER, createFolderIfNotExists, sanitizeName } from '../utils'
 import { PROGRAM_FILE_EXTENSION, TEST_FILE_EXTENSION, WOLLOK_FILE_EXTENSION } from 'wollok-ts'
 import kebabCase from 'lodash/kebabCase'
+import { execSync } from 'node:child_process'
 
 export type Options = {
   project: string,
@@ -13,9 +14,10 @@ export type Options = {
   noTest: boolean,
   noCI: boolean,
   game: boolean,
+  noGit: boolean
 }
 
-export default function (folder: string | undefined, { project: _project, name, noTest = false, noCI = false, game = false }: Options): void {
+export default function (folder: string | undefined, { project: _project, name, noTest = false, noCI = false, game = false, noGit = false }: Options): void {
   const project = join(_project, folder ?? '')
 
   // Initialization
@@ -66,6 +68,15 @@ export default function (folder: string | undefined, { project: _project, name, 
 
   logger.info('Creating Gitignore')
   writeFileSync(join(project, '.gitignore'), gitignore)
+
+  if (!noGit) {
+    logger.info('Initializing Git repository')
+    try {
+      execSync('git init', { cwd: project })
+    } catch {
+      logger.error(yellow('🚨 Error initializing git repository, please check if git is installed in your system.'))
+    }
+  }
 
   // Finish
   logger.info(green('✨ Project successfully created. Happy coding!'))

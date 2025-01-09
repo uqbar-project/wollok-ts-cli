@@ -20,20 +20,13 @@ export const pathAssertions: Chai.ChaiPlugin = (chai) => {
   const { Assertion } = chai
 
   Assertion.addMethod('pathExists', function () {
-    const path = this._obj
-    const exists = existsSync(path)
-
-    const pathBasePath = path.split('/').slice(0, -1).join('/')
-
-    // Improve error message if path does not exist
-    const files = !exists ? lstatSync(pathBasePath).isDirectory() ? readdirSync(pathBasePath) : [] : []
-
+    new Assertion(this._obj).to.be.an('string').length.above(0)
+    const exists = existsSync(this._obj)
     this.assert(
       exists,
-      'expected path to exist',
-      'expected path not to exist',
-      path,
-      'Found in directory: ' + files.join(', '),
+      `expected path ${this._obj} to exist`,
+      `expected path ${this._obj} not to exist`,
+      this._obj
     )
   })
 }

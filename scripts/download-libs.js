@@ -7,20 +7,20 @@ const libsToDownload = [
     libDest: "game",
     libs: [
       {
-        filename: "p5.js",
-        url: "http://cdnjs.cloudflare.com/ajax/libs/p5.js/1.2.0/p5.min.js",
+        filename: "p5.min.js",
+        url: "http://cdnjs.cloudflare.com/ajax/libs/p5.js/1.10.0/p5.min.js",
       },
       {
-        filename: "p5.sound.js",
-        url: "http://cdnjs.cloudflare.com/ajax/libs/p5.js/1.5.0/addons/p5.sound.min.js",
+        filename: "p5.sound.min.js",
+        url: "http://cdnjs.cloudflare.com/ajax/libs/p5.js/1.10.0/addons/p5.sound.min.js",
       },
       {
         filename: "socket.io.esm.min.js",
-        url: "http://cdn.socket.io/4.4.1/socket.io.esm.min.js",
+        url: "http://cdn.socket.io/4.7.5/socket.io.esm.min.js",
       },
       {
         filename: "socket.io.esm.min.js.map",
-        url: "http://cdn.socket.io/4.4.1/socket.io.esm.min.js.map",
+        url: "http://cdn.socket.io/4.7.5/socket.io.esm.min.js.map",
       },
     ],
   },
@@ -29,15 +29,15 @@ const libsToDownload = [
     libs: [
       {
         filename: "socket.io.esm.min.js",
-        url: "http://cdn.socket.io/4.4.1/socket.io.esm.min.js",
+        url: "http://cdn.socket.io/4.7.5/socket.io.esm.min.js",
       },
       {
         filename: "socket.io.esm.min.js.map",
-        url: "http://cdn.socket.io/4.4.1/socket.io.esm.min.js.map",
+        url: "http://cdn.socket.io/4.7.5/socket.io.esm.min.js.map",
       },
       {
         filename: "cytoscape.min.js",
-        url: "http://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js",
+        url: "http://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.30.2/cytoscape.min.js",
       },
     ],
   },

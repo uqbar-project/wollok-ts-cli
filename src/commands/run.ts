@@ -6,11 +6,10 @@ import http from 'http'
 import logger from 'loglevel'
 import { join, relative } from 'path'
 import { Server, Socket } from 'socket.io'
-import { Asset, boardState, buildKeyPressEvent, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools/dist/utils'
+import { Asset, boardState, buildKeyPressEvent, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools'
 import { Environment, GAME_MODULE, interpret, Interpreter, Name, Package, RuntimeObject, WollokException, WRENatives as natives } from 'wollok-ts'
 import { logger as fileLogger } from '../logger'
-import { getDataDiagram } from '../services/diagram-generator'
-import { buildEnvironmentForProject, buildEnvironmentIcon, ENTER, failureDescription, folderIcon, gameIcon, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readPackageProperties, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
+import { buildEnvironmentForProject, buildEnvironmentIcon, ENTER, failureDescription, folderIcon, gameIcon, getDynamicDiagram, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readPackageProperties, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
 import { DummyProfiler, EventProfiler, TimeMeasurer } from './../time-measurer'
 
 const { time, timeEnd } = console
@@ -22,7 +21,7 @@ export type Options = {
   host: string,
   port: string
   game: boolean,
-  startDiagram: boolean
+  startDiagram: boolean,
 }
 
 const DEFAULT_PORT = '4200'
@@ -32,8 +31,8 @@ type DynamicDiagramClient = {
   onReload: () => void,
 }
 
-export default async function (programFQN: Name, options: Options): Promise<void> {
-  const { project, game } = options
+export default async function (programFQN: Name, options: Options): Promise<Server | undefined> {
+  const { game, project, assets } = options
   const timeMeasurer = new TimeMeasurer()
   try {
     logger.info(`${game ? gameIcon : programIcon} Running program ${valueDescription(programFQN)} ${runner(game)} on ${valueDescription(project)}`)
@@ -53,16 +52,18 @@ export default async function (programFQN: Name, options: Options): Promise<void
     const environment = await buildEnvironmentForProgram(options)
     const debug = logger.getLevel() <= logger.levels.DEBUG
     if (debug) time(successDescription('Run initiated successfully'))
+    const assetFiles = getAllAssets(project, assets)
 
-
-    const ioGame: Server | undefined = initializeGameClient(options)
     const interpreter = game ? getGameInterpreter(environment) : interpret(environment, { ...natives })
     const programPackage = environment.getNodeByFQN<Package>(programFQN).parent as Package
     const dynamicDiagramClient = await initializeDynamicDiagram(programPackage, options, interpreter)
+    const ioGame: Server | undefined = initializeGameClient(options)
 
     interpreter.run(programFQN)
 
-    eventsFor(ioGame!, interpreter, dynamicDiagramClient, options)
+    if (game) {
+      eventsFor(ioGame!, interpreter, dynamicDiagramClient, assetFiles)
+    }
 
     if (debug) timeEnd(successDescription('Run finalized successfully'))
 
@@ -70,6 +71,8 @@ export default async function (programFQN: Name, options: Options): Promise<void
       fileLogger.info({ message: `${programIcon} Program executed ${programFQN} on ${project}`, timeElapsed: timeMeasurer.elapsedTime(), ok: true })
       process.exit(0)
     }
+
+    return ioGame
   } catch (error: any) {
     handleError(error)
     fileLogger.info({ message: `${game ? gameIcon : programIcon} ${game ? 'Game' : 'Program'} executed ${programFQN} on ${project}`, timeElapsed: timeMeasurer.elapsedTime(), ok: false, error: sanitizeStackTrace(error) })
@@ -123,7 +126,7 @@ export async function initializeDynamicDiagram(programPackage: Package, options:
   })
   const connectionListener = (interpreter: Interpreter) => (socket: Socket) => {
     socket.emit('initDiagram', options)
-    socket.emit('updateDiagram', getDataDiagram(interpreter, programPackage))
+    socket.emit('updateDiagram', getDynamicDiagram(interpreter, programPackage))
   }
   const currentConnectionListener = connectionListener(interpreter)
   io.on('connection', currentConnectionListener)
@@ -141,20 +144,12 @@ export async function initializeDynamicDiagram(programPackage: Package, options:
 
   return {
     onReload: () => {
-      io.emit('updateDiagram', getDataDiagram(interpreter, programPackage))
+      io.emit('updateDiagram', getDynamicDiagram(interpreter, programPackage))
     },
   }
 }
 
-export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramClient: DynamicDiagramClient, { game, project, assets }: Options): void => {
-  if (!game) return
-  const baseFolder = join(project, assets)
-  if (!existsSync(baseFolder))
-    logger.warn(failureDescription(`Resource folder for images not found: ${assets}`))
-
-
-  const assetFiles = getAllAssets(project, assets)
-
+export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramClient: DynamicDiagramClient, assetFiles: Asset[]): void => {
   io.on('connection', socket => {
     logger.info(successDescription('Running game!'))
     socket.on('keyPressed', (events: string[]) => {
@@ -212,7 +207,7 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
 export const getAllAssets = (projectPath: string, assetsFolder: string): Asset[] => {
   const baseFolder = join(projectPath, assetsFolder)
   if (!existsSync(baseFolder))
-    throw `Folder image ${baseFolder} does not exist`
+    throw new Error(`Folder image ${baseFolder} does not exist`)
 
   const fileRelativeFor = (fileName: string) => ({ name: fileName, url: fileName })
 

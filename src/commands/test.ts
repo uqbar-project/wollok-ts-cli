@@ -1,8 +1,8 @@
 import { bold, red } from 'chalk'
 import { time, timeEnd } from 'console'
 import logger from 'loglevel'
-import { Entity, Environment, Node, Test, is, match, when, WRENatives as natives, interpret, Describe } from 'wollok-ts'
-import { buildEnvironmentForProject, failureDescription, successDescription, valueDescription, validateEnvironment, handleError, ENTER, sanitizeStackTrace, buildEnvironmentIcon, testIcon } from '../utils'
+import { Entity, Environment, Node, Test, is, match, when, WRENatives as natives, interpret, Describe, count } from 'wollok-ts'
+import { buildEnvironmentForProject, failureDescription, successDescription, valueDescription, validateEnvironment, handleError, ENTER, sanitizeStackTrace, buildEnvironmentIcon, testIcon, assertionError, warningDescription } from '../utils'
 import { logger as fileLogger } from '../logger'
 import { TimeMeasurer } from '../time-measurer'
 import { Package } from 'wollok-ts'
@@ -78,6 +78,18 @@ export function tabulationForNode({ fullyQualifiedName }: { fullyQualifiedName: 
   return '  '.repeat(fullyQualifiedName.split('.').length - 1)
 }
 
+enum TestResult {
+  'ok',
+  'failure',
+  'error'
+}
+
+type TestExecutionError = {
+  test: Test,
+  result: TestResult,
+  error: Error,
+}
+
 export default async function (filter: string | undefined, options: Options): Promise<void> {
   try {
     validateParameters(filter, options)
@@ -101,20 +113,25 @@ export default async function (filter: string | undefined, options: Options): Pr
     const debug = logger.getLevel() <= logger.levels.DEBUG
     if (debug) time('Run finished')
     const interpreter = interpret(environment, natives)
-    const failures: [Test, Error][] = []
+    const testsFailed: TestExecutionError[] = []
     let successes = 0
 
     environment.forEach((node: Node) => match(node)(
-      when(Test)((node: Test) => {
-        if (targets.includes(node)) {
-          const tabulation = tabulationForNode(node)
+      when(Test)((test: Test) => {
+        if (targets.includes(test)) {
+          const tabulation = tabulationForNode(test)
           try {
-            interpreter.fork().exec(node)
-            logger.info(tabulation, successDescription(node.name))
+            interpreter.fork().exec(test)
+            logger.info(tabulation, successDescription(test.name))
             successes++
-          } catch (error: any) {
-            logger.info(tabulation, failureDescription(node.name))
-            failures.push([node, error])
+          } catch (error: unknown) {
+            const isAssertionError = assertionError(error as Error)
+            logger.info(tabulation, isAssertionError ? warningDescription(test.name) : failureDescription(test.name))
+            testsFailed.push({
+              test,
+              error: error as Error,
+              result: isAssertionError ? TestResult.failure : TestResult.error,
+            })
           }
         }
       }),
@@ -132,25 +149,29 @@ export default async function (filter: string | undefined, options: Options): Pr
     log()
     if (debug) timeEnd('Run finished')
 
-    failures.forEach(([test, error]) => {
+    testsFailed.forEach(({ test, error }) => {
       log()
       logger.error(failureDescription(bold(test.fullyQualifiedName), error))
     })
 
-    const failuresForLogging = failures.map(([test, error]) => ({
+    const failures = count(testsFailed, ({ result }) => result === TestResult.failure)
+    const errors = count(testsFailed, ({ result }) => result === TestResult.error)
+
+    const testsFailedForLogging = testsFailed.map(({ test, error }) => ({
       test: test.fullyQualifiedName,
       error: sanitizeStackTrace(error),
     }))
-    fileLogger.info({ message: `${testIcon} Test runner executed ${filter ? `matching ${filter} ` : ''}on ${project}`, result: { ok: successes, failed: failures.length }, failures: failuresForLogging, timeElapsed: timeMeasurer.elapsedTime() })
+    fileLogger.info({ message: `${testIcon} Test runner executed ${filter ? `matching ${filter} ` : ''}on ${project}`, result: { ok: successes, failed: failures, errored: errors }, testsFailed: testsFailedForLogging, timeElapsed: timeMeasurer.elapsedTime() })
 
     logger.info(
       ENTER,
-      successDescription(`${successes} passing`),
-      failures.length ? failureDescription(`${failures.length} failing`) : '',
+      successDescription(`${successes} passed`),
+      failures ? warningDescription(`${failures} failed`) : '',
+      errors ? failureDescription(`${errors} errored`) : '',
       ENTER
     )
 
-    if (failures.length) {
+    if (failures + errors > 0) {
       process.exit(2)
     }
   } catch (error: any) {

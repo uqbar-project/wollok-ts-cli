@@ -12,6 +12,7 @@ src/wre/wre.json
 coverage
 .DS_Store
 /public/diagram/lib/*
-log/*
+/public/diagram/diagram-index.js
 /public/game/lib/*
+log/*
 wollok.log

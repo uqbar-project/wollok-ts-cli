@@ -3,10 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <title>Dynamic Diagram</title>
-    <script
-      src="./lib/cytoscape.min.js"
-    ></script>
-    <script type="text/javascript" src="./diagram.js"></script>
+    <script src="./lib/cytoscape.min.js"></script>
+    <script src="./diagram-index.js"></script>
     <link rel="stylesheet" href="./diagram.css" />
     <style>
       #cy {
@@ -32,31 +30,31 @@
         </div>
       </div>
       <script type="module">
-        import { io } from "./lib/socket.io.esm.min.js";
+        import { io } from "./lib/socket.io.esm.min.js"
 
-        const socket = io();
+        const socket = io()
         socket.on("connect", function () {
-          console.log("conectado!");
-        });
+          console.log("conectado!")
+        })
 
         socket.on("event", function (data) {
-          console.log(`evento! ${data}`);
-        });
+          console.log(`evento! ${data}`)
+        })
 
         socket.on("disconnect", function () {
-          console.log("desconectado!");
-        });
+          console.log("desconectado!")
+        })
 
-        initializeCytoscape(document.getElementById("cy"));
+        initializeCytoscape(document.getElementById("cy"))
 
         socket.on("initDiagram", function (options) {
-          document.getElementById('toggle-mode').checked = options?.darkMode ?? false;
-          modeChanged();
-        });
+          document.getElementById('toggle-mode').checked = options?.darkMode ?? false
+          modeChanged()
+        })
 
         socket.on("updateDiagram", (elements) => {
-          reloadDiagram(elements);
-        });
+          reloadDiagram(elements)
+        })
       </script>
       <div id="cy"></div>
     </div>

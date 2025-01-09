@@ -1,6 +1,6 @@
 {
   "name": "wollok-ts-cli",
-  "version": "0.2.9",
+  "version": "0.3.0",
   "description": "Wollok Command Line Interface",
   "repository": "https://github.com/uqbar-project/wollok-ts-cli",
   "license": "MIT",
@@ -19,18 +19,20 @@
   ],
   "main": "./build/src/index.js",
   "scripts": {
-    "preinstall": "node ./scripts/download-libs.js",
+    "prepare": "node ./scripts/download-libs.js && npm run build:tools",
     "start": "node ./build/src/index.js",
     "test": "npm run lint && npm run test:unit",
-    "test:diagram": "mocha -r ts-node/register/transpile-only test/**/diagram.test.ts --timeout 7000",
+    "test:diagram": "mocha -r ts-node/register/transpile-only test/**/diagram.test.ts --timeout 5000",
+    "test:run": "mocha -r ts-node/register/transpile-only test/**/run.test.ts --timeout 2000",
     "test-with-coverage": "npm run lint && nyc --reporter=json --lines 70 npm run test:unit",
     "lint": "eslint . ",
     "lint:fix": "eslint . --fix",
-    "test:unit": "mocha --parallel -r ts-node/register/transpile-only test/**/*.test.ts --timeout 7000",
-    "build": "shx rm -rf build && shx mkdir ./build && shx cp -r ./public ./build/public && cp ./node_modules/wollok-web-tools/dist/web/index.js ./build/public/game/lib && tsc -p ./tsconfig.build.json",
+    "test:unit": "mocha --parallel -r ts-node/register/transpile-only test/**/*.test.ts --timeout 5000",
+    "build:tools": "shx cp ./node_modules/wollok-web-tools/dist/web/game-index.js ./public/game/lib && shx cp ./node_modules/wollok-web-tools/dist/dynamicDiagram/diagram-index.js ./public/diagram",
+    "build": "shx rm -rf build && shx mkdir ./build && shx cp -r ./public ./build/public && tsc -p ./tsconfig.build.json",
     "watch": "npm run build -- -w",
     "pack": "pkg .",
-    "prepublishOnly": "npm run build && npm run test"
+    "prepublishOnly": "npm run prepare && npm run build && npm run test"
   },
   "bin": {
     "wollok": "./build/src/index.js"
@@ -38,8 +40,8 @@
   "pkg": {
     "scripts": "build/**/*.js",
     "targets": [
-      "node18-linux-x64",
       "node18-macos-x64",
+      "node18-linux-x64",
       "node18-macos-arm64",
       "node18-win-x64"
     ],
@@ -49,8 +51,11 @@
     "outputPath": "dist"
   },
   "dependencies": {
+    "@badisi/latest-version": "^7.0.10",
     "chalk": "^4.1.2",
+    "cli-box": "^6.0.10",
     "commander": "^11.1.0",
+    "compare-versions": "^6.1.1",
     "cors": "^2.8.5",
     "cytoscape": "^3.15.2",
     "express": "^4.18.1",
@@ -59,14 +64,17 @@
     "loglevel": "^1.8.1",
     "p5": "^1.8.0",
     "pkg": "^5.8.1",
+    "print-message": "^3.0.1",
     "socket.io": "^4.5.1",
     "winston": "^3.11.0",
-    "wollok-ts": "4.1.6",
-    "wollok-web-tools": "1.1.2"
+    "wollok-ts": "^4.1.9",
+    "wollok-web-tools": "^1.1.7"
   },
   "devDependencies": {
+    "@stylistic/eslint-plugin-ts": "^2.8.0",
     "@types/chai": "^4.3.16",
     "@types/chai-as-promised": "^7.1.7",
+    "@types/cli-box": "^6.0.4",
     "@types/cytoscape": "^3.19.7",
     "@types/express": "^4.17.20",
     "@types/lodash": "^4.17.9",
@@ -74,8 +82,8 @@
     "@types/node": "^18.14.5",
     "@types/p5": "^1.7.1",
     "@types/sinon": "^17.0.0",
-    "@typescript-eslint/eslint-plugin": "^6.9.1",
-    "@typescript-eslint/parser": "^6.9.1",
+    "@typescript-eslint/eslint-plugin": "^8.7.0",
+    "@typescript-eslint/parser": "^8.7.0",
     "chai": "^4.5.0",
     "chai-as-promised": "^7.1.1",
     "chai-http": "^4.4.0",
@@ -86,6 +94,6 @@
     "sinon": "^17.0.1",
     "socket.io-client": "^4.7.5",
     "ts-node": "10.9.1",
-    "typescript": "^4.9.5"
+    "typescript": "~5.5.1"
   }
 }

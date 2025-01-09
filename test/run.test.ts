@@ -1,14 +1,17 @@
 import chai from 'chai'
+import chaiAsPromised from 'chai-as-promised'
+import chaiHttp from 'chai-http'
 import { mkdirSync, rmdirSync } from 'fs'
 import { join } from 'path'
 import sinon from 'sinon'
-import { io as ioc } from 'socket.io-client'
+import * as utils from '../src/utils'
 import run, { buildEnvironmentForProgram, getAllAssets, getAssetsFolder, getGameInterpreter, getSoundsFolder, getVisuals, Options } from '../src/commands/run'
 import { logger as fileLogger } from '../src/logger'
 import { spyCalledWithSubstring } from './assertions'
 
-
 chai.should()
+chai.use(chaiHttp)
+chai.use(chaiAsPromised)
 const expect = chai.expect
 
 const project = join('examples', 'run-examples', 'basic-example')
@@ -216,20 +219,53 @@ describe('testing run', () => {
   })
 
   describe('run a simple game', () => {
+    let handleErrorSpy: sinon.SinonStub
+    let processExitSpy: sinon.SinonStub
+    let errorReturned: string | undefined = undefined
 
-    it('smoke test - should work if program has no errors', done => {
-      run('mainGame.PepitaGame', {
+    beforeEach(() => {
+      handleErrorSpy = sinon.stub(utils, 'handleError')
+      handleErrorSpy.callsFake((error) => {
+        console.info(`👾👾👾 ${error.message} 👾👾👾`)
+        errorReturned = error.message
+      })
+      processExitSpy = sinon.stub(process, 'exit')
+    })
+
+    afterEach(() => {
+      sinon.restore()
+    })
+
+    it('smoke test - should work if program has no errors', async () => {
+      const ioGame = await run('mainGame.PepitaGame', {
+        project: join('examples', 'run-examples', 'basic-game'),
+        skipValidations: false,
+        game: true,
+        startDiagram: false,
+        assets: 'specialAssets',
+        port: '3000',
+        host: 'localhost',
+      })
+      ioGame?.close()
+      expect(processExitSpy.calledWith(0)).to.be.false
+      expect(errorReturned).to.be.undefined
+    })
+
+    it('smoke test - should not work if program has errors', async () => {
+      const ioGame = await run('mainGame.PepitaGame', {
         project: join('examples', 'run-examples', 'basic-example'),
         skipValidations: false,
         game: true,
         startDiagram: false,
-        assets,
+        assets: 'specialAssets',
         port: '3000',
         host: 'localhost',
       })
-      const clientSocket = ioc('http://localhost:3000')
-      clientSocket.on('connect', done) // Game finish on client connection
+      ioGame?.close()
+      expect(processExitSpy.calledWith(21)).to.be.false
+      expect(errorReturned).to.equal('Folder image examples/run-examples/basic-example/specialAssets does not exist')
     })
+
   })
 
 })

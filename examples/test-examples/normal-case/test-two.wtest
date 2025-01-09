@@ -1,7 +1,9 @@
+class SomeClass {}
+
 describe "second describe" {
 
   test "second test" {
-    assert.that(true)
+    assert.that(new SomeClass().dontCallMe())
   }
 
   test "another second test" {
@@ -15,6 +17,10 @@ describe "third describe" {
   test "just a test" {
     const a = 1
     assert.equals(a + 1, 1)
+  }
+
+  test "just another test" {
+    assert.that(false)
   }
 
 }
