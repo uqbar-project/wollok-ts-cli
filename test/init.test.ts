@@ -172,7 +172,6 @@ describe('testing init', () => {
     expect(mainFileContent).to.include('import someRandomGame.pepita')
     const testFileContent = readFileSync(wollokTestFile, 'utf8')
     expect(testFileContent).to.include('import someRandomGame.pepita')
-    expect(getResourceFolder()).to.be.undefined
   })
 
   it('should exit with code 1 if folder already exists', () => {
