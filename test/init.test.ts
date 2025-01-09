@@ -135,6 +135,7 @@ describe('testing init', () => {
     expect(join(project, GITHUB_FOLDER, 'ci.yml')).to.pathExists()
     expect(join(project, 'README.md')).to.pathExists()
     expect(join(project, '.gitignore')).to.pathExists()
+    expect(getResourceFolder()).to.be.undefined
   })
 
   it('should normalize imports and filenames', async () => {
