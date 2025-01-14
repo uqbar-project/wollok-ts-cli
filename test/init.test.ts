@@ -108,6 +108,22 @@ describe('testing init', () => {
     expect(join(customFolderProject, '.gitignore')).to.pathExists()
   })
 
+
+  it('should normalize package.json name when creating with custom name', async () => {
+    init(undefined, { ...baseOptions, name: 'Pepita Game' })
+
+    expect(join(project, 'pepitaGame.wlk')).to.pathExists()
+    expect(join(project, 'testPepitaGame.wtest')).to.pathExists()
+    expect(join(project, 'package.json')).to.pathExists()
+    expect(join(project, GITHUB_FOLDER, 'ci.yml')).to.pathExists()
+    expect(join(project, 'README.md')).to.pathExists()
+    expect(join(project, '.gitignore')).to.pathExists()
+    // Assert content of package.json
+    const packageJson = readFileSync(join(project, 'package.json'), 'utf8')
+    const { name } = JSON.parse(packageJson)
+    expect(name).to.be.equal('pepita-game')
+  })
+
   it('should skip the initialization of a git repository if notGit flag es enabled', async () => {
     init(undefined, { ...baseOptions, noGit: true })
 
@@ -120,6 +136,42 @@ describe('testing init', () => {
     expect(join(project, 'README.md')).to.pathExists()
     expect(join(project, '.gitignore')).to.pathExists()
     expect(getResourceFolder()).to.be.undefined
+  })
+
+  it('should normalize imports and filenames', async () => {
+    init(undefined, { ...baseOptions, name: 'Pepita Game', game: true })
+
+    const wollokDefinitionFile = join(project, 'pepitaGame.wlk')
+    const wollokMainFile = join(project, 'mainPepitaGame.wpgm')
+    const wollokTestFile = join(project, 'testPepitaGame.wtest')
+
+    expect(wollokDefinitionFile).to.pathExists()
+    expect(wollokMainFile).to.pathExists()
+    expect(wollokTestFile).to.pathExists()
+
+    // Assert content of files
+    const mainFileContent = readFileSync(wollokMainFile, 'utf8')
+    expect(mainFileContent).to.include('import pepitaGame.pepita')
+    const testFileContent = readFileSync(wollokTestFile, 'utf8')
+    expect(testFileContent).to.include('import pepitaGame.pepita')
+  })
+
+  it('should sanitize especial characters', async () => {
+    init(undefined, { ...baseOptions, name: 'Some random Game :) !', game: true })
+
+    const wollokDefinitionFile = join(project, 'someRandomGame.wlk')
+    const wollokMainFile = join(project, 'mainSomeRandomGame.wpgm')
+    const wollokTestFile = join(project, 'testSomeRandomGame.wtest')
+
+    expect(wollokDefinitionFile).to.pathExists()
+    expect(wollokMainFile).to.pathExists()
+    expect(wollokTestFile).to.pathExists()
+
+    // Assert content of files
+    const mainFileContent = readFileSync(wollokMainFile, 'utf8')
+    expect(mainFileContent).to.include('import someRandomGame.pepita')
+    const testFileContent = readFileSync(wollokTestFile, 'utf8')
+    expect(testFileContent).to.include('import someRandomGame.pepita')
   })
 
   it('should exit with code 1 if folder already exists', () => {

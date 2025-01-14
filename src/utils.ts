@@ -4,6 +4,7 @@ import { readFile } from 'fs/promises'
 import globby from 'globby'
 import logger from 'loglevel'
 import path, { join } from 'path'
+import camelCase from 'lodash/camelCase'
 import { getDataDiagram, VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools'
 import { buildEnvironment, Environment, getDynamicDiagramData, Interpreter, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException } from 'wollok-ts'
 import { ElementDefinition } from 'cytoscape'
@@ -172,6 +173,17 @@ export const serverError = ({ port, code }: { port: string, code: string }): voi
   }
   process.exit(13)
 }
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// SANITIZING
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Sanitizes project name to allow it to be used as a filename and as a module name.
+ * If it doesn't start with a lowercase letter or a '_', it adds '_' at the beggining.
+ * Replaces every symbol not allowed with a '_'.
+ */
+export const sanitizeName = (name: string): string => camelCase(name[0].replace(/([^a-z_])/g, '_$1') + name.slice(1).replace(/[^a-zA-z1-9_-]/g, '_'))
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // DYNAMIC DIAGRAM
