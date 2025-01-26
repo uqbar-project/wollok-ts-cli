@@ -1,13 +1,15 @@
 import chai from 'chai'
+import chaiAsPromised from 'chai-as-promised'
 import chaiHttp from 'chai-http'
 import { join } from 'path'
-import chaiAsPromised from 'chai-as-promised'
-import { Options, replFn } from '../src/commands/repl'
 import { Interface } from 'readline'
 import sinon from 'sinon'
+import { Server } from 'socket.io'
+import * as wollok from 'wollok-ts'
+import { Options, replFn } from '../src/commands/repl'
 import { ENTER } from '../src/utils'
 import { spyCalledWithSubstring } from './assertions'
-import * as wollok from 'wollok-ts'
+import { fakeIO } from './mocks'
 
 chai.should()
 chai.use(chaiHttp)
@@ -19,6 +21,7 @@ const baseOptions = {
   port: '8080',
   host: 'localhost',
   skipDiagram: true,
+  assets: '',
 }
 
 const buildOptionsFor = (path: string, skipValidations = false) => ({
@@ -27,32 +30,36 @@ const buildOptionsFor = (path: string, skipValidations = false) => ({
   skipValidations,
 })
 
-const callRepl = (autoImportPath: string, options: Options) =>
+const startReplCommand = (autoImportPath: string, options: Options) =>
   replFn(join(options.project, autoImportPath), options)
 
-describe('REPL integration test for valid project', () => {
+describe('REPL command', () => {
   const projectPath = join('examples', 'repl-examples')
 
   const options = {
     project: projectPath,
     skipValidations: false,
-    darkMode: true,
-    host: 'localhost',
-    port: '8080',
-    skipDiagram: true,
+    ...baseOptions,
   }
   let processExitSpy: sinon.SinonStub
   let consoleLogSpy: sinon.SinonStub
+  let initializeGameClientSpy: sinon.SinonStub
   let repl: Interface
+  let io: Server
 
   beforeEach(async () => {
     processExitSpy = sinon.stub(process, 'exit')
     consoleLogSpy = sinon.stub(console, 'log')
+    io = fakeIO()
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    initializeGameClientSpy = sinon.stub(require('../src/game'), 'initializeGameClient').returns(io)
     repl = await replFn(undefined, options)
   })
 
   afterEach(() => {
     sinon.restore()
+    repl.close()
+    io.close()
   })
 
   it('should process values & quit successfully', async () => {
@@ -64,16 +71,24 @@ describe('REPL integration test for valid project', () => {
     expect(processExitSpy.calledWith(0)).to.be.true
   })
 
+  it('should init game server', async () => {
+    expect(initializeGameClientSpy.called).to.be.false
+    repl.write('game.start()' + ENTER)
+    expect(spyCalledWithSubstring(consoleLogSpy, 'true')).to.be.true
+    expect(initializeGameClientSpy.called).to.be.true
+  })
+
   it('should quit successfully if project has validation errors but skip validation config is passed', async () => {
-    const repl = await callRepl('fileWithValidationErrors.wlk', buildOptionsFor('validation-errors', true))
+    const repl = await startReplCommand('fileWithValidationErrors.wlk', buildOptionsFor('validation-errors', true))
     repl.emit('line', ':q')
     expect(processExitSpy.calledWith(0)).to.be.true
+    repl.close()
   })
 
 
 })
 
-describe('REPL integration test for invalid project', () => {
+describe('REPL command - invalid project', () => {
   beforeEach(async () => {
     sinon.stub(process, 'exit').callsFake((code?: number | undefined) => {
       throw new Error(code && code > 0 ? `exit with ${code} error code` : 'ok')
@@ -87,19 +102,19 @@ describe('REPL integration test for invalid project', () => {
   it('should return exit code 12 if project has parse errors', async () => {
     sinon.stub(wollok, 'buildEnvironment').throws(new Error('Failed to parse fileWithParseErrors.wlk'))
 
-    await expect(callRepl('fileWithParseErrors.wlk', buildOptionsFor('parse-errors'))).to.eventually.be.rejectedWith(/exit with 12 error code/)
+    await expect(startReplCommand('fileWithParseErrors.wlk', buildOptionsFor('parse-errors'))).to.eventually.be.rejectedWith(/exit with 12 error code/)
   })
 
   it('should return exit code 12 if project has validation errors', async () => {
-    await expect(callRepl('fileWithValidationErrors.wlk', buildOptionsFor('validation-errors'))).to.eventually.be.rejectedWith(/exit with 12 error code/)
+    await expect(startReplCommand('fileWithValidationErrors.wlk', buildOptionsFor('validation-errors'))).to.eventually.be.rejectedWith(/exit with 12 error code/)
   })
 
   it('should return exit code 12 if file does not exist - no validation', async () => {
-    await expect(callRepl('noFile.wlk', buildOptionsFor('validation-errors', true))).to.eventually.be.rejectedWith(/exit with 12 error code/)
+    await expect(startReplCommand('noFile.wlk', buildOptionsFor('validation-errors', true))).to.eventually.be.rejectedWith(/exit with 12 error code/)
   })
 
   it('should return exit code 12 if file does not exist - with validation', async () => {
-    await expect(callRepl('noFile.wlk', buildOptionsFor('missing-files'))).to.eventually.be.rejectedWith(/exit with 12 error code/)
+    await expect(startReplCommand('noFile.wlk', buildOptionsFor('missing-files'))).to.eventually.be.rejectedWith(/exit with 12 error code/)
   })
 
 })
