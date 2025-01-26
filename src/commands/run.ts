@@ -1,13 +1,8 @@
-import { bold } from 'chalk'
-import cors from 'cors'
-import express from 'express'
-import http from 'http'
 import logger from 'loglevel'
-import { Server, Socket } from 'socket.io'
-import { Execution, interpret, Interpreter, Name, NativeFunction, Program, RuntimeValue } from 'wollok-ts'
+import { Execution, interpret, Name, NativeFunction, Program, RuntimeValue } from 'wollok-ts'
 import { eventsFor, initializeGameClient } from '../game'
 import { logger as fileLogger } from '../logger'
-import { buildEnvironmentCommand, buildEnvironmentIcon, buildNativesForGame, diagramIcon, DynamicDiagramClient, ENTER, failureDescription, gameIcon, getAllAssets, getAssetsFolder, getDynamicDiagram, handleError, nextPort, programIcon, publicPath, sanitizeStackTrace, serverError, successDescription, valueDescription } from '../utils'
+import { buildEnvironmentCommand, buildEnvironmentIcon, buildNativesForGame, ENTER, gameIcon, getAllAssets, getAssetsFolder, handleError, initializeDynamicDiagram, nextPort, programIcon, sanitizeStackTrace, successDescription, valueDescription } from '../utils'
 import { TimeMeasurer } from './../time-measurer'
 
 const { time, timeEnd } = console
@@ -22,7 +17,7 @@ export type Options = {
 }
 
 export default async function (programFQN: Name, options: Options): Promise<undefined> {
-  const { project, assets, host, port, skipValidations } = options
+  const { project, assets, host, port, skipValidations, startDiagram } = options
   let game = false
   const timeMeasurer = new TimeMeasurer()
   try {
@@ -43,7 +38,8 @@ export default async function (programFQN: Name, options: Options): Promise<unde
       return yield* this.reify(true)
     }
     const interpreter = interpret(environment, buildNativesForGame(serveGame))
-    const dynamicDiagramClient = await initializeDynamicDiagram(programFQN, options, interpreter)
+    const rootPackage = interpreter.evaluation.environment.getNodeByFQN<Program>(programFQN).parent
+    const dynamicDiagramClient = initializeDynamicDiagram(interpreter, { ...options, port: nextPort(port) }, rootPackage, startDiagram)
 
     interpreter.run(programFQN)
 
@@ -58,47 +54,6 @@ export default async function (programFQN: Name, options: Options): Promise<unde
     handleError(error)
     fileLogger.info({ message: `${programIcon} Program executed ${valueDescription(programFQN)} on ${valueDescription(project)}`, timeElapsed: timeMeasurer.elapsedTime(), ok: false, error: sanitizeStackTrace(error) })
     if (!game) process.exit(21)
-  }
-}
-
-export async function initializeDynamicDiagram(programFQN: Name, options: Options, interpreter: Interpreter): Promise<DynamicDiagramClient> {
-  if (!options.startDiagram) return { onReload: () => { }, enabled: false }
-
-  const app = express()
-  const server = http.createServer(app)
-
-  server.addListener('error', serverError)
-
-  const io = new Server(server)
-
-  io.on('connection', (socket: Socket) => {
-    logger.debug(successDescription('Connected to Dynamic diagram'))
-    socket.on('disconnect', () => { logger.debug(failureDescription('Dynamic diagram closed')) })
-  })
-
-  const programPackage = interpreter.evaluation.environment.getNodeByFQN<Program>(programFQN).parent
-  const connectionListener = (interpreter: Interpreter) => (socket: Socket) => {
-    socket.emit('initDiagram', options)
-    socket.emit('updateDiagram', getDynamicDiagram(interpreter, programPackage))
-  }
-  const currentConnectionListener = connectionListener(interpreter)
-  io.on('connection', currentConnectionListener)
-
-  app.use(
-    cors({ allowedHeaders: '*' }),
-    express.static(publicPath('diagram'), { maxAge: '1d' }),
-  )
-  const currentHost = options.host
-  const currentPort = nextPort(options.port)
-  server.listen(parseInt(currentPort), currentHost)
-  server.addListener('listening', () => {
-    logger.info(`${diagramIcon} Dynamic diagram available at: ${bold(`http://${currentHost}:${currentPort}`)}`)
-  })
-
-  return {
-    onReload: (_interpreter: Interpreter) =>
-      io.emit('updateDiagram', getDynamicDiagram(_interpreter, programPackage)),
-    enabled: true,
   }
 }
 

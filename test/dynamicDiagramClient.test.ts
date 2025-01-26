@@ -4,7 +4,8 @@ import chaiHttp from 'chai-http'
 import { join } from 'path'
 import { Interface, createInterface as Repl } from 'readline'
 import { Interpreter } from 'wollok-ts'
-import { initializeClient, initializeInterpreter } from '../src/commands/repl'
+import { initializeInterpreter } from '../src/commands/repl'
+import { initializeDynamicDiagram } from '../src/utils'
 
 chai.should()
 chai.use(chaiHttp)
@@ -16,6 +17,7 @@ describe('dynamic diagram client', () => {
 
   const options = {
     project: projectPath,
+    assets: '',
     skipValidations: false,
     darkMode: true,
     port: '8080',
@@ -35,24 +37,19 @@ describe('dynamic diagram client', () => {
   })
 
   it('should work for root path', async () => {
-    const { enabled, app, server } = await initializeClient(options, repl, interpreter)
+    const { enabled, server } = initializeDynamicDiagram(interpreter, options, interpreter.evaluation.environment.replNode())
     try {
       expect(enabled).to.be.true
-      const result = await chai.request(app).get('/index.html')
+      const result = await chai.request(server).get('/index.html')
       expect(result).to.have.status(200)
     } finally {
-      server!.close()
+      server?.close()
     }
   })
 
-  it('should return a fake client if skipDiagram is set', async () => {
-    const skipDiagramOptions = {
-      ...options,
-      skipDiagram: true,
-    }
-    const { enabled, app, server } = await initializeClient(skipDiagramOptions, repl, interpreter)
+  it('should return a fake client if does not start diagram', () => {
+    const { enabled, server } = initializeDynamicDiagram(interpreter, options, interpreter.evaluation.environment.replNode(), false)
     expect(enabled).to.be.false
-    expect(app).to.be.undefined
     expect(server).to.be.undefined
   })
 

@@ -1,17 +1,13 @@
 /* eslint-disable no-console */
 import { bold } from 'chalk'
 import { Command } from 'commander'
-import cors from 'cors'
-import express from 'express'
-import http from 'http'
 import logger from 'loglevel'
 import { CompleterResult, Interface, createInterface as Repl } from 'readline'
-import { Server, Socket } from 'socket.io'
 import { Entity, Environment, Evaluation, Execution, Interpreter, NativeFunction, Package, REPL, RuntimeValue, WRENatives, interprete, link } from 'wollok-ts'
 import { eventsFor, initializeGameClient } from '../game'
 import { logger as fileLogger } from '../logger'
 import { TimeMeasurer } from '../time-measurer'
-import { DynamicDiagramClient, ENTER, buildEnvironmentCommand, buildNativesForGame, failureDescription, getAllAssets, getAssetsFolder, getDynamicDiagram, getFQN, handleError, nextPort, publicPath, replIcon, sanitizeStackTrace, serverError, successDescription, valueDescription } from '../utils'
+import { ENTER, buildEnvironmentCommand, buildNativesForGame, failureDescription, getAllAssets, getAssetsFolder, getFQN, handleError, initializeDynamicDiagram, nextPort, replIcon, sanitizeStackTrace, successDescription, valueDescription } from '../utils'
 
 // TODO:
 // - autocomplete piola
@@ -45,6 +41,7 @@ export async function replFn(autoImportPath: string | undefined, options: Option
     return yield* this.reify(true)
   }
   let interpreter = await initializeInterpreter(autoImportPath, options, buildNativesForGame(serveGame))
+
   const autoImportName = autoImportPath && interpreter.evaluation.environment.replNode().name
   const repl = Repl({
     input: process.stdin,
@@ -55,13 +52,15 @@ export async function replFn(autoImportPath: string | undefined, options: Option
     prompt: bold(`wollok${autoImportName ? ':' + autoImportName : ''}> `),
     completer: autocomplete,
   })
-  let dynamicDiagramClient = await initializeClient(options, repl, interpreter)
 
-  const onReloadClient = async (activateDiagram: boolean, newInterpreter?: Interpreter) => {
+  const rootPackage = interpreter.evaluation.environment.replNode()
+  let dynamicDiagramClient = initializeDynamicDiagram(interpreter, options, rootPackage, !options.skipDiagram)
+
+  const onReloadClient = async (diagramActivated: boolean, newInterpreter?: Interpreter) => {
     const selectedInterpreter = newInterpreter ?? interpreter
-    if (activateDiagram && !dynamicDiagramClient.enabled) {
-      options.skipDiagram = !activateDiagram
-      dynamicDiagramClient = await initializeClient(options, repl, selectedInterpreter)
+    if (diagramActivated && !dynamicDiagramClient.enabled) { // If the server was not initialized, do it now
+      options.skipDiagram = !diagramActivated // Hack for one time use
+      dynamicDiagramClient = initializeDynamicDiagram(selectedInterpreter, options, rootPackage, !options.skipDiagram)
     } else {
       dynamicDiagramClient.onReload(selectedInterpreter)
       logger.info(successDescription('Dynamic diagram reloaded at ' + bold(`http://${options.host}:${options.port}`)))
@@ -100,7 +99,10 @@ export async function replFn(autoImportPath: string | undefined, options: Option
       repl.prompt()
     })
 
-  repl.prompt()
+  if (dynamicDiagramClient.enabled)
+    dynamicDiagramClient.server!.addListener('listening', () => repl.prompt())
+  else
+    repl.prompt()
   return repl
 }
 
@@ -142,7 +144,7 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-// COMMANDS
+// SUB-COMMANDS
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 function defineCommands(autoImportPath: string | undefined, options: Options, reloadClient: (activateDiagram: boolean, interpreter?: Interpreter) => Promise<void>, setInterpreter: (interpreter: Interpreter, rerun: boolean) => void): Command {
   const reload = (rerun = false) => async () => {
@@ -195,63 +197,12 @@ function defineCommands(autoImportPath: string | undefined, options: Options, re
   return commandHandler
 }
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-// EVALUATION
+// AUTOCOMPLETE
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-async function autocomplete(input: string): Promise<CompleterResult> {
+function autocomplete(input: string): CompleterResult {
   const completions = ['fafafa', 'fefefe', 'fofofo']
   const hits = completions.filter((c) => c.startsWith(input))
-  // Show all completions if none found
-  return [hits.length ? hits : completions, input]
-}
-
-
-// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-// SERVER/CLIENT
-// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-
-export async function initializeClient(options: Options, repl: Interface, interpreter: Interpreter): Promise<DynamicDiagramClient> {
-  if (options.skipDiagram) return { onReload: () => { }, enabled: false }
-
-  const app = express()
-  const server = http.createServer(app)
-
-  server.addListener('error', serverError)
-
-  const io = new Server(server)
-
-  io.on('connection', (socket: Socket) => {
-    logger.debug(successDescription('Connected to Dynamic diagram'))
-    socket.on('disconnect', () => { logger.debug(failureDescription('Dynamic diagram closed')) })
-  })
-  const connectionListener = (interpreter: Interpreter) => (socket: Socket) => {
-    socket.emit('initDiagram', options)
-    socket.emit('updateDiagram', getDynamicDiagram(interpreter))
-  }
-  let currentConnectionListener = connectionListener(interpreter)
-  io.on('connection', currentConnectionListener)
-
-  app.use(
-    cors({ allowedHeaders: '*' }),
-    express.static(publicPath('diagram'), { maxAge: '1d' }),
-  )
-  const host = options.host
-  server.listen(parseInt(options.port), host)
-  server.addListener('listening', () => {
-    logger.info(successDescription('Dynamic diagram available at: ' + bold(`http://${host}:${options.port}`)))
-    repl.prompt()
-  })
-
-  return {
-    onReload: (interpreter: Interpreter) => {
-      io.off('connection', currentConnectionListener)
-      currentConnectionListener = connectionListener(interpreter)
-      io.on('connection', currentConnectionListener)
-
-      io.emit('updateDiagram', getDynamicDiagram(interpreter))
-    },
-    enabled: true,
-    app,
-    server,
-  }
+  const results = hits.length ? hits : completions // Show all completions if none found
+  return [results, results[0]]
 }

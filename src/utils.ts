@@ -1,12 +1,14 @@
 import { blue, bold, green, italic, red, yellow, yellowBright } from 'chalk'
+import cors from 'cors'
 import { ElementDefinition } from 'cytoscape'
-import { Express } from 'express'
+import express, { Express } from 'express'
 import fs, { Dirent, existsSync, mkdirSync } from 'fs'
 import { readFile } from 'fs/promises'
 import globby from 'globby'
 import http from 'http'
 import logger from 'loglevel'
 import path, { join, relative } from 'path'
+import { Server, Socket } from 'socket.io'
 import { buildEnvironment, Environment, get, getDynamicDiagramData, Interpreter, NativeFunction, Natives, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException, WRENatives } from 'wollok-ts'
 import { Asset, getDataDiagram, VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools'
 
@@ -199,13 +201,57 @@ export const nextPort = (port: string): string => `${+port + 1}`
 export type DynamicDiagramClient = {
   onReload: (interpreter: Interpreter) => void,
   enabled: boolean,
-  app?: Express, // only for testing purposes
   server?: http.Server, // only for testing purposes
 }
 
 export function getDynamicDiagram(interpreter: Interpreter, rootFQN?: Package): ElementDefinition[] {
   const objects = getDynamicDiagramData(interpreter, rootFQN)
   return getDataDiagram(objects)
+}
+
+export type DynamicDiagramOptions = {
+  host: string
+  port: string
+}
+
+export function initializeDynamicDiagram(_interpreter: Interpreter, options: DynamicDiagramOptions, rootPackage: Package, startDiagram = true): DynamicDiagramClient {
+  if (!startDiagram) return { onReload: () => { }, enabled: false }
+
+  const { host, port } = options
+  let interpreter = _interpreter
+
+  const app = express()
+  const server = http.createServer(app)
+  const io = new Server(server)
+
+  io.on('connection', (socket: Socket) => {
+    logger.debug(successDescription('Connected to Dynamic diagram'))
+    socket.on('disconnect', () => { logger.debug(failureDescription('Dynamic diagram closed')) })
+    // INITITALIZATION
+    socket.emit('initDiagram', options)
+    socket.emit('updateDiagram', getDynamicDiagram(interpreter, rootPackage))
+  })
+
+  app.use(
+    cors({ allowedHeaders: '*' }),
+    express.static(publicPath('diagram'), { maxAge: '1d' }),
+  )
+
+  server.addListener('error', serverError)
+  server.addListener('listening', () => {
+    logger.info(`${diagramIcon} Dynamic diagram available at: ${bold(`http://${host}:${port}`)}`)
+  })
+
+  server.listen(parseInt(port), host)
+
+  return {
+    onReload: (maybeNewinterpreter: Interpreter) => {
+      if (interpreter !== maybeNewinterpreter) interpreter = maybeNewinterpreter
+      io.emit('updateDiagram', getDynamicDiagram(interpreter, rootPackage))
+    },
+    enabled: true,
+    server
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -233,7 +279,7 @@ export const getAllAssets = (projectPath: string, assetsFolder: string): Asset[]
     fs.readdirSync(basePath, { withFileTypes: true })
       .flatMap((file: Dirent) =>
         file.isDirectory() ? loadAssetsIn(join(basePath, file.name)) :
-        isValidAsset(file) ? [fileRelativeFor(relative(baseFolder, join(basePath, file.name)))] : []
+          isValidAsset(file) ? [fileRelativeFor(relative(baseFolder, join(basePath, file.name)))] : []
       )
 
   return loadAssetsIn(baseFolder)
