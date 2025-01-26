@@ -1,7 +1,7 @@
 import { blue, bold, green, italic, red, yellow, yellowBright } from 'chalk'
 import cors from 'cors'
 import { ElementDefinition } from 'cytoscape'
-import express, { Express } from 'express'
+import express from 'express'
 import fs, { Dirent, existsSync, mkdirSync } from 'fs'
 import { readFile } from 'fs/promises'
 import globby from 'globby'
@@ -250,7 +250,7 @@ export function initializeDynamicDiagram(_interpreter: Interpreter, options: Dyn
       io.emit('updateDiagram', getDynamicDiagram(interpreter, rootPackage))
     },
     enabled: true,
-    server
+    server,
   }
 }
 
@@ -279,7 +279,7 @@ export const getAllAssets = (projectPath: string, assetsFolder: string): Asset[]
     fs.readdirSync(basePath, { withFileTypes: true })
       .flatMap((file: Dirent) =>
         file.isDirectory() ? loadAssetsIn(join(basePath, file.name)) :
-          isValidAsset(file) ? [fileRelativeFor(relative(baseFolder, join(basePath, file.name)))] : []
+        isValidAsset(file) ? [fileRelativeFor(relative(baseFolder, join(basePath, file.name)))] : []
       )
 
   return loadAssetsIn(baseFolder)
