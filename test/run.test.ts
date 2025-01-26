@@ -1,12 +1,17 @@
 import chai from 'chai'
 import chaiAsPromised from 'chai-as-promised'
 import chaiHttp from 'chai-http'
+import express from 'express'
 import { mkdirSync, rmdirSync } from 'fs'
+import http from 'http'
 import { join } from 'path'
 import sinon from 'sinon'
+import { Server } from 'socket.io'
 import { interpret, WRENatives } from 'wollok-ts'
 import run, { buildEnvironmentForProgram, getAllAssets, getAssetsFolder, getSoundsFolder, getVisuals, Options } from '../src/commands/run'
 import { logger as fileLogger } from '../src/logger'
+
+import logger from 'loglevel'
 import * as utils from '../src/utils'
 import { spyCalledWithSubstring } from './assertions'
 
@@ -20,8 +25,7 @@ const assets = 'assets'
 
 describe('testing run', () => {
 
-  const buildOptions = (game: boolean, assets: string): Options => ({
-    game,
+  const buildOptions = (assets: string): Options => ({
     project,
     assets,
     skipValidations: false,
@@ -33,11 +37,11 @@ describe('testing run', () => {
   describe('getAssetsPath', () => {
 
     it('should return assets folder from package if it exists', () => {
-      expect(getAssetsFolder(buildOptions(true, 'myAssets' /** Ignored :( */))).to.equal('specialAssets')
+      expect(getAssetsFolder(buildOptions('myAssets' /** Ignored :( */))).to.equal('specialAssets')
     })
 
     it('should return assets folder from package with default option', () => {
-      expect(getAssetsFolder(buildOptions(true, assets))).to.equal('specialAssets')
+      expect(getAssetsFolder(buildOptions(assets))).to.equal('specialAssets')
     })
   })
 
@@ -75,7 +79,7 @@ describe('testing run', () => {
       const imageProject = join('examples', 'run-examples', 'asset-example')
 
       const options = {
-        ...buildOptions(true, 'assets'),
+        ...buildOptions('assets'),
         project: imageProject,
       }
 
@@ -161,11 +165,13 @@ describe('testing run', () => {
     let processExitSpy: sinon.SinonStub
     let consoleLogSpy: sinon.SinonStub
     let fileLoggerInfoSpy: sinon.SinonStub
+    let consoleLoggerInfoSpy: sinon.SinonStub
 
     beforeEach(() => {
       processExitSpy = sinon.stub(process, 'exit')
       consoleLogSpy = sinon.stub(console, 'log')
       fileLoggerInfoSpy = sinon.stub(fileLogger, 'info')
+      consoleLoggerInfoSpy = sinon.stub(logger, 'info')
     })
 
     afterEach(() => {
@@ -177,7 +183,6 @@ describe('testing run', () => {
       await run('mainExample.PepitaProgram', {
         project: join('examples', 'run-examples', 'basic-example'),
         skipValidations: false,
-        game: false,
         startDiagram: false,
         assets,
         host: 'localhost',
@@ -193,13 +198,13 @@ describe('testing run', () => {
       const fileLoggerArg = fileLoggerInfoSpy.firstCall.firstArg
       expect(fileLoggerArg.ok).to.be.true
       expect(fileLoggerArg.message).to.contain('Program executed')
+      expect(spyCalledWithSubstring(consoleLoggerInfoSpy, 'finalized successfully')).to.be.true
     })
 
     it('should exit if program has errors', async () => {
       await run('mainExample.PepitaProgram', {
         project: join('examples', 'run-examples', 'bad-example'),
         skipValidations: false,
-        game: false,
         startDiagram: false,
         assets,
         host: 'localhost',
@@ -218,6 +223,7 @@ describe('testing run', () => {
     let handleErrorSpy: sinon.SinonStub
     let processExitSpy: sinon.SinonStub
     let errorReturned: string | undefined = undefined
+    let io: Server
 
     beforeEach(() => {
       handleErrorSpy = sinon.stub(utils, 'handleError')
@@ -226,23 +232,25 @@ describe('testing run', () => {
         errorReturned = error.message
       })
       processExitSpy = sinon.stub(process, 'exit')
+      io = fakeIO()
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      sinon.stub(require('../src/commands/run'), 'initializeGameClient').returns(io)
     })
 
     afterEach(() => {
       sinon.restore()
+      io.close()
     })
 
     it('smoke test - should work if program has no errors', async () => {
-      const ioGame = await run('mainGame.PepitaGame', {
+      await run('mainGame.PepitaGame', {
         project: join('examples', 'run-examples', 'basic-game'),
         skipValidations: false,
-        game: true,
         startDiagram: false,
         assets: 'specialAssets',
         port: '3000',
         host: 'localhost',
       })
-      ioGame?.close()
       expect(processExitSpy.calledWith(0)).to.be.false
       expect(errorReturned).to.be.undefined
     })
@@ -251,14 +259,20 @@ describe('testing run', () => {
       await run('mainGame.PepitaGame', {
         project: join('examples', 'run-examples', 'basic-example'),
         skipValidations: false,
-        game: true,
         startDiagram: false,
         assets: 'specialAssets',
         port: '3000',
         host: 'localhost',
       })
-      // expect(processExitSpy.calledWith(21)).to.be.false
-      expect(errorReturned).to.equal('Folder image examples/run-examples/basic-example/specialAssets does not exist')
+      expect(processExitSpy.calledWith(21)).to.be.false
+      expect(errorReturned?.split('\n')[0]).to.equal('Folder image examples/run-examples/basic-example/specialAssets does not exist')
     })
   })
 })
+
+const fakeIO = (): Server => {
+  const app = express()
+  const server = http.createServer(app)
+  const io = new Server(server)
+  return io
+}

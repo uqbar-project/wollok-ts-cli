@@ -26,7 +26,6 @@ updateNotifier().finally(() => {
     .option('--skipValidations', 'skip code validation', false)
     .option('--host [host]', 'host to run (bind) the server', 'localhost')
     .option('--port [port]', 'port to run the server', '3000')
-    .option('-g, --game', 'sets the program as a game', false)
     .option('-v, --verbose', 'print debugging information', false)
     .option('-d, --startDiagram', 'activate the dynamic diagram (only for games)', false)
     .action((programFQN, options) => { run(programFQN, options) })
