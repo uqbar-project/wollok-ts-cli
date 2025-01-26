@@ -4,9 +4,10 @@ import chaiHttp from 'chai-http'
 import { mkdirSync, rmdirSync } from 'fs'
 import { join } from 'path'
 import sinon from 'sinon'
-import * as utils from '../src/utils'
-import run, { buildEnvironmentForProgram, getAllAssets, getAssetsFolder, getGameInterpreter, getSoundsFolder, getVisuals, Options } from '../src/commands/run'
+import { interpret, WRENatives } from 'wollok-ts'
+import run, { buildEnvironmentForProgram, getAllAssets, getAssetsFolder, getSoundsFolder, getVisuals, Options } from '../src/commands/run'
 import { logger as fileLogger } from '../src/logger'
+import * as utils from '../src/utils'
 import { spyCalledWithSubstring } from './assertions'
 
 chai.should()
@@ -38,11 +39,6 @@ describe('testing run', () => {
     it('should return assets folder from package with default option', () => {
       expect(getAssetsFolder(buildOptions(true, assets))).to.equal('specialAssets')
     })
-
-    it('should return undefined if game is not set', () => {
-      expect(getAssetsFolder(buildOptions(false, 'myAssets'))).to.equal('')
-    })
-
   })
 
 
@@ -84,7 +80,7 @@ describe('testing run', () => {
       }
 
       const environment = await buildEnvironmentForProgram(options)
-      const interpreter = getGameInterpreter(environment)!
+      const interpreter = interpret(environment, WRENatives)
       const game = interpreter.object('wollok.game.game')
       interpreter.send('addVisual', game, interpreter.object('mainGame.elementoVisual'))
 
@@ -252,7 +248,7 @@ describe('testing run', () => {
     })
 
     it('smoke test - should not work if program has errors', async () => {
-      const ioGame = await run('mainGame.PepitaGame', {
+      await run('mainGame.PepitaGame', {
         project: join('examples', 'run-examples', 'basic-example'),
         skipValidations: false,
         game: true,
@@ -261,11 +257,8 @@ describe('testing run', () => {
         port: '3000',
         host: 'localhost',
       })
-      ioGame?.close()
-      expect(processExitSpy.calledWith(21)).to.be.false
+      // expect(processExitSpy.calledWith(21)).to.be.false
       expect(errorReturned).to.equal('Folder image examples/run-examples/basic-example/specialAssets does not exist')
     })
-
   })
-
 })

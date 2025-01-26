@@ -6,8 +6,8 @@ import http from 'http'
 import logger from 'loglevel'
 import { join, relative } from 'path'
 import { Server, Socket } from 'socket.io'
+import { Environment, GAME_MODULE, interpret, Interpreter, Name, WRENatives as natives, Program, RuntimeObject, WollokException } from 'wollok-ts'
 import { Asset, boardState, buildKeyPressEvent, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools'
-import { Environment, GAME_MODULE, interpret, Interpreter, Name, Package, RuntimeObject, WollokException, WRENatives as natives } from 'wollok-ts'
 import { logger as fileLogger } from '../logger'
 import { buildEnvironmentForProject, buildEnvironmentIcon, ENTER, failureDescription, folderIcon, gameIcon, getDynamicDiagram, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readPackageProperties, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
 import { DummyProfiler, EventProfiler, TimeMeasurer } from './../time-measurer'
@@ -32,61 +32,44 @@ type DynamicDiagramClient = {
 }
 
 export default async function (programFQN: Name, options: Options): Promise<Server | undefined> {
-  const { game, project, assets } = options
+  const { game, project } = options
   const timeMeasurer = new TimeMeasurer()
   try {
-    logger.info(`${game ? gameIcon : programIcon} Running program ${valueDescription(programFQN)} ${runner(game)} on ${valueDescription(project)}`)
-    options.assets = game ? getAssetsFolder(options) : ''
-    if (game) {
-      const logGameFinished = (exitCode: any) => {
-        fileLogger.info({ message: `${gameIcon} Game executed ${programFQN} on ${project}`, timeElapsed: timeMeasurer.elapsedTime(), exitCode })
-        process.exit(exitCode)
-      }
-      logger.info(`${folderIcon}  Assets folder ${join(project, options.assets)}`)
-      Array.from(['exit', 'SIGINT', 'SIGUSR1', 'SIGUSR2', 'SIGTERM', 'SIGHUP', 'uncaughtException']).forEach((eventType: string) => {
-        process.on(eventType, logGameFinished)
-      })
-    }
+    logger.info(`${programIcon} Running program ${valueDescription(programFQN)} on ${valueDescription(project)}`)
 
     logger.info(`${buildEnvironmentIcon} Building environment for ${valueDescription(programFQN)}...${ENTER}`)
     const environment = await buildEnvironmentForProgram(options)
     const debug = logger.getLevel() <= logger.levels.DEBUG
     if (debug) time(successDescription('Run initiated successfully'))
-    const assetFiles = getAllAssets(project, assets)
 
-    const interpreter = game ? getGameInterpreter(environment) : interpret(environment, { ...natives })
-    const programPackage = environment.getNodeByFQN<Package>(programFQN).parent as Package
-    const dynamicDiagramClient = await initializeDynamicDiagram(programPackage, options, interpreter)
-    const ioGame: Server | undefined = initializeGameClient(options)
+    const interpreter = interpret(environment, { ...natives })
+    const dynamicDiagramClient = await initializeDynamicDiagram(programFQN, options, interpreter)
 
     interpreter.run(programFQN)
 
-    if (game) {
-      eventsFor(ioGame!, interpreter, dynamicDiagramClient, assetFiles)
-    }
-
     if (debug) timeEnd(successDescription('Run finalized successfully'))
 
-    if (!game) {
-      fileLogger.info({ message: `${programIcon} Program executed ${programFQN} on ${project}`, timeElapsed: timeMeasurer.elapsedTime(), ok: true })
-      process.exit(0)
+    if (game) { // Move to native
+      const assets = getAssetsFolder(options)
+      const ioGame = initializeGameClient(options)
+      const assetFiles = getAllAssets(project, assets)
+      configProcessForGame(programFQN, timeMeasurer, options)
+      eventsFor(ioGame!, interpreter, dynamicDiagramClient, assetFiles)
+      return ioGame
     }
 
-    return ioGame
+    fileLogger.info({ message: `${programIcon} Program executed ${valueDescription(programFQN)} on ${valueDescription(project)}`, timeElapsed: timeMeasurer.elapsedTime(), ok: true })
+    process.exit(0)
+
   } catch (error: any) {
     handleError(error)
-    fileLogger.info({ message: `${game ? gameIcon : programIcon} ${game ? 'Game' : 'Program'} executed ${programFQN} on ${project}`, timeElapsed: timeMeasurer.elapsedTime(), ok: false, error: sanitizeStackTrace(error) })
-    if (!game) { process.exit(21) }
+    fileLogger.info({ message: `${programIcon} Program executed ${valueDescription(programFQN)} on ${valueDescription(project)}`, timeElapsed: timeMeasurer.elapsedTime(), ok: false, error: sanitizeStackTrace(error) })
+    // if (!game) { process.exit(21) }
+    process.exit(21)
   }
 }
 
-export const getGameInterpreter = (environment: Environment): Interpreter => {
-  return interpret(environment, natives)
-}
-
-export const initializeGameClient = ({ project, assets, host, port, game }: Options): Server | undefined => {
-  if (!game) return undefined
-
+export const initializeGameClient = ({ project, assets, host, port }: Options): Server => {
   const app = express()
   const server = http.createServer(app)
   const io = new Server(server)
@@ -105,12 +88,12 @@ export const initializeGameClient = ({ project, assets, host, port, game }: Opti
   const currentPort = gamePort(port!)
   server.listen(parseInt(currentPort), currentHost)
 
-  logger.info(successDescription('Game available at: ' + bold(`http://${currentHost}:${currentPort}`)))
+  logger.info(successDescription(`${gameIcon} Game available at: ${bold(`http://${currentHost}:${currentPort}`)}`))
   server.listen(currentPort)
   return io
 }
 
-export async function initializeDynamicDiagram(programPackage: Package, options: Options, interpreter: Interpreter): Promise<DynamicDiagramClient> {
+export async function initializeDynamicDiagram(programFQN: Name, options: Options, interpreter: Interpreter): Promise<DynamicDiagramClient> {
   if (!options.startDiagram || !options.game) return { onReload: () => { } }
 
   const app = express()
@@ -124,6 +107,8 @@ export async function initializeDynamicDiagram(programPackage: Package, options:
     logger.debug(successDescription('Connected to Dynamic diagram'))
     socket.on('disconnect', () => { logger.debug(failureDescription('Dynamic diagram closed')) })
   })
+
+  const programPackage = interpreter.evaluation.environment.getNodeByFQN<Program>(programFQN).parent
   const connectionListener = (interpreter: Interpreter) => (socket: Socket) => {
     socket.emit('initDiagram', options)
     socket.emit('updateDiagram', getDynamicDiagram(interpreter, programPackage))
@@ -231,8 +216,7 @@ export const getSoundsFolder = (projectPath: string, assetsOptions: string | und
   fs.readdirSync(projectPath).includes('sounds') ? 'sounds' : assetsOptions ?? 'assets'
 
 
-export const getAssetsFolder = ({ game, project, assets }: Options): string => {
-  if (!game) return ''
+export const getAssetsFolder = ({ project, assets }: Options): string => {
   const packageProperties = readPackageProperties(project)
   return packageProperties?.resourceFolder ?? assets
 }
@@ -243,12 +227,21 @@ export const buildEnvironmentForProgram = async ({ project, skipValidations }: O
   return environment
 }
 
-export const runner = (game: boolean): string => game ? 'as a game' : 'as a program'
-
 export const gamePort = (port: string): string => port ?? DEFAULT_PORT
 export const gameHost = (host: string): string => host ?? DEFAULT_HOST
 
 export const dynamicDiagramPort = (port: string): string => `${+gamePort(port) + 1}`
+
+const configProcessForGame = (programFQN: Name, timeMeasurer: TimeMeasurer, { project, assets }: Options) => {
+  const logGameFinished = (exitCode: any) => {
+    fileLogger.info({ message: `${gameIcon} Game executed ${programFQN} on ${project}`, timeElapsed: timeMeasurer.elapsedTime(), exitCode })
+    process.exit(exitCode)
+  }
+  logger.info(`${folderIcon}  Assets folder ${join(project, assets)}`)
+  Array.from(['exit', 'SIGINT', 'SIGUSR1', 'SIGUSR2', 'SIGTERM', 'SIGHUP', 'uncaughtException']).forEach((eventType: string) => {
+    process.on(eventType, logGameFinished)
+  })
+}
 
 const draw = (interpreter: Interpreter, io: Server) => {
   const game = interpreter?.object(GAME_MODULE)
