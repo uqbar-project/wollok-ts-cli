@@ -2,34 +2,30 @@
 import { bold } from 'chalk'
 import { Command } from 'commander'
 import cors from 'cors'
-import express, { Express } from 'express'
+import express from 'express'
 import http from 'http'
 import logger from 'loglevel'
 import { CompleterResult, Interface, createInterface as Repl } from 'readline'
 import { Server, Socket } from 'socket.io'
-import { Entity, Environment, Evaluation, Interpreter, Package, REPL, interprete, link, WRENatives as natives } from 'wollok-ts'
+import { Entity, Environment, Evaluation, Execution, Interpreter, NativeFunction, Package, REPL, RuntimeValue, WRENatives, interprete, link } from 'wollok-ts'
+import { eventsFor, initializeGameClient } from '../game'
 import { logger as fileLogger } from '../logger'
 import { TimeMeasurer } from '../time-measurer'
-import { ENTER, buildEnvironmentForProject, failureDescription, getDynamicDiagram, getFQN, handleError, publicPath, replIcon, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
+import { DynamicDiagramClient, ENTER, buildEnvironmentCommand, buildNativesForGame, failureDescription, getAllAssets, getAssetsFolder, getDynamicDiagram, getFQN, handleError, nextPort, publicPath, replIcon, sanitizeStackTrace, serverError, successDescription, valueDescription } from '../utils'
 
 // TODO:
 // - autocomplete piola
 
 export type Options = {
   project: string
-  skipValidations: boolean,
-  darkMode: boolean,
-  host: string,
-  port: string,
-  skipDiagram: boolean,
+  assets: string
+  skipValidations: boolean
+  darkMode: boolean
+  host: string
+  port: string
+  skipDiagram: boolean
 }
 
-type DynamicDiagramClient = {
-  onReload: (interpreter: Interpreter) => void,
-  enabled: boolean,
-  app?: Express, // only for testing purposes
-  server?: http.Server, // only for testing purposes
-}
 
 export default async function (autoImportPath: string | undefined, options: Options): Promise<void> {
   replFn(autoImportPath, options)
@@ -38,9 +34,17 @@ export default async function (autoImportPath: string | undefined, options: Opti
 const history: string[] = []
 
 export async function replFn(autoImportPath: string | undefined, options: Options): Promise<Interface> {
+  const { project, assets, host, port } = options
   logger.info(`${replIcon}  Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
 
-  let interpreter = await initializeInterpreter(autoImportPath, options)
+  const serveGame: NativeFunction = function* (): Execution<RuntimeValue> {
+    const path = getAssetsFolder(project, assets)
+    const ioGame = initializeGameClient(project, path, host, nextPort(port))
+    const assetFiles = getAllAssets(project, path)
+    eventsFor(ioGame, interpreter, dynamicDiagramClient, assetFiles)
+    return yield* this.reify(true)
+  }
+  let interpreter = await initializeInterpreter(autoImportPath, options, buildNativesForGame(serveGame))
   const autoImportName = autoImportPath && interpreter.evaluation.environment.replNode().name
   const repl = Repl({
     input: process.stdin,
@@ -105,13 +109,12 @@ export function interpreteLine(interpreter: Interpreter, line: string): string {
   return errored ? failureDescription(result, error) : successDescription(result)
 }
 
-export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations }: Options): Promise<Interpreter> {
+export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations }: Options, natives = WRENatives): Promise<Interpreter> {
   let environment: Environment
   const timeMeasurer = new TimeMeasurer()
 
   try {
-    environment = await buildEnvironmentForProject(project)
-    validateEnvironment(environment, skipValidations)
+    environment = await buildEnvironmentCommand(project, skipValidations)
 
     if (autoImportPath) {
       const fqn = getFQN(project, autoImportPath)
@@ -128,7 +131,9 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
       const replPackage = new Package({ name: REPL })
       environment = link([replPackage], environment)
     }
-    return new Interpreter(Evaluation.build(environment, natives))
+
+    const interpreter = new Interpreter(Evaluation.build(environment, natives))
+    return interpreter
   } catch (error: any) {
     handleError(error)
     fileLogger.info({ message: `${replIcon} REPL execution - build failed for ${project}`, timeElapsed: timeMeasurer.elapsedTime(), ok: false, error: sanitizeStackTrace(error) })
@@ -206,9 +211,8 @@ async function autocomplete(input: string): Promise<CompleterResult> {
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
 export async function initializeClient(options: Options, repl: Interface, interpreter: Interpreter): Promise<DynamicDiagramClient> {
-  if (options.skipDiagram) {
-    return { onReload: (_interpreter: Interpreter) => {}, enabled: false }
-  }
+  if (options.skipDiagram) return { onReload: () => { }, enabled: false }
+
   const app = express()
   const server = http.createServer(app)
 

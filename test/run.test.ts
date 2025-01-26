@@ -4,15 +4,16 @@ import chaiHttp from 'chai-http'
 import express from 'express'
 import { mkdirSync, rmdirSync } from 'fs'
 import http from 'http'
+import logger from 'loglevel'
 import { join } from 'path'
 import sinon from 'sinon'
 import { Server } from 'socket.io'
 import { interpret, WRENatives } from 'wollok-ts'
-import run, { buildEnvironmentForProgram, getAllAssets, getAssetsFolder, getSoundsFolder, getVisuals, Options } from '../src/commands/run'
+import run, { Options } from '../src/commands/run'
+import { getVisuals } from '../src/game'
 import { logger as fileLogger } from '../src/logger'
-
-import logger from 'loglevel'
 import * as utils from '../src/utils'
+import { buildEnvironmentCommand, getAllAssets, getAssetsFolder, getSoundsFolder } from '../src/utils'
 import { spyCalledWithSubstring } from './assertions'
 
 chai.should()
@@ -21,7 +22,7 @@ chai.use(chaiAsPromised)
 const expect = chai.expect
 
 const project = join('examples', 'run-examples', 'basic-example')
-const assets = 'assets'
+const assetsFolder = 'assets'
 
 describe('testing run', () => {
 
@@ -37,11 +38,13 @@ describe('testing run', () => {
   describe('getAssetsPath', () => {
 
     it('should return assets folder from package if it exists', () => {
-      expect(getAssetsFolder(buildOptions('myAssets' /** Ignored :( */))).to.equal('specialAssets')
+      const { project, assets } = buildOptions('myAssets' /** Ignored :( */)
+      expect(getAssetsFolder(project, assets)).to.equal('specialAssets')
     })
 
     it('should return assets folder from package with default option', () => {
-      expect(getAssetsFolder(buildOptions(assets))).to.equal('specialAssets')
+      const { project, assets } = buildOptions(assetsFolder)
+      expect(getAssetsFolder(project, assets)).to.equal('specialAssets')
     })
   })
 
@@ -67,23 +70,13 @@ describe('testing run', () => {
       expect(getSoundsFolder(project, 'myAssets')).to.equal('myAssets')
     })
 
-    it('should return assets folder if assets options not sent', () => {
-      expect(getSoundsFolder(project, undefined)).to.equal('assets')
-    })
-
   })
 
   describe('getVisuals', () => {
 
     it('should return all visuals for a simple project', async () => {
       const imageProject = join('examples', 'run-examples', 'asset-example')
-
-      const options = {
-        ...buildOptions('assets'),
-        project: imageProject,
-      }
-
-      const environment = await buildEnvironmentForProgram(options)
+      const environment = await buildEnvironmentCommand(imageProject)
       const interpreter = interpret(environment, WRENatives)
       const game = interpreter.object('wollok.game.game')
       interpreter.send('addVisual', game, interpreter.object('mainGame.elementoVisual'))
@@ -184,7 +177,7 @@ describe('testing run', () => {
         project: join('examples', 'run-examples', 'basic-example'),
         skipValidations: false,
         startDiagram: false,
-        assets,
+        assets: assetsFolder,
         host: 'localhost',
         port: '3000',
       })
@@ -206,7 +199,7 @@ describe('testing run', () => {
         project: join('examples', 'run-examples', 'bad-example'),
         skipValidations: false,
         startDiagram: false,
-        assets,
+        assets: assetsFolder,
         host: 'localhost',
         port: '3000',
       })
@@ -234,7 +227,7 @@ describe('testing run', () => {
       processExitSpy = sinon.stub(process, 'exit')
       io = fakeIO()
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      sinon.stub(require('../src/commands/run'), 'initializeGameClient').returns(io)
+      sinon.stub(require('../src/game'), 'initializeGameClient').returns(io)
     })
 
     afterEach(() => {

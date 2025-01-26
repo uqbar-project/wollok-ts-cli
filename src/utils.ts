@@ -1,12 +1,14 @@
 import { blue, bold, green, italic, red, yellow, yellowBright } from 'chalk'
-import fs, { existsSync, mkdirSync } from 'fs'
+import { ElementDefinition } from 'cytoscape'
+import { Express } from 'express'
+import fs, { Dirent, existsSync, mkdirSync } from 'fs'
 import { readFile } from 'fs/promises'
 import globby from 'globby'
+import http from 'http'
 import logger from 'loglevel'
-import path, { join } from 'path'
-import { getDataDiagram, VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools'
-import { buildEnvironment, Environment, getDynamicDiagramData, Interpreter, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException } from 'wollok-ts'
-import { ElementDefinition } from 'cytoscape'
+import path, { join, relative } from 'path'
+import { buildEnvironment, Environment, get, getDynamicDiagramData, Interpreter, NativeFunction, Natives, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException, WRENatives } from 'wollok-ts'
+import { Asset, getDataDiagram, VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools'
 
 const { time, timeEnd } = console
 
@@ -21,6 +23,7 @@ export const testIcon = '🧪'
 export const replIcon = '🖥️'
 export const buildEnvironmentIcon = '🌏'
 export const folderIcon = '🗂️'
+export const diagramIcon = '🔀'
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // FILE / PATH HANDLING
@@ -79,6 +82,12 @@ export const validateEnvironment = (environment: Environment, skipValidations: b
       throw new Error(`Fatal error while running validations. ${error.message}`)
     }
   }
+}
+
+export const buildEnvironmentCommand = async (project: string, skipValidations = false): Promise<Environment> => {
+  const environment = await buildEnvironmentForProject(project)
+  validateEnvironment(environment, skipValidations)
+  return environment
 }
 
 export const handleError = (error: any): void => {
@@ -157,6 +166,14 @@ export function isREPLConstant(environment: Environment, localName: string): boo
   return environment.replNode().isConstant(localName)
 }
 
+// TODO: Use the merge function
+export const buildNativesForGame = (serve: NativeFunction): Natives => {
+  const natives = { ...WRENatives }
+  const io = get<Natives>(natives, 'wollok.lang.io')!
+  io['serve'] = serve
+  return natives
+}
+
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // HTTP SERVER
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -173,11 +190,51 @@ export const serverError = ({ port, code }: { port: string, code: string }): voi
   process.exit(13)
 }
 
+export const nextPort = (port: string): string => `${+port + 1}`
+
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // DYNAMIC DIAGRAM
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
+export type DynamicDiagramClient = {
+  onReload: (interpreter: Interpreter) => void,
+  enabled: boolean,
+  app?: Express, // only for testing purposes
+  server?: http.Server, // only for testing purposes
+}
+
 export function getDynamicDiagram(interpreter: Interpreter, rootFQN?: Package): ElementDefinition[] {
   const objects = getDynamicDiagramData(interpreter, rootFQN)
   return getDataDiagram(objects)
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// WOLLOK GAME
+// ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+export const getAssetsFolder = (project: string, assets: string): string => {
+  const packageProperties = readPackageProperties(project)
+  return packageProperties?.resourceFolder ?? assets
+}
+
+export const getSoundsFolder = (projectPath: string, assetsOptions: string): string =>
+  fs.readdirSync(projectPath).includes('sounds') ? 'sounds' : assetsOptions
+
+export const getAllAssets = (projectPath: string, assetsFolder: string): Asset[] => {
+  const baseFolder = join(projectPath, assetsFolder)
+  if (!existsSync(baseFolder))
+    throw new Error(`Folder image ${baseFolder} does not exist`)
+
+  logger.info(`${folderIcon}  Assets folder ${valueDescription(baseFolder)}${ENTER}`)
+
+  const fileRelativeFor = (fileName: string) => ({ name: fileName, url: fileName })
+
+  const loadAssetsIn = (basePath: string): Asset[] =>
+    fs.readdirSync(basePath, { withFileTypes: true })
+      .flatMap((file: Dirent) =>
+        file.isDirectory() ? loadAssetsIn(join(basePath, file.name)) :
+        isValidAsset(file) ? [fileRelativeFor(relative(baseFolder, join(basePath, file.name)))] : []
+      )
+
+  return loadAssetsIn(baseFolder)
 }
