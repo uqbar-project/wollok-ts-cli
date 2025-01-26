@@ -1,9 +1,7 @@
 import chai from 'chai'
 import chaiAsPromised from 'chai-as-promised'
 import chaiHttp from 'chai-http'
-import express from 'express'
 import { mkdirSync, rmdirSync } from 'fs'
-import http from 'http'
 import logger from 'loglevel'
 import { join } from 'path'
 import sinon from 'sinon'
@@ -15,6 +13,7 @@ import { logger as fileLogger } from '../src/logger'
 import * as utils from '../src/utils'
 import { buildEnvironmentCommand, getAllAssets, getAssetsFolder, getSoundsFolder } from '../src/utils'
 import { spyCalledWithSubstring } from './assertions'
+import { fakeIO } from './mocks'
 
 chai.should()
 chai.use(chaiHttp)
@@ -262,10 +261,3 @@ describe('testing run', () => {
     })
   })
 })
-
-const fakeIO = (): Server => {
-  const app = express()
-  const server = http.createServer(app)
-  const io = new Server(server)
-  return io
-}

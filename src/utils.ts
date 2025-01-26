@@ -271,7 +271,7 @@ export const getAllAssets = (projectPath: string, assetsFolder: string): Asset[]
   if (!existsSync(baseFolder))
     throw new Error(`Folder image ${baseFolder} does not exist`)
 
-  logger.info(`${folderIcon}  Assets folder ${valueDescription(baseFolder)}${ENTER}`)
+  logger.info(`${folderIcon}  Assets folder ${valueDescription(baseFolder)}`)
 
   const fileRelativeFor = (fileName: string) => ({ name: fileName, url: fileName })
 

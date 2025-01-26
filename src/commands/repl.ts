@@ -103,6 +103,7 @@ export async function replFn(autoImportPath: string | undefined, options: Option
     dynamicDiagramClient.server!.addListener('listening', () => repl.prompt())
   else
     repl.prompt()
+
   return repl
 }
 
