@@ -2,10 +2,8 @@ import chai from 'chai'
 import chaiAsPromised from 'chai-as-promised'
 import chaiHttp from 'chai-http'
 import { join } from 'path'
-import { Interface, createInterface as Repl } from 'readline'
-import { Interpreter } from 'wollok-ts'
-import { initializeInterpreter } from '../src/commands/repl'
-import { initializeDynamicDiagram } from '../src/utils'
+import { Evaluation, Interpreter, WRENatives } from 'wollok-ts'
+import { buildEnvironmentForProject, initializeDynamicDiagram } from '../src/utils'
 
 chai.should()
 chai.use(chaiHttp)
@@ -25,16 +23,10 @@ describe('dynamic diagram client', () => {
     skipDiagram: false,
   }
   let interpreter: Interpreter
-  let repl: Interface
 
-  beforeEach(async () => {
-    interpreter = await initializeInterpreter(undefined, options)
-    repl = Repl({
-      input: process.stdin,
-      output: process.stdout,
-      terminal: true,
-    })
-  })
+  beforeEach(async () =>
+    interpreter = new Interpreter(Evaluation.build(await buildEnvironmentForProject(projectPath), WRENatives))
+  )
 
   it('should work for root path', async () => {
     const { enabled, server } = initializeDynamicDiagram(interpreter, options, interpreter.evaluation.environment.replNode())
