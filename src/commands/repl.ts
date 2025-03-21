@@ -20,8 +20,7 @@ export type Options = {
   darkMode: boolean,
   host: string,
   port: string,
-  skipDiagram: boolean,
-  natives?: string
+  skipDiagram: boolean
 }
 
 type DynamicDiagramClient = {
