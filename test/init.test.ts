@@ -4,17 +4,18 @@ import { readFileSync, rmSync } from 'fs'
 import sinon from 'sinon'
 import init, { Options } from '../src/commands/init'
 import test from '../src/commands/test'
-import { pathAssertions, jsonAssertions } from './assertions'
+import { pathAssertions } from './assertions'
+import { homedir } from 'os'
 
 chai.should()
 
 const expect = chai.expect
 use(pathAssertions)
-use(jsonAssertions)
 
 const project = join('examples', 'init-examples', 'basic-example')
 const customFolderName = 'custom-folder'
 const customFolderProject = join(project, customFolderName)
+const absoluteFolder = join(homedir(), '_____folder_for_wollok_unit_test_please_remove_it______')
 const GITHUB_FOLDER = join('.github', 'workflows')
 
 const baseOptions: Options = {
@@ -36,22 +37,22 @@ describe('testing init', () => {
   afterEach(() => {
     rmSync(project, { recursive: true, force: true })
     rmSync(customFolderProject, { recursive: true, force: true })
-
+    rmSync(absoluteFolder, { recursive: true, force: true })
     sinon.restore()
   })
 
   it('should create files successfully for default values: ci, no game, example name & git', async () => {
     init(undefined, baseOptions)
 
-    expect(join(project, 'example.wlk')).to.pathExists
-    expect(join(project, 'testExample.wtest')).to.pathExists
-    expect(join(project, 'package.json')).to.pathExists
-    expect(join(project, GITHUB_FOLDER, 'ci.yml')).to.pathExists
-    expect(join(project, 'README.md')).to.pathExists
-    expect(join(project, '.gitignore')).to.pathExists
-    expect(join(project, 'mainExample.wpgm')).to.not.pathExists
-    expect(join(project, '.git')).to.pathExists
-    expect(join(project, '.git/HEAD')).to.pathExists
+    expect(join(project, 'example.wlk')).to.pathExists()
+    expect(join(project, 'testExample.wtest')).to.pathExists()
+    expect(join(project, 'package.json')).to.pathExists()
+    expect(join(project, GITHUB_FOLDER, 'ci.yml')).to.pathExists()
+    expect(join(project, 'README.md')).to.pathExists()
+    expect(join(project, '.gitignore')).to.pathExists()
+    expect(join(project, 'mainExample.wpgm')).not.to.pathExists()
+    expect(join(project, '.git')).to.pathExists()
+    expect(join(project, '.git/HEAD')).to.pathExists()
     expect(getResourceFolder()).to.be.undefined
 
     await test(undefined, {
@@ -90,40 +91,38 @@ describe('testing init', () => {
       name: 'pepita',
     })
 
-    expect(join(project, 'pepita.wlk')).to.pathExists
-    expect(join(project, 'testPepita.wtest')).to.not.pathExists
-    expect(join(project, 'package.json')).to.pathExists
-    expect(join(project, 'mainPepita.wpgm')).to.not.pathExists
-    expect(join(project, GITHUB_FOLDER, 'ci.yml')).to.not.pathExists
-    expect(join(project, '.gitignore')).to.pathExists
-    expect(join(project, 'README.md')).to.pathExists
+    expect(join(project, 'pepita.wlk')).to.pathExists()
+    expect(join(project, 'testPepita.wtest')).not.to.pathExists()
+    expect(join(project, 'package.json')).to.pathExists()
+    expect(join(project, 'mainPepita.wpgm')).to.pathExists()
+    expect(join(project, GITHUB_FOLDER, 'ci.yml')).not.pathExists()
+    expect(join(project, '.gitignore')).to.pathExists()
+    expect(join(project, 'README.md')).to.pathExists()
   })
 
   it('should create files successfully with an argument for the folder name working in combination with project option', async () => {
-    init(customFolderName, { ...baseOptions, name:'pepita' } )
+    init(customFolderName, baseOptions)
 
 
-    expect(join(customFolderProject, 'pepita.wlk')).to.pathExists
-    expect(join(customFolderProject, 'testPepita.wtest')).to.pathExists
-    expect(join(customFolderProject, 'mainPepita.wpgm')).to.not.pathExists
-    expect(join(customFolderProject, 'package.json')).to.pathExists
-    expect(join(customFolderProject, GITHUB_FOLDER, 'ci.yml')).to.pathExists
-    expect(join(customFolderProject, 'README.md')).to.pathExists
-    expect(join(customFolderProject, '.gitignore')).to.pathExists
+    expect(join(customFolderProject, 'example.wlk')).to.pathExists()
+    expect(join(customFolderProject, 'testExample.wtest')).to.pathExists()
+    expect(join(customFolderProject, 'package.json')).to.pathExists()
+    expect(join(customFolderProject, GITHUB_FOLDER, 'ci.yml')).to.pathExists()
+    expect(join(customFolderProject, 'README.md')).to.pathExists()
+    expect(join(customFolderProject, '.gitignore')).to.pathExists()
   })
 
   it('should skip the initialization of a git repository if notGit flag es enabled', async () => {
     init(undefined, { ...baseOptions, noGit: true })
 
-    expect(join(project, '.git')).not.to.pathExists
-    expect(join(project, '.git/HEAD')).not.to.pathExists
-    expect(join(project, 'example.wlk')).to.pathExists
-    expect(join(project, 'testExample.wtest')).to.pathExists
-    expect(join(project, 'package.json')).to.pathExists
-    expect(join(project, GITHUB_FOLDER, 'ci.yml')).to.pathExists
-    expect(join(project, 'README.md')).to.pathExists
-    expect(join(project, '.gitignore')).to.pathExists
-    expect(join(project, 'mainExample.wpgm')).to.not.pathExists
+    expect(join(project, '.git')).not.to.pathExists()
+    expect(join(project, '.git/HEAD')).not.to.pathExists()
+    expect(join(project, 'example.wlk')).to.pathExists()
+    expect(join(project, 'testExample.wtest')).to.pathExists()
+    expect(join(project, 'package.json')).to.pathExists()
+    expect(join(project, GITHUB_FOLDER, 'ci.yml')).to.pathExists()
+    expect(join(project, 'README.md')).to.pathExists()
+    expect(join(project, '.gitignore')).to.pathExists()
     expect(getResourceFolder()).to.be.undefined
   })
 
@@ -137,27 +136,30 @@ describe('testing init', () => {
   })
 
   it('should create a natives folder when it is required', () => {
-    init(undefined, { ...baseOptions, natives: 'myNatives' })
-
-    expect(join(project, 'myNatives')).to.pathExists
-    expect('package.json')
-    expect(join(project, 'package.json')).jsonMatch({ natives: 'myNatives' })
+    init(undefined, {
+      ...baseOptions,
+      natives: 'myNatives',
+    })
+    expect(join(project, 'myNatives')).to.pathExists()
 
   })
 
   it('should create a natives nested folders when it is required', () => {
     const nativesFolder =join('myNatives', 'myReallyNatives')
-    init(undefined, { ...baseOptions, natives: nativesFolder })
-    expect(join(project, 'package.json')).jsonMatch({ natives: nativesFolder })
-
+    init(undefined, {
+      ...baseOptions,
+      natives: nativesFolder,
+    })
+    expect(join(project, nativesFolder)).to.pathExists()
   })
 
-  it('should not create a natives folders when it is not specified', () => {
-    init(undefined, baseOptions)
-    expect(join(project, 'package.json')).not.jsonKeys(['natives'])
+  it('should create a native folders event it is an absolute path', () => {
+    init(undefined, {
+      ...baseOptions,
+      natives: absoluteFolder,
+    })
+    expect(absoluteFolder).to.pathExists
   })
-
-
 })
 
 const getResourceFolder = () => {

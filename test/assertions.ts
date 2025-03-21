@@ -7,7 +7,7 @@ declare global {
   export namespace Chai {
     interface Assertion { // TODO: split into the separate modules
       connect: (label: string, sourceLabel: string, targetLabel: string, width?: number, style?: string) => Assertion
-      pathExists: Assertion
+      pathExists(): Assertion
       jsonKeys(expectedKeys: string[]): Assertion;
       jsonMatch(expected: Record<string, any>): Assertion;
     }
@@ -21,16 +21,14 @@ declare global {
 export const pathAssertions: Chai.ChaiPlugin = (chai) => {
   const { Assertion } = chai
 
-  Assertion.addProperty('pathExists', function () {
+  Assertion.addMethod('pathExists', function () {
     const path:string = this._obj
     const exists = existsSync(path)
     this.assert(
       exists,
       `expected this path to exist: '${path}'`,
       `expected this path to not exist: '${path}'`,
-      true,
-      exists,
-      false
+      this._obj
     )
   })
 }
