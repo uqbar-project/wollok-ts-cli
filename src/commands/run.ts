@@ -38,7 +38,7 @@ export default async function (programFQN: Name, options: Options): Promise<Serv
 
   try {
     logger.info(`${game ? gameIcon : programIcon} Running program ${valueDescription(programFQN)} ${runner(game)} on ${valueDescription(project)}`)
-    options.assets = game ? getAssetsFolder(options) : ''
+    options.assets = game ? getAssetsFolder(proj, options) : ''
     if (game) {
       const logGameFinished = (exitCode: any) => {
         fileLogger.info({ message: `${gameIcon} Game executed ${programFQN} on ${project}`, timeElapsed: timeMeasurer.elapsedTime(), exitCode })
@@ -233,9 +233,9 @@ export const getSoundsFolder = (projectPath: string, assetsOptions: string | und
   fs.readdirSync(projectPath).includes('sounds') ? 'sounds' : assetsOptions ?? 'assets'
 
 
-export const getAssetsFolder = ({ game, project, assets }: Options): string => {
+export const getAssetsFolder = (project: Project, { game, assets }: Options): string => {
   if (!game) return ''
-  return new Project(project).properties.resourceFolder ?? assets //TODO: No sería mejor al revés? si me pasaron una opción usar esa, si no usar la del package.json
+  return project.properties.resourceFolder ?? assets //TODO: No sería mejor al revés? si me pasaron una opción usar esa, si no usar la del package.json
 }
 
 export const buildEnvironmentForProgram = async ({ project, skipValidations }: Options): Promise<Environment> => {

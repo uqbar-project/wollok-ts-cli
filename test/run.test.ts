@@ -15,6 +15,7 @@ chai.use(chaiAsPromised)
 const expect = chai.expect
 
 const project = join('examples', 'run-examples', 'basic-example')
+const proj = new utils.Project(project)
 const assets = 'assets'
 
 describe('testing run', () => {
@@ -29,18 +30,19 @@ describe('testing run', () => {
     port: '3000',
   })
 
+
   describe('getAssetsPath', () => {
 
     it('should return assets folder from package if it exists', () => {
-      expect(getAssetsFolder(buildOptions(true, 'myAssets' /** Ignored :( */))).to.equal('specialAssets')
+      expect(getAssetsFolder(proj, buildOptions(true, 'myAssets' /** Ignored :( */))).to.equal('specialAssets')
     })
 
     it('should return assets folder from package with default option', () => {
-      expect(getAssetsFolder(buildOptions(true, assets))).to.equal('specialAssets')
+      expect(getAssetsFolder(proj, buildOptions(true, assets))).to.equal('specialAssets')
     })
 
     it('should return undefined if game is not set', () => {
-      expect(getAssetsFolder(buildOptions(false, 'myAssets'))).to.equal('')
+      expect(getAssetsFolder(proj, buildOptions(false, 'myAssets'))).to.equal('')
     })
 
   })
