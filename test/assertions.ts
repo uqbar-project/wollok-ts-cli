@@ -1,5 +1,5 @@
 import { ElementDefinition } from 'cytoscape'
-import { existsSync, readFileSync } from 'fs'
+import { existsSync } from 'fs'
 
 type ElementDefinitionQuery = Partial<ElementDefinition['data']>
 
@@ -8,8 +8,6 @@ declare global {
     interface Assertion { // TODO: split into the separate modules
       connect: (label: string, sourceLabel: string, targetLabel: string, width?: number, style?: string) => Assertion
       pathExists(): Assertion
-      jsonKeys(expectedKeys: string[]): Assertion;
-      jsonMatch(expected: Record<string, any>): Assertion;
     }
 
     interface Include {
@@ -22,17 +20,16 @@ export const pathAssertions: Chai.ChaiPlugin = (chai) => {
   const { Assertion } = chai
 
   Assertion.addMethod('pathExists', function () {
-    const path:string = this._obj
-    const exists = existsSync(path)
+    new Assertion(this._obj).to.be.an('string').length.above(0)
+    const exists = existsSync(this._obj)
     this.assert(
       exists,
-      `expected this path to exist: '${path}'`,
-      `expected this path to not exist: '${path}'`,
+      `expected path ${this._obj} to exist`,
+      `expected path ${this._obj} not to exist`,
       this._obj
     )
   })
 }
-
 
 export const diagramAssertions: Chai.ChaiPlugin = (chai) => {
   const { Assertion } = chai
@@ -81,73 +78,4 @@ export const spyCalledWithSubstring = (spy: sinon.SinonStub, value: string, debu
     }
   }
   return false
-}
-
-export const jsonAssertions: Chai.ChaiPlugin = (chai) => {
-  const { Assertion } = chai
-
-  const getNestedValue = (obj: Record<string, any>, path: string): any =>
-    path.split('.').reduce((acc, key) => acc ? acc[key] : undefined, obj)
-
-  const matchPartial = (
-    expected: Record<string, any>,
-    actual: Record<string, any>,
-    prefix: string = ''
-  ): boolean =>
-    Object.keys(expected).every((key) => {
-      const fullPath = prefix ? `${prefix}.${key}` : key
-      if (typeof expected[key] === 'object' && expected[key] !== null) {
-        if (typeof actual[key] !== 'object' || actual[key] === null) {
-          return false
-        }
-        return matchPartial(expected[key], actual[key], fullPath)
-      }
-      return actual[key] === expected[key]
-    })
-
-  const getJsonContent = (filePath: string): any => {
-    if (!existsSync(filePath)) {
-      throw new chai.AssertionError(`Expected file "${filePath}" to exist`)
-    }
-
-    try {
-      return JSON.parse(readFileSync(filePath, 'utf8'))
-    } catch (error) {
-      throw new chai.AssertionError(
-        `Failed to parse JSON from file "${filePath}": ${String(error)}`
-      )
-    }
-  }
-
-  Assertion.addMethod('jsonKeys', function (expectedKeys: string[]) {
-    const filePath = this._obj as string
-
-    const jsonContent = getJsonContent(filePath)
-
-    expectedKeys.forEach((key) =>
-      this.assert(
-        getNestedValue(jsonContent, key) !== undefined,
-        `Expected JSON to have key "${key} but"`,
-        `Expected JSON not to have key "${key}"`,
-        key,
-        jsonContent,
-        jsonContent
-      )
-    )
-  })
-
-  Assertion.addMethod('jsonMatch', function (expected: Record<string, any>) {
-    const filePath = this._obj as string
-
-    const jsonContent = getJsonContent(filePath)
-
-    this.assert(
-      matchPartial(expected, jsonContent),
-      `Expected JSON to match: ${JSON.stringify(expected)}, but got: ${JSON.stringify(jsonContent)}`,
-      `Expected JSON not to match: ${JSON.stringify(expected)}`,
-      expected,
-      jsonContent,
-      true
-    )
-  })
 }
