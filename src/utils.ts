@@ -36,13 +36,9 @@ export const folderIcon = '🗂️'
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
 export class Project {
-  project!: string
-  properties: any = {}
+  private _properties?: any
 
-  constructor(project: string) {
-    this.project = project
-    this.safeLoadJson()
-  }
+  constructor(public readonly project: string) {}
 
   get sourceFolder() : string {
     return this.project
@@ -52,15 +48,20 @@ export class Project {
     return path.join(this.sourceFolder, 'package.json')
   }
 
-  private safeLoadJson() {
+  get properties(): any {
+    if (this._properties === undefined) {
+      this._properties = this.safeLoadJson()
+    }
+    return this._properties
+  }
+
+  private safeLoadJson(): any {
     try {
       const rawData = fs.readFileSync(this.packageJsonPath, 'utf-8')
-      this.properties = JSON.parse(rawData)
-
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (_error) {
-      // No package.json or it is invalid. This is not a real problem.
-      // Silence here or log?
+      return JSON.parse(rawData)
+    } catch (error) {
+      logger.warn(`Failed to load package.json: ${error}`)
+      return {}
     }
   }
 
@@ -204,11 +205,6 @@ export const problemDescription = (problem: Problem): string => {
 export const publicPath = (...paths: string[]): string =>
   path.join(__dirname, '..', 'public', ...paths)
 
-export const readPackageProperties = (pathProject: string): any | undefined => {
-  const packagePath = path.join(pathProject, 'package.json')
-  if (!fs.existsSync(packagePath)) return undefined
-  return JSON.parse(fs.readFileSync(packagePath, { encoding: 'utf-8' }))
-}
 
 interface Named {
   name: string

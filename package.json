@@ -69,8 +69,10 @@
     "winston": "^3.11.0",
     "wollok-ts": "^4.1.9",
     "wollok-web-tools": "^1.1.7",
-    "typescript": "~5.5.1"
+    "typescript": "~5.5.1",
+    "ts-node": "10.9.1"
   },
+  
   "devDependencies": {
     "@stylistic/eslint-plugin-ts": "^2.8.0",
     "@types/chai": "^4.3.16",
@@ -92,7 +94,6 @@
     "nyc": "^15.1.0",
     "shx": "^0.3.4",
     "sinon": "^17.0.1",
-    "socket.io-client": "^4.7.5",
-    "ts-node": "10.9.1"
+    "socket.io-client": "^4.7.5"
   }
 }

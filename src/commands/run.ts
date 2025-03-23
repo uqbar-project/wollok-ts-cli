@@ -9,7 +9,7 @@ import { Server, Socket } from 'socket.io'
 import { Asset, boardState, buildKeyPressEvent, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools'
 import { Environment, GAME_MODULE, interpret, Interpreter, Name, Natives, Package, RuntimeObject, WollokException } from 'wollok-ts'
 import { logger as fileLogger } from '../logger'
-import { buildEnvironmentForProject, buildEnvironmentIcon, ENTER, failureDescription, folderIcon, gameIcon, getDynamicDiagram, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readPackageProperties, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription, Project } from '../utils'
+import { buildEnvironmentForProject, buildEnvironmentIcon, ENTER, failureDescription, folderIcon, gameIcon, getDynamicDiagram, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription, Project } from '../utils'
 import { DummyProfiler, EventProfiler, TimeMeasurer } from './../time-measurer'
 
 const { time, timeEnd } = console
@@ -235,8 +235,7 @@ export const getSoundsFolder = (projectPath: string, assetsOptions: string | und
 
 export const getAssetsFolder = ({ game, project, assets }: Options): string => {
   if (!game) return ''
-  const packageProperties = readPackageProperties(project)
-  return packageProperties?.resourceFolder ?? assets
+  return new Project(project).properties.resourceFolder ?? assets //TODO: No sería mejor al revés? si me pasaron una opción usar esa, si no usar la del package.json
 }
 
 export const buildEnvironmentForProgram = async ({ project, skipValidations }: Options): Promise<Environment> => {
