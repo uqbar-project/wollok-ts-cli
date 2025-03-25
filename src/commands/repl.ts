@@ -7,11 +7,10 @@ import http from 'http'
 import logger from 'loglevel'
 import { CompleterResult, Interface, createInterface as Repl } from 'readline'
 import { Server, Socket } from 'socket.io'
-import { Entity, Environment, Evaluation, Interpreter, Package, REPL, interprete, link, WRENatives as natives } from 'wollok-ts'
+import { Entity, Environment, Evaluation, Interpreter, Package, REPL, interprete, link } from 'wollok-ts'
 import { logger as fileLogger } from '../logger'
 import { TimeMeasurer } from '../time-measurer'
-import { ENTER, buildEnvironmentForProject, failureDescription, getDynamicDiagram, getFQN, handleError, publicPath, replIcon, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
-
+import { ENTER, buildEnvironmentForProject, failureDescription, getDynamicDiagram, getFQN, handleError, publicPath, replIcon, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription, Project } from '../utils'
 // TODO:
 // - autocomplete piola
 
@@ -21,7 +20,7 @@ export type Options = {
   darkMode: boolean,
   host: string,
   port: string,
-  skipDiagram: boolean,
+  skipDiagram: boolean
 }
 
 type DynamicDiagramClient = {
@@ -108,6 +107,7 @@ export function interpreteLine(interpreter: Interpreter, line: string): string {
 export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations }: Options): Promise<Interpreter> {
   let environment: Environment
   const timeMeasurer = new TimeMeasurer()
+  const proj = new Project(project)
 
   try {
     environment = await buildEnvironmentForProject(project)
@@ -128,7 +128,7 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
       const replPackage = new Package({ name: REPL })
       environment = link([replPackage], environment)
     }
-    return new Interpreter(Evaluation.build(environment, natives))
+    return new Interpreter(Evaluation.build(environment, await proj.readNatives()))
   } catch (error: any) {
     handleError(error)
     fileLogger.info({ message: `${replIcon} REPL execution - build failed for ${project}`, timeElapsed: timeMeasurer.elapsedTime(), ok: false, error: sanitizeStackTrace(error) })

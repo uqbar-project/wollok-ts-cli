@@ -13,11 +13,13 @@ export type Options = {
   noTest: boolean,
   noCI: boolean,
   game: boolean,
-  noGit: boolean
+  noGit: boolean,
+  natives?: string
 }
 
-export default function (folder: string | undefined, { project: _project, name, noTest = false, noCI = false, game = false, noGit = false }: Options): void {
+export default function (folder: string | undefined, { project: _project, name, noTest = false, noCI = false, game = false, noGit = false, natives = undefined }: Options): void {
   const project = join(_project, folder ?? '')
+  const nativesFolder = join(project, natives ?? '')
 
   // Initialization
   if (existsSync(join(project, 'package.json'))) {
@@ -28,6 +30,7 @@ export default function (folder: string | undefined, { project: _project, name, 
 
   // Creating folders
   createFolderIfNotExists(project)
+  createFolderIfNotExists(nativesFolder)
   createFolderIfNotExists(join(project, '.github'))
   createFolderIfNotExists(join(project, '.github', 'workflows'))
   if (game) {
@@ -52,7 +55,7 @@ export default function (folder: string | undefined, { project: _project, name, 
   }
 
   logger.info('Creating package.json')
-  writeFileSync(join(project, 'package.json'), packageJsonDefinition(project, game))
+  writeFileSync(join(project, 'package.json'), packageJsonDefinition(project, game, natives ))
 
   if (!noCI) {
     logger.info('Creating CI files')
@@ -130,16 +133,16 @@ program PepitaGame {
 }
 `
 
-const packageJsonDefinition = (projectName: string, game: boolean) => `{
+const packageJsonDefinition = (projectName: string, game: boolean, natives?: string) => `{
   "name": "${basename(projectName)}",
   "version": "1.0.0",
   ${game ? assetsConfiguration() : ''}"wollokVersion": "4.0.0",
-  "author": "${userInfo().username}",
+  "author": "${userInfo().username}",${nativesConfiguration(natives)}
   "license": "ISC"
 }
 `
-
 const assetsConfiguration = () => `"resourceFolder": "assets",${ENTER}  `
+const nativesConfiguration = (natives?: string) =>  natives ? `${ENTER}  "natives": "${natives}",` : ''
 
 const ymlForCI = `name: build
 
@@ -172,5 +175,9 @@ const gitignore = `
 .history
 
 # Wollok Log
+log
 *.log
+
+# Dependencies
+node_modules
 `

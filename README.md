@@ -18,6 +18,11 @@ This is the list of the currently available commands:
 - **`test <filter>`**: Runs Wollok tests on the target project.
 - **`repl <auto-import>`**: Opens the Wollok REPL on the target project importing the auto-import path (if any).
 - **`init <name>`**: Creates a new Wollok project
+- **`dependencies`**: Manage dependencies with other Node.js projects (Experimental).
+  - **`add <package>`**: Adds a dependency to the project.
+  - **`remove <package>`**: Removes a dependency from the project.
+  - **`sync`**: Synchronizes all dependencies.
+  - **`help [command]`**: Displays help for a specific subcommand.
 
 ## 💻 Installation instructions
 

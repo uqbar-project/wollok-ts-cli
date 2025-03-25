@@ -7,9 +7,9 @@ import logger from 'loglevel'
 import { join, relative } from 'path'
 import { Server, Socket } from 'socket.io'
 import { Asset, boardState, buildKeyPressEvent, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools'
-import { Environment, GAME_MODULE, interpret, Interpreter, Name, Package, RuntimeObject, WollokException, WRENatives as natives } from 'wollok-ts'
+import { Environment, GAME_MODULE, interpret, Interpreter, Name, Natives, Package, RuntimeObject, WollokException } from 'wollok-ts'
 import { logger as fileLogger } from '../logger'
-import { buildEnvironmentForProject, buildEnvironmentIcon, ENTER, failureDescription, folderIcon, gameIcon, getDynamicDiagram, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, readPackageProperties, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription } from '../utils'
+import { buildEnvironmentForProject, buildEnvironmentIcon, ENTER, failureDescription, folderIcon, gameIcon, getDynamicDiagram, handleError, isValidAsset, isValidImage, isValidSound, programIcon, publicPath, sanitizeStackTrace, serverError, successDescription, validateEnvironment, valueDescription, Project } from '../utils'
 import { DummyProfiler, EventProfiler, TimeMeasurer } from './../time-measurer'
 
 const { time, timeEnd } = console
@@ -34,9 +34,11 @@ type DynamicDiagramClient = {
 export default async function (programFQN: Name, options: Options): Promise<Server | undefined> {
   const { game, project, assets } = options
   const timeMeasurer = new TimeMeasurer()
+  const proj = new Project(project)
+
   try {
     logger.info(`${game ? gameIcon : programIcon} Running program ${valueDescription(programFQN)} ${runner(game)} on ${valueDescription(project)}`)
-    options.assets = game ? getAssetsFolder(options) : ''
+    options.assets = game ? getAssetsFolder(proj, options) : ''
     if (game) {
       const logGameFinished = (exitCode: any) => {
         fileLogger.info({ message: `${gameIcon} Game executed ${programFQN} on ${project}`, timeElapsed: timeMeasurer.elapsedTime(), exitCode })
@@ -53,8 +55,8 @@ export default async function (programFQN: Name, options: Options): Promise<Serv
     const debug = logger.getLevel() <= logger.levels.DEBUG
     if (debug) time(successDescription('Run initiated successfully'))
     const assetFiles = getAllAssets(project, assets)
-
-    const interpreter = game ? getGameInterpreter(environment) : interpret(environment, { ...natives })
+    const natives = await proj.readNatives()
+    const interpreter = game ? getGameInterpreter(environment, natives) : interpret(environment, natives)
     const programPackage = environment.getNodeByFQN<Package>(programFQN).parent as Package
     const dynamicDiagramClient = await initializeDynamicDiagram(programPackage, options, interpreter)
     const ioGame: Server | undefined = initializeGameClient(options)
@@ -80,7 +82,7 @@ export default async function (programFQN: Name, options: Options): Promise<Serv
   }
 }
 
-export const getGameInterpreter = (environment: Environment): Interpreter => {
+export const getGameInterpreter = (environment: Environment, natives:Natives): Interpreter => {
   return interpret(environment, natives)
 }
 
@@ -231,10 +233,9 @@ export const getSoundsFolder = (projectPath: string, assetsOptions: string | und
   fs.readdirSync(projectPath).includes('sounds') ? 'sounds' : assetsOptions ?? 'assets'
 
 
-export const getAssetsFolder = ({ game, project, assets }: Options): string => {
+export const getAssetsFolder = (project: Project, { game, assets }: Options): string => {
   if (!game) return ''
-  const packageProperties = readPackageProperties(project)
-  return packageProperties?.resourceFolder ?? assets
+  return project.properties.resourceFolder ?? assets //TODO: No sería mejor al revés? si me pasaron una opción usar esa, si no usar la del package.json
 }
 
 export const buildEnvironmentForProgram = async ({ project, skipValidations }: Options): Promise<Environment> => {

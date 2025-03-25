@@ -5,8 +5,17 @@ import globby from 'globby'
 import logger from 'loglevel'
 import path, { join } from 'path'
 import { getDataDiagram, VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools'
-import { buildEnvironment, Environment, getDynamicDiagramData, Interpreter, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException } from 'wollok-ts'
+import { buildEnvironment, Environment, getDynamicDiagramData, Interpreter, Natives, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException, natives, List } from 'wollok-ts'
 import { ElementDefinition } from 'cytoscape'
+import { register } from 'ts-node'
+
+register({
+  transpileOnly: true,
+  compilerOptions: {
+    module: 'NodeNext',
+    moduleResolution: 'NodeNext',
+  },
+})
 
 const { time, timeEnd } = console
 
@@ -25,6 +34,47 @@ export const folderIcon = '🗂️'
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // FILE / PATH HANDLING
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+export class Project {
+  private _properties?: any
+
+  constructor(public readonly project: string) {}
+
+  get sourceFolder() : string {
+    return this.project
+  }
+
+  get packageJsonPath(): string {
+    return path.join(this.sourceFolder, 'package.json')
+  }
+
+  get properties(): any {
+    if (this._properties === undefined) {
+      this._properties = this.safeLoadJson()
+    }
+    return this._properties
+  }
+
+  private safeLoadJson(): any {
+    try {
+      const rawData = fs.readFileSync(this.packageJsonPath, 'utf-8')
+      return JSON.parse(rawData)
+    } catch (error) {
+      logger.warn(`Failed to load package.json: ${error}`)
+      return {}
+    }
+  }
+
+  get nativesFolder(): string {
+    return join(this.sourceFolder, this.properties.natives || '')
+  }
+
+  public async readNatives(): Promise<Natives>{
+    return readNatives(this.nativesFolder)
+  }
+
+}
+
 export function relativeFilePath(project: string, filePath: string): string {
   return path.relative(project, filePath).split('.')[0]
 }
@@ -87,6 +137,27 @@ export const handleError = (error: any): void => {
   logger.debug(failureDescription('ℹ️ Stack trace:', error))
 }
 
+export async function readNatives(nativeFolder: string): Promise<Natives> {
+  const paths = await globby('**/*.@(ts|cjs|js)', { cwd: nativeFolder })
+
+  const debug = logger.getLevel() <= logger.levels.DEBUG
+
+  if (debug) time('Loading natives files')
+
+  const nativesObjects: List<Natives> = await Promise.all(
+    paths.map(async (filePath) => {
+      const fullPath = path.resolve(nativeFolder, filePath)
+      const importedModule = await import(fullPath)
+      const segments = filePath.replace(/\.(ts|js)$/, '').split(path.sep)
+
+      return segments.reduceRight((acc, segment) => {  return { [segment]: acc }}, importedModule.default || importedModule)
+    })
+  )
+  if (debug) timeEnd('Loading natives files')
+
+  return natives(nativesObjects)
+}
+
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // PRINTING
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -134,11 +205,6 @@ export const problemDescription = (problem: Problem): string => {
 export const publicPath = (...paths: string[]): string =>
   path.join(__dirname, '..', 'public', ...paths)
 
-export const readPackageProperties = (pathProject: string): any | undefined => {
-  const packagePath = path.join(pathProject, 'package.json')
-  if (!fs.existsSync(packagePath)) return undefined
-  return JSON.parse(fs.readFileSync(packagePath, { encoding: 'utf-8' }))
-}
 
 interface Named {
   name: string

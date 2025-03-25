@@ -6,6 +6,12 @@
       "name": "Run Wollok CLI tests",
       "request": "launch",
       "type": "node-terminal"
+    },
+    {
+      "command": "npm run test:file ${file}",
+      "name": "Run a single test file",
+      "request": "launch",
+      "type": "node-terminal"
     }
   ]
 }
