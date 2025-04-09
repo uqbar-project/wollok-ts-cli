@@ -223,7 +223,7 @@ describe('testing run', () => {
     let errorReturned: string | undefined = undefined
     let io: Server
 
-    beforeEach(() => {
+    beforeEach(async () => {
       handleErrorSpy = sinon.stub(utils, 'handleError')
       handleErrorSpy.callsFake((error) => {
         console.info(`👾👾👾 ${error.message} 👾👾👾`)
@@ -231,8 +231,7 @@ describe('testing run', () => {
       })
       processExitSpy = sinon.stub(process, 'exit')
       io = fakeIO()
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      sinon.stub(require('../src/game'), 'initializeGameClient').returns(io)
+      sinon.stub(await import('../src/game'), 'initializeGameClient').returns(io)
     })
 
     afterEach(() => {
