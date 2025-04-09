@@ -27,9 +27,8 @@ updateNotifier().finally(() => {
     .option('--skipValidations', 'skip code validation', false)
     .option('--host [host]', 'host to run (bind) the server', 'localhost')
     .option('--port [port]', 'port to run the server', '3000')
-    .option('-g, --game', 'sets the program as a game', false)
     .option('-v, --verbose', 'print debugging information', false)
-    .option('-d, --startDiagram', 'activate the dynamic diagram (only for games)', false)
+    .option('-d, --startDiagram', 'activate the dynamic diagram', false)
     .action((programFQN, options) => { run(programFQN, options) })
 
   program.command('test')
@@ -47,6 +46,7 @@ updateNotifier().finally(() => {
     .description('Start Wollok interactive console')
     .argument('[file]', 'main Wollok file to auto import')
     .option('-p, --project [filter]', 'path to project', process.cwd())
+    .option('-a, --assets [path]', 'path relative to project for game assets. By default, it takes the assets definition from package.json.', 'assets')
     .option('--skipValidations', 'skip code validation', false)
     .option('--darkMode', 'dark mode', false)
     .option('--skipDiagram', 'avoid starting the server for the dynamic diagram', false)

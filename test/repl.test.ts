@@ -12,6 +12,7 @@ describe('REPL', () => {
 
   const options = {
     project: projectPath,
+    assets: '',
     skipValidations: false,
     darkMode: true,
     port: '8080',
@@ -97,8 +98,7 @@ describe('REPL', () => {
       result.should.includes('wollok.lang.MessageNotUnderstoodException: 1 does not understand coso()')
     })
 
-    // TODO: Change the Runtime model
-    xit('const const', () => {
+    it('const const', () => {
       interpreteLine(interpreter, 'const a = 1')
       const result = interpreteLine(interpreter, 'const a = 2')
       result.should.includes(failureDescription('Evaluation Error!'))
