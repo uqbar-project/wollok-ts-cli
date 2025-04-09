@@ -1,0 +1,8 @@
+import myPackage.myInnerFile.packageModel
+import rootFile.myModel
+
+program myProgram {
+
+    console.println(myModel.nativeOne())
+    console.println(packageModel.nativeTwo())
+}

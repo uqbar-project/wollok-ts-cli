@@ -141,7 +141,6 @@ describe('Test', () => {
           expect(tests[1].name).to.equal('"another test"')
           expect(tests[2].name).to.equal('"another test with longer name"')
         })
-
         it('should filter by file & describe & test using file & describe & test option', () => {
           const tests = getTarget(environment, undefined, {
             ...emptyOptions,
@@ -332,7 +331,6 @@ describe('Test', () => {
         ...emptyOptions,
         file: 'test-one.wtest',
       })
-
       expect(processExitSpy.callCount).to.equal(0)
       expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 3 tests')).to.be.true
       expect(spyCalledWithSubstring(loggerInfoSpy, '3 passed')).to.be.true
@@ -347,7 +345,6 @@ describe('Test', () => {
         ...emptyOptions,
         file: 'non-existing-file.wtest',
       })
-
       expect(processExitSpy.callCount).to.equal(0)
       expect(spyCalledWithSubstring(loggerInfoSpy, 'Running 0 tests')).to.be.true
       expect(spyCalledWithSubstring(loggerErrorSpy, 'File \'non-existing-file.wtest\' not found')).to.be.true

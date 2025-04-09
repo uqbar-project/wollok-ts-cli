@@ -2,7 +2,7 @@ import logger from 'loglevel'
 import { Execution, interpret, Name, NativeFunction, Program, RuntimeValue } from 'wollok-ts'
 import { eventsFor, initializeGameClient } from '../game'
 import { logger as fileLogger } from '../logger'
-import { buildEnvironmentCommand, buildEnvironmentIcon, buildNativesForGame, ENTER, gameIcon, getAllAssets, getAssetsFolder, handleError, initializeDynamicDiagram, nextPort, programIcon, sanitizeStackTrace, successDescription, valueDescription } from '../utils'
+import { buildEnvironmentCommand, buildEnvironmentIcon, buildNativesForGame, ENTER, gameIcon, getAllAssets, getAssetsFolder, handleError, initializeDynamicDiagram, nextPort, programIcon, Project, sanitizeStackTrace, successDescription, valueDescription } from '../utils'
 import { TimeMeasurer } from './../time-measurer'
 
 const { time, timeEnd } = console
@@ -20,6 +20,8 @@ export default async function (programFQN: Name, options: Options): Promise<unde
   const { project, assets, host, port, skipValidations, startDiagram } = options
   let game = false
   const timeMeasurer = new TimeMeasurer()
+  const proj = new Project(project)
+
   try {
     logger.info(`${programIcon} Running program ${valueDescription(programFQN)} on ${valueDescription(project)}`)
 
@@ -30,14 +32,14 @@ export default async function (programFQN: Name, options: Options): Promise<unde
 
     const serveGame: NativeFunction = function* (): Execution<RuntimeValue> {
       game = true
-      const path = getAssetsFolder(project, assets)
+      const path = getAssetsFolder(proj, assets)
       const ioGame = initializeGameClient(project, assets, host, port)
       const assetFiles = getAllAssets(project, path)
       configProcessForGame(programFQN, timeMeasurer, project)
       eventsFor(ioGame, interpreter, dynamicDiagramClient, assetFiles)
       return yield* this.reify(true)
     }
-    const interpreter = interpret(environment, buildNativesForGame(serveGame))
+    const interpreter = interpret(environment, await buildNativesForGame(proj, serveGame))
     const rootPackage = interpreter.evaluation.environment.getNodeByFQN<Program>(programFQN).parent
     const dynamicDiagramClient = initializeDynamicDiagram(interpreter, { ...options, port: nextPort(port) }, rootPackage, startDiagram)
 

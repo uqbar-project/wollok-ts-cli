@@ -3,11 +3,11 @@ import { bold } from 'chalk'
 import { Command } from 'commander'
 import logger from 'loglevel'
 import { CompleterResult, Interface, createInterface as Repl } from 'readline'
-import { Entity, Environment, Evaluation, Execution, Interpreter, NativeFunction, Package, REPL, RuntimeValue, WRENatives, interprete, link } from 'wollok-ts'
+import { Entity, Environment, Evaluation, Execution, Interpreter, NativeFunction, Package, REPL, RuntimeValue, interprete, link } from 'wollok-ts'
 import { eventsFor, initializeGameClient } from '../game'
 import { logger as fileLogger } from '../logger'
 import { TimeMeasurer } from '../time-measurer'
-import { ENTER, buildEnvironmentCommand, buildNativesForGame, failureDescription, getAllAssets, getAssetsFolder, getFQN, handleError, initializeDynamicDiagram, nextPort, replIcon, sanitizeStackTrace, successDescription, valueDescription } from '../utils'
+import { ENTER, Project, buildEnvironmentCommand, buildNativesForGame, failureDescription, getAllAssets, getAssetsFolder, getFQN, handleError, initializeDynamicDiagram, nextPort, replIcon, sanitizeStackTrace, successDescription, valueDescription } from '../utils'
 
 // TODO:
 // - autocomplete piola
@@ -34,13 +34,14 @@ export async function replFn(autoImportPath: string | undefined, options: Option
   logger.info(`${replIcon}  Initializing Wollok REPL ${autoImportPath ? `for file ${valueDescription(autoImportPath)} ` : ''}on ${valueDescription(options.project)}`)
 
   const serveGame: NativeFunction = function* (): Execution<RuntimeValue> {
-    const path = getAssetsFolder(project, assets)
+    const path = getAssetsFolder(new Project(project), assets)
     const ioGame = initializeGameClient(project, path, host, nextPort(port))
     const assetFiles = getAllAssets(project, path)
     eventsFor(ioGame, interpreter, dynamicDiagramClient, assetFiles)
     return yield* this.reify(true)
   }
-  let interpreter = await initializeInterpreter(autoImportPath, options, buildNativesForGame(serveGame))
+
+  let interpreter = await initializeInterpreter(autoImportPath, options, serveGame)
 
   const autoImportName = autoImportPath && interpreter.evaluation.environment.replNode().name
   const repl = Repl({
@@ -81,7 +82,7 @@ export async function replFn(autoImportPath: string | undefined, options: Option
     repl.prompt()
   }
 
-  const commandHandler = defineCommands(autoImportPath, options, onReloadClient, onReloadInterpreter)
+  const commandHandler = defineCommands(autoImportPath, options, onReloadClient, onReloadInterpreter, serveGame)
 
   repl
     .on('close', () => console.log(''))
@@ -112,9 +113,10 @@ export function interpreteLine(interpreter: Interpreter, line: string): string {
   return errored ? failureDescription(result, error) : successDescription(result)
 }
 
-export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations }: Options, natives = WRENatives): Promise<Interpreter> {
+export async function initializeInterpreter(autoImportPath: string | undefined, { project, skipValidations }: Options, serveGame?: NativeFunction): Promise<Interpreter> {
   let environment: Environment
   const timeMeasurer = new TimeMeasurer()
+  const proj = new Project(project)
 
   try {
     environment = await buildEnvironmentCommand(project, skipValidations)
@@ -134,9 +136,8 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
       const replPackage = new Package({ name: REPL })
       environment = link([replPackage], environment)
     }
-
-    const interpreter = new Interpreter(Evaluation.build(environment, natives))
-    return interpreter
+    const mergedNatives = serveGame ? await buildNativesForGame(proj, serveGame) : await proj.readNatives()
+    return new Interpreter(Evaluation.build(environment, mergedNatives))
   } catch (error: any) {
     handleError(error)
     fileLogger.info({ message: `${replIcon} REPL execution - build failed for ${project}`, timeElapsed: timeMeasurer.elapsedTime(), ok: false, error: sanitizeStackTrace(error) })
@@ -147,10 +148,10 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // SUB-COMMANDS
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-function defineCommands(autoImportPath: string | undefined, options: Options, reloadClient: (activateDiagram: boolean, interpreter?: Interpreter) => Promise<void>, setInterpreter: (interpreter: Interpreter, rerun: boolean) => void): Command {
+function defineCommands(autoImportPath: string | undefined, options: Options, reloadClient: (activateDiagram: boolean, interpreter?: Interpreter) => Promise<void>, setInterpreter: (interpreter: Interpreter, rerun: boolean) => void, serveGame: NativeFunction): Command {
   const reload = (rerun = false) => async () => {
     logger.info(successDescription('Reloading environment'))
-    const interpreter = await initializeInterpreter(autoImportPath, options)
+    const interpreter = await initializeInterpreter(autoImportPath, options, serveGame)
     setInterpreter(interpreter, rerun)
     reloadClient(options.skipDiagram, interpreter)
   }

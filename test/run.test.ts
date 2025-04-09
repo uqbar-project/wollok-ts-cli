@@ -6,12 +6,12 @@ import logger from 'loglevel'
 import { join } from 'path'
 import sinon from 'sinon'
 import { Server } from 'socket.io'
-import { interpret, WRENatives } from 'wollok-ts'
+import { interpret } from 'wollok-ts'
 import run, { Options } from '../src/commands/run'
 import { getVisuals } from '../src/game'
 import { logger as fileLogger } from '../src/logger'
 import * as utils from '../src/utils'
-import { buildEnvironmentCommand, getAllAssets, getAssetsFolder, getSoundsFolder } from '../src/utils'
+import { buildEnvironmentCommand, getAllAssets, getAssetsFolder, getSoundsFolder, readNatives } from '../src/utils'
 import { spyCalledWithSubstring } from './assertions'
 import { fakeIO } from './mocks'
 
@@ -21,7 +21,8 @@ chai.use(chaiAsPromised)
 const expect = chai.expect
 
 const project = join('examples', 'run-examples', 'basic-example')
-const assetsFolder = 'assets'
+const proj = new utils.Project(project)
+const assets = 'assets'
 
 describe('testing run', () => {
 
@@ -34,16 +35,15 @@ describe('testing run', () => {
     port: '3000',
   })
 
+
   describe('getAssetsPath', () => {
 
     it('should return assets folder from package if it exists', () => {
-      const { project, assets } = buildOptions('myAssets' /** Ignored :( */)
-      expect(getAssetsFolder(project, assets)).to.equal('specialAssets')
+      expect(getAssetsFolder(proj, 'myAssets' /** Ignored :( */)).to.equal('specialAssets')
     })
 
     it('should return assets folder from package with default option', () => {
-      const { project, assets } = buildOptions(assetsFolder)
-      expect(getAssetsFolder(project, assets)).to.equal('specialAssets')
+      expect(getAssetsFolder(proj, assets)).to.equal('specialAssets')
     })
   })
 
@@ -75,8 +75,14 @@ describe('testing run', () => {
 
     it('should return all visuals for a simple project', async () => {
       const imageProject = join('examples', 'run-examples', 'asset-example')
+
+      const options = {
+        ...buildOptions('assets'),
+        project: imageProject,
+      }
+
       const environment = await buildEnvironmentCommand(imageProject)
-      const interpreter = interpret(environment, WRENatives)
+      const interpreter = interpret(environment, await readNatives(options.project))
       const game = interpreter.object('wollok.game.game')
       interpreter.send('addVisual', game, interpreter.object('mainGame.elementoVisual'))
 
@@ -176,7 +182,7 @@ describe('testing run', () => {
         project: join('examples', 'run-examples', 'basic-example'),
         skipValidations: false,
         startDiagram: false,
-        assets: assetsFolder,
+        assets,
         host: 'localhost',
         port: '3000',
       })
@@ -198,7 +204,7 @@ describe('testing run', () => {
         project: join('examples', 'run-examples', 'bad-example'),
         skipValidations: false,
         startDiagram: false,
-        assets: assetsFolder,
+        assets,
         host: 'localhost',
         port: '3000',
       })

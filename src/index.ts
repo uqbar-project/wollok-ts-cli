@@ -4,6 +4,7 @@ import repl from './commands/repl'
 import run from './commands/run'
 import test from './commands/test'
 import init from './commands/init'
+import { addDependency, removeDependency, synchronizeDependencies } from './commands/dependencies'
 import logger from 'loglevel'
 import pkg from '../package.json'
 import { cyan } from 'chalk'
@@ -54,7 +55,6 @@ updateNotifier().finally(() => {
     .option('-v, --verbose', 'print debugging information', false)
     .action(repl)
 
-
   program.command('init')
     .description('Create a new Wollok project')
     .argument('[folder]', 'folder name, if not provided, the current folder will be used')
@@ -64,8 +64,38 @@ updateNotifier().finally(() => {
     .option('-t, --noTest', 'avoids creating a test file', false)
     .option('-c, --noCI', 'avoids creating a file for CI', false)
     .option('-ng, --noGit', 'avoids initializing a git repository', false)
+    .option('-N, --natives [natives]', 'folder name for native files (default: root folder).', undefined)
     .allowUnknownOption()
     .action(init)
 
+  const dependencyCommand = new Command('dependencies')
+    .description('Manage dependencies for a Wollok project')
+
+  dependencyCommand
+    .command('add')
+    .description('Add a dependency to the project')
+    .argument('<package>', 'Name of the package to add (e.g., lodash@latest)')
+    .option('-p, --project [path]', 'Path to project', process.cwd())
+    .option('-v, --verbose', 'Print debugging information', false)
+    .allowUnknownOption()
+    .action(addDependency)
+
+  dependencyCommand
+    .command('remove')
+    .description('Remove a dependency from the project')
+    .argument('<package>', 'Name of the package to remove (e.g., lodash)')
+    .option('-p, --project [path]', 'Path to project', process.cwd())
+    .option('-v, --verbose', 'Print debugging information', false)
+    .allowUnknownOption()
+    .action(removeDependency)
+
+  dependencyCommand
+    .command('sync')
+    .description('Synchronize all dependencies')
+    .option('-p, --project [path]', 'Path to project', process.cwd())
+    .option('-v, --verbose', 'Print debugging information', false)
+    .action(synchronizeDependencies)
+
+  program.addCommand(dependencyCommand)
   program.parseAsync()
 })

@@ -9,8 +9,17 @@ import http from 'http'
 import logger from 'loglevel'
 import path, { join, relative } from 'path'
 import { Server, Socket } from 'socket.io'
-import { buildEnvironment, Environment, get, getDynamicDiagramData, Interpreter, NativeFunction, Natives, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException, WRENatives } from 'wollok-ts'
+import { register } from 'ts-node'
+import { buildEnvironment, Environment, get, getDynamicDiagramData, Interpreter, List, NativeFunction, Natives, natives, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException } from 'wollok-ts'
 import { Asset, getDataDiagram, VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools'
+
+register({
+  transpileOnly: true,
+  compilerOptions: {
+    module: 'NodeNext',
+    moduleResolution: 'NodeNext',
+  },
+})
 
 const { time, timeEnd } = console
 
@@ -30,6 +39,47 @@ export const diagramIcon = '🔀'
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // FILE / PATH HANDLING
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+export class Project {
+  private _properties?: any
+
+  constructor(public readonly project: string) { }
+
+  get sourceFolder(): string {
+    return this.project
+  }
+
+  get packageJsonPath(): string {
+    return path.join(this.sourceFolder, 'package.json')
+  }
+
+  get properties(): any {
+    if (this._properties === undefined) {
+      this._properties = this.safeLoadJson()
+    }
+    return this._properties
+  }
+
+  private safeLoadJson(): any {
+    try {
+      const rawData = fs.readFileSync(this.packageJsonPath, 'utf-8')
+      return JSON.parse(rawData)
+    } catch (error) {
+      logger.warn(`Failed to load package.json: ${error}`)
+      return {}
+    }
+  }
+
+  get nativesFolder(): string {
+    return join(this.sourceFolder, this.properties.natives || '')
+  }
+
+  public async readNatives(): Promise<Natives> {
+    return readNatives(this.nativesFolder)
+  }
+
+}
+
 export function relativeFilePath(project: string, filePath: string): string {
   return path.relative(project, filePath).split('.')[0]
 }
@@ -98,6 +148,27 @@ export const handleError = (error: any): void => {
   logger.debug(failureDescription('ℹ️ Stack trace:', error))
 }
 
+export async function readNatives(nativeFolder: string): Promise<Natives> {
+  const paths = await globby('**/*.@(ts|cjs|js)', { cwd: nativeFolder })
+
+  const debug = logger.getLevel() <= logger.levels.DEBUG
+
+  if (debug) time('Loading natives files')
+
+  const nativesObjects: List<Natives> = await Promise.all(
+    paths.map(async (filePath) => {
+      const fullPath = path.resolve(nativeFolder, filePath)
+      const importedModule = await import(fullPath)
+      const segments = filePath.replace(/\.(ts|js)$/, '').split(path.sep)
+
+      return segments.reduceRight((acc, segment) => { return { [segment]: acc } }, importedModule.default || importedModule)
+    })
+  )
+  if (debug) timeEnd('Loading natives files')
+
+  return natives(nativesObjects)
+}
+
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // PRINTING
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -145,11 +216,6 @@ export const problemDescription = (problem: Problem): string => {
 export const publicPath = (...paths: string[]): string =>
   path.join(__dirname, '..', 'public', ...paths)
 
-export const readPackageProperties = (pathProject: string): any | undefined => {
-  const packagePath = path.join(pathProject, 'package.json')
-  if (!fs.existsSync(packagePath)) return undefined
-  return JSON.parse(fs.readFileSync(packagePath, { encoding: 'utf-8' }))
-}
 
 interface Named {
   name: string
@@ -169,8 +235,8 @@ export function isREPLConstant(environment: Environment, localName: string): boo
 }
 
 // TODO: Use the merge function
-export const buildNativesForGame = (serve: NativeFunction): Natives => {
-  const natives = { ...WRENatives }
+export const buildNativesForGame = async (project: Project, serve: NativeFunction): Promise<Natives> => {
+  const natives = await project.readNatives()
   const io = get<Natives>(natives, 'wollok.lang.io')!
   io['serve'] = serve
   return natives
@@ -258,10 +324,9 @@ export function initializeDynamicDiagram(_interpreter: Interpreter, options: Dyn
 // WOLLOK GAME
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-export const getAssetsFolder = (project: string, assets: string): string => {
-  const packageProperties = readPackageProperties(project)
-  return packageProperties?.resourceFolder ?? assets
-}
+//TODO: No sería mejor al revés? si me pasaron una opción usar esa, si no usar la del package.json
+export const getAssetsFolder = (project: Project, assets: string): string => project.properties.resourceFolder ?? assets
+
 
 export const getSoundsFolder = (projectPath: string, assetsOptions: string): string =>
   fs.readdirSync(projectPath).includes('sounds') ? 'sounds' : assetsOptions

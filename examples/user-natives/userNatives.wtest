@@ -1,0 +1,7 @@
+import rootFile.myModel
+import myPackage.myInnerFile.packageModel
+
+test "call a native method used by user" {
+    assert.equals(1, myModel.nativeOne())
+    assert.equals(2, packageModel.nativeTwo())
+}
