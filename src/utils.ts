@@ -10,7 +10,7 @@ import logger from 'loglevel'
 import path, { join, relative } from 'path'
 import { Server, Socket } from 'socket.io'
 import { register } from 'ts-node'
-import { buildEnvironment, Environment, get, getDynamicDiagramData, Interpreter, List, NativeFunction, Natives, natives, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException } from 'wollok-ts'
+import { buildEnvironment, Environment, get, getDynamicDiagramData, getMessage, Interpreter, List, NativeFunction, Natives, natives, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException } from 'wollok-ts'
 import { Asset, getDataDiagram, VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools'
 
 register({
@@ -33,8 +33,11 @@ export const gameIcon = '👾'
 export const testIcon = '🧪'
 export const replIcon = '🖥️'
 export const buildEnvironmentIcon = '🌏'
+export const lintIcon = '🔦'
 export const folderIcon = '🗂️'
 export const diagramIcon = '🔀'
+export const errorIcon = '❌'
+export const warningIcon = '⚠️'
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // FILE / PATH HANDLING
@@ -206,7 +209,7 @@ export const failureDescription = (description: string, error?: Error): string =
 export const problemDescription = (problem: Problem): string => {
   const color = problem.level === 'warning' ? yellowBright : red
   const header = bold(`[${problem.level.toUpperCase()}]`)
-  return color(`${header}: ${problem.code} at ${problem.node?.sourceInfo ?? 'unknown'}`)
+  return color(`${header}: ${getMessage({ message: problem.code, values: problem.values.concat() })} at ${problem.node?.sourceInfo ?? 'unknown'}`)
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════

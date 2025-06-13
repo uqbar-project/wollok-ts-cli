@@ -4,6 +4,7 @@ import repl from './commands/repl'
 import run from './commands/run'
 import test from './commands/test'
 import init from './commands/init'
+import lint from './commands/lint'
 import { addDependency, removeDependency, synchronizeDependencies } from './commands/dependencies'
 import logger from 'loglevel'
 import pkg from '../package.json'
@@ -67,6 +68,13 @@ updateNotifier().finally(() => {
     .option('-N, --natives [natives]', 'folder name for native files (default: root folder).', undefined)
     .allowUnknownOption()
     .action(init)
+
+  program.command('lint')
+    .description('Validate Wollok code')
+    .option('-p, --project [project]', 'path to project', process.cwd())
+    .option('-f, --file [file]', 'path to file relative to the project', '')
+    .allowUnknownOption()
+    .action(lint)
 
   const dependencyCommand = new Command('dependencies')
     .description('Manage dependencies for a Wollok project')
