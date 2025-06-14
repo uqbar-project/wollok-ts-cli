@@ -43,6 +43,25 @@ describe('lint', () => {
     expect(spyCalledWithSubstring(consoleLogSpy, '3 Warnings')).to.be.true
   })
 
+  it('filtering by file finds errors and warnings', async () => {
+    await lint({ project: projectPath + '/error-project', file: 'testExample' })
+    expect (processExitSpy.calledWith(2)).to.be.true
+    expect(spyCalledWithSubstring(consoleLogSpy, '1 Error')).to.be.true
+    expect(spyCalledWithSubstring(consoleLogSpy, '0 Warnings')).to.be.true
+  })
+
+  it('filtering by file finds errors and warnings', async () => {
+    await lint({ project: projectPath + '/error-project', file: 'example' })
+    expect (processExitSpy.calledWith(2)).to.be.true
+    expect(spyCalledWithSubstring(consoleLogSpy, '1 Warning')).to.be.true
+    expect(spyCalledWithSubstring(consoleLogSpy, '0 Errors')).to.be.true
+  })
+
+  it('filtering by unexistent file return error exit code', async () => {
+    await lint({ project: projectPath + '/error-project', file: 'non-existent-file' })
+    expect (processExitSpy.calledWith(1)).to.be.true
+  })
+
   afterEach(() => {
     sinon.restore()
   })
