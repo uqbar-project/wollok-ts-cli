@@ -1,7 +1,7 @@
 import { time, timeEnd } from 'console'
 import logger from 'loglevel'
 import { getMessage, Problem, validate } from 'wollok-ts'
-import { buildEnvironmentForProject, successDescription, valueDescription, handleError, ENTER, buildEnvironmentIcon, Project, problemDescription, lintIcon, errorIcon, warningIcon } from '../utils'
+import { buildEnvironmentForProject, successDescription, valueDescription, handleError, ENTER, buildEnvironmentIcon, problemDescription, lintIcon, errorIcon, warningIcon } from '../utils'
 import { logger as fileLogger } from '../logger'
 import { TimeMeasurer } from '../time-measurer'
 
@@ -31,8 +31,6 @@ export default async function (options: LinterOptions): Promise<void> {
     const debug = logger.getLevel() <= logger.levels.DEBUG
     if (debug) time('Linter process')
 
-    const proj = new Project(options.project)
-
     const timeMeasurer = new TimeMeasurer()
     const { project, file } = options
 
@@ -52,7 +50,7 @@ export default async function (options: LinterOptions): Promise<void> {
 
     const singularOrPlural = (count: number): string => count === 1 ? '' : 's'
     logger.info(
-      isOk ? successDescription(`No errors or warnings found!`) : `${errorIcon} ${errors.length} Error${singularOrPlural(errors.length)}, ${warningIcon} ${warnings.length} Warning${singularOrPlural(warnings.length)}`,
+      isOk ? successDescription('No errors or warnings found!') : `${errorIcon} ${errors.length} Error${singularOrPlural(errors.length)}, ${warningIcon} ${warnings.length} Warning${singularOrPlural(warnings.length)}`,
       ENTER,
     )
 

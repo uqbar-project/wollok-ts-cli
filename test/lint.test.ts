@@ -1,6 +1,6 @@
 import { expect, should } from 'chai'
 import { join } from 'path'
-import lint, { LinterOptions } from '../src/commands/lint'
+import lint from '../src/commands/lint'
 import sinon from 'sinon'
 import { spyCalledWithSubstring } from './assertions'
 import logger from 'loglevel'
@@ -11,10 +11,6 @@ const projectPath = join('examples', 'lint-examples')
 
 describe('lint', () => {
 
-  const options: LinterOptions = {
-    project: projectPath,
-    file: undefined,
-  }
   let processExitSpy: sinon.SinonStub
   let consoleLogSpy: sinon.SinonStub
 
@@ -66,8 +62,3 @@ describe('lint', () => {
     sinon.restore()
   })
 })
-
-
-const consoleCharacters = (value: string) =>
-  // eslint-disable-next-line no-control-regex
-  value.replace(/\u001b\[.*?m/g, '').trim()

@@ -26,6 +26,7 @@ jobs:
       with:
         files: ./coverage/coverage-final.json
         verbose: true
+        token: ${{ secrets.CODECOV_TOKEN }}
     - name: Build & Pack
       if: github.ref == 'refs/heads/master'
       run: |
