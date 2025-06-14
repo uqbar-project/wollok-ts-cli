@@ -102,16 +102,16 @@ describe('printing', () => {
       problems = validate(environment)
     })
 
-    it('shows a problem error', () => {
+    it('shows a problem error using internationalization message', () => {
       const firstError = problems?.find(problem => problem.level === 'error') as Problem
       const problem = problemDescription(firstError)
-      chai.expect(problem).to.contain(red(`${bold('[ERROR]')}: shouldNotReassignConst at example.wlk:5`))
+      chai.expect(problem).to.contain(red(`${bold('[ERROR]')}: Cannot modify constants at example.wlk:5`))
     })
 
-    it('shows a problem warning', () => {
+    it('shows a problem warning using internationalization message', () => {
       const firstError = problems?.find(problem => problem.level === 'warning') as Problem
       const problem = problemDescription(firstError)
-      chai.expect(problem).to.contain(yellowBright(`${bold('[WARNING]')}: nameShouldBeginWithUppercase at example.wlk:1`))
+      chai.expect(problem).to.contain(yellowBright(`${bold('[WARNING]')}: The name bird must start with uppercase at example.wlk:1`))
     })
 
   })
