@@ -9,7 +9,7 @@ const { log } = console
 
 export type LinterOptions = {
   project: string,
-  file: string | undefined,
+  file?: string,
 }
 
 export type LinterProblem = {
@@ -41,7 +41,6 @@ export default async function (options: LinterOptions): Promise<void> {
     logger.info(`${lintIcon} Linting ${file ? `file ${valueDescription(file)}` : 'all files'}...`)
     if (file && !environment.getNodeOrUndefinedByFQN(file)) throw new Error(`File '${file}' not found`)
     const problems = validate(file ? environment.getNodeOrUndefinedByFQN(file)! : environment)
-
     log()
     if (debug) timeEnd('Linter process')
 
@@ -63,6 +62,7 @@ export default async function (options: LinterOptions): Promise<void> {
       })
       process.exit(2)
     }
+    process.exit(0)
   } catch (error: any) {
     handleError(error)
     return process.exit(1)
