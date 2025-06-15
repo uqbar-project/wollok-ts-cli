@@ -22,6 +22,7 @@
     "prepare": "node ./scripts/download-libs.js && npm run build:tools",
     "start": "node ./build/src/index.js",
     "test": "npm run lint && npm run test:unit",
+    "test:ast": "mocha -r ts-node/register/transpile-only test/**/ast.test.ts --timeout 2000",
     "test:lint": "mocha -r ts-node/register/transpile-only test/**/lint.test.ts --timeout 2000",
     "test:run": "mocha -r ts-node/register/transpile-only test/**/run.test.ts --timeout 2000",
     "test:repl": "mocha -r ts-node/register/transpile-only test/**/*epl.test.ts --timeout 2000",
