@@ -328,9 +328,7 @@ export function initializeDynamicDiagram(_interpreter: Interpreter, options: Dyn
 // WOLLOK GAME
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-//TODO: No sería mejor al revés? si me pasaron una opción usar esa, si no usar la del package.json
-export const getAssetsFolder = (project: Project, assets: string): string => project.properties.resourceFolder ?? assets
-
+export const getAssetsFolder = (project: Project, assets: string): string => assets || project.properties.resourceFolder || 'assets'
 
 export const getSoundsFolder = (projectPath: string, assetsOptions: string): string =>
   fs.readdirSync(projectPath).includes('sounds') ? 'sounds' : assetsOptions

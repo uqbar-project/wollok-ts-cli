@@ -21,7 +21,7 @@ const baseOptions = {
   port: '8080',
   host: 'localhost',
   skipDiagram: true,
-  assets: '',
+  assets: 'assets',
 }
 
 const buildOptionsFor = (path: string, skipValidations = false) => ({
