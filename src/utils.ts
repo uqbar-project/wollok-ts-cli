@@ -109,7 +109,7 @@ export const createFolderIfNotExists = (folder: string): void => {
 export async function buildEnvironmentForProject(project: string, files: string[] = []): Promise<Environment> {
   const debug = logger.getLevel() <= logger.levels.DEBUG
 
-  const paths = files.length ? files : await globby('**/*.@(wlk|wtest|wpgm)', { cwd: project })
+  const paths = files.length ? files : await globby(['**/*.wlk', '**/*.wtest', '**/*.wpgm'], { cwd: project })
 
   if (debug) time('Reading project files')
   const environmentFiles = await Promise.all(paths.map(async name =>
@@ -153,7 +153,7 @@ export const handleError = (error: any): void => {
 }
 
 export async function readNatives(nativeFolder: string): Promise<Natives> {
-  const paths = await globby('**/*.@(ts|cjs|js)', { cwd: nativeFolder })
+  const paths = await globby(['**/*.ts', '**/*.cjs', '**/*.js'], { cwd: nativeFolder })
 
   const debug = logger.getLevel() <= logger.levels.DEBUG
 
