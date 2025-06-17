@@ -2,7 +2,7 @@ import { bold, red, yellowBright } from 'chalk'
 import logger from 'loglevel'
 import sinon from 'sinon'
 import path, { join } from 'path'
-import { buildEnvironmentForProject, failureDescription, getFQN, handleError, problemDescription, validateEnvironment, Project } from '../src/utils'
+import { buildEnvironmentForProject, failureDescription, getFQN, handleError, problemDescription, validateEnvironment, Project, validateName } from '../src/utils'
 import chaiAsPromised from 'chai-as-promised'
 import chai from 'chai'
 import { spyCalledWithSubstring } from './assertions'
@@ -112,6 +112,37 @@ describe('printing', () => {
       const firstError = problems?.find(problem => problem.level === 'warning') as Problem
       const problem = problemDescription(firstError)
       chai.expect(problem).to.contain(yellowBright(`${bold('[WARNING]')}: The name bird must start with uppercase at example.wlk:1`))
+    })
+
+  })
+
+  describe('validate name', () => {
+    it('passes ok with a valid name', () => {
+      chai.expect(() => validateName('valid')).to.not.throw()
+    })
+
+    it('passes ok with a valid name in camel case', () => {
+      chai.expect(() => validateName('validName')).to.not.throw()
+    })
+
+    it('passes ok with a valid name in kebab case', () => {
+      chai.expect(() => validateName('valid-name')).to.not.throw()
+    })
+
+    it('passes ok with a valid name in snake case', () => {
+      chai.expect(() => validateName('valid_name')).to.not.throw()
+    })
+
+    it('throws an error for invalid name', () => {
+      chai.expect(() => validateName('')).to.throw('Name cannot be empty')
+    })
+
+    it('throws an error for invalid name', () => {
+      chai.expect(() => validateName('invalidName!')).to.throw('Invalid name: [invalidName!]')
+    })
+
+    it('throws an error for invalid name', () => {
+      chai.expect(() => validateName('2024-o-tpiJuego')).to.throw('Invalid name: [2024-o-tpiJuego]')
     })
 
   })

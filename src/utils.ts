@@ -195,7 +195,7 @@ export const sanitizeStackTrace = (e?: Error): string[] => {
 }
 
 export const warningDescription = (description: string): string =>
-  yellow(`${bold('⚠️')} ${description}`)
+  yellow(`${bold(warningIcon)} ${description}`)
 
 export const assertionError = (error: Error): boolean =>
   error instanceof WollokException && error.instance?.module?.name === 'AssertionException'
@@ -229,6 +229,15 @@ const assetsExtensions = VALID_IMAGE_EXTENSIONS.concat(VALID_SOUND_EXTENSIONS)
 export const isValidAsset = (file: Named): boolean => assetsExtensions.some(extension => file.name.endsWith(extension))
 export const isValidImage = (file: Named): boolean => VALID_IMAGE_EXTENSIONS.some(extension => file.name.endsWith(extension))
 export const isValidSound = (file: Named): boolean => VALID_SOUND_EXTENSIONS.some(extension => file.name.endsWith(extension))
+
+export const validateName = (name: string): void => {
+  if (!name.length) {
+    throw new Error('Name cannot be empty')
+  }
+  if (!name.match(/^[A-Za-z][A-Za-z0-9_-]*$/g)) {
+    throw new Error(`Invalid name: [${name}]`)
+  }
+}
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // WOLLOK AST
