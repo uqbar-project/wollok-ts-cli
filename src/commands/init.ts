@@ -1,6 +1,6 @@
 import { bold, cyan, yellow, green } from 'chalk'
 import logger from 'loglevel'
-import { existsSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import kebabCase from 'kebab-case'
 import  { userInfo } from 'os'
@@ -142,14 +142,21 @@ program PepitaGame {
 }
 `
 
-const packageJsonDefinition = (projectName: string, game: boolean, natives?: string) => `{
-  "name": "${kebabCase(basename(projectName))}",
-  "version": "1.0.0",
-  ${game ? assetsConfiguration() : ''}"wollokVersion": "4.0.0",
-  "author": "${userInfo().username}",${nativesConfiguration(natives)}
-  "license": "ISC"
+const packageJsonDefinition = (projectName: string, game: boolean, natives?: string) => {
+  const raw = readFileSync('./package.json', 'utf-8')
+  const pkg = JSON.parse(raw)
+  const wollokVersion = pkg.dependencies['wollok-ts'].replace(/^[^0-9]*/, '')
+
+  return `{
+    "name": "${kebabCase(basename(projectName))}",
+    "version": "1.0.0",
+    ${game ? assetsConfiguration() : ''}"wollokVersion": "${wollokVersion}",
+    "author": "${userInfo().username}",${nativesConfiguration(natives)}
+    "license": "ISC"
+  }
+  `
 }
-`
+
 const assetsConfiguration = () => `"resourceFolder": "assets",${ENTER}  `
 const nativesConfiguration = (natives?: string) =>  natives ? `${ENTER}  "natives": "${natives}",` : ''
 
