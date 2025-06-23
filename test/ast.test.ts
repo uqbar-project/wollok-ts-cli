@@ -20,7 +20,7 @@ describe('ast', () => {
   })
 
   it('returns ast as json for project', async () => {
-    await ast({ project: projectPath + '/ok-project', file: 'example' })
+    await ast({ project: projectPath + '/ok-project', entityFQN: 'example' })
     expect (processExitSpy.calledWith(0)).to.be.true
     expect(spyCalledWithSubstring(consoleLogSpy, '"name": "example"')).to.be.true
     expect(spyCalledWithSubstring(consoleLogSpy, '"name": "Animal"')).to.be.true
@@ -28,14 +28,23 @@ describe('ast', () => {
   })
 
   it('if entity is provided, it filters ast correctly', async () => {
-    await ast({ project: projectPath + '/ok-project', entity: 'example.Animal' })
+    await ast({ project: projectPath + '/ok-project', entityFQN: 'example.Animal' })
     expect (processExitSpy.calledWith(0)).to.be.true
     expect(spyCalledWithSubstring(consoleLogSpy, '"name": "Animal"')).to.be.true
     expect(spyCalledWithSubstring(consoleLogSpy, '"name": "pepita"')).to.be.false
   })
 
-  it('if no file and not entity is provided, it returns an error', async () => {
+  it('if no file and not entity is provided, it returns all the nodes from the project', async () => {
     await ast({ project: projectPath + '/ok-project' })
+    expect (processExitSpy.calledWith(0)).to.be.true
+    expect(spyCalledWithSubstring(consoleLogSpy, '"name": "example"')).to.be.true
+    expect(spyCalledWithSubstring(consoleLogSpy, '"name": "Animal"')).to.be.true
+    expect(spyCalledWithSubstring(consoleLogSpy, '"name": "pepita"')).to.be.true
+    expect(spyCalledWithSubstring(consoleLogSpy, '"name": "Extra"')).to.be.true
+  })
+
+  it('if no project is provided, it returns an error', async () => {
+    await ast({ project: '' })
     expect (processExitSpy.calledWith(1)).to.be.true
   })
 

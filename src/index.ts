@@ -73,15 +73,14 @@ updateNotifier().finally(() => {
   program.command('lint')
     .description('Validate Wollok code')
     .option('-p, --project [project]', 'path to project', process.cwd())
-    .option('-f, --file [file]', 'path to file relative to the project', '')
+    .option('-e, --entityFQN [entity]', 'entity (use the fully qualified name or leave it blank in order to use the whole project)', undefined)
     .allowUnknownOption()
     .action(lint)
 
   program.command('ast')
     .description('Show abstract syntax tree')
     .option('-p, --project [project]', 'path to project', process.cwd())
-    .option('-f, --file [file]', 'path to file relative to the project', '')
-    .option('-e, --entity [entity]', 'entity (use the fully qualified name)', '')
+    .option('-e, --entityFQN [entity]', 'entity (use the fully qualified name or leave it blank in order to use the whole project)', undefined)
     .allowUnknownOption()
     .action(ast)
 

@@ -2,7 +2,7 @@ import { bold, red } from 'chalk'
 import { time, timeEnd } from 'console'
 import logger from 'loglevel'
 import { Entity, Environment, Node, Test, is, match, when, interpret, Describe, count } from 'wollok-ts'
-import { buildEnvironmentForProject, failureDescription, successDescription, valueDescription, validateEnvironment, handleError, ENTER, sanitizeStackTrace, buildEnvironmentIcon, testIcon, assertionError, warningDescription, Project } from '../utils'
+import { buildEnvironmentForProject, failureDescription, successDescription, valueDescription, validateEnvironment, handleError, ENTER, sanitizeStackTrace, buildEnvironmentIcon, testIcon, assertionError, warningDescription, Project, ValidationAction } from '../utils'
 import { logger as fileLogger } from '../logger'
 import { TimeMeasurer } from '../time-measurer'
 import { Package } from 'wollok-ts'
@@ -105,7 +105,7 @@ export default async function (filter: string | undefined, options: Options): Pr
 
     logger.info(`${buildEnvironmentIcon} Building environment for ${valueDescription(project)}...${ENTER}`)
     const environment = await buildEnvironmentForProject(project)
-    validateEnvironment(environment, skipValidations)
+    validateEnvironment(environment, skipValidations ? ValidationAction.SKIP_VALIDATION : ValidationAction.THROW_ON_ERRORS)
 
     const targets = getTarget(environment, filter, options)
 

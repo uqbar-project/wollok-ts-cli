@@ -2,7 +2,7 @@ import { bold, red, yellowBright } from 'chalk'
 import logger from 'loglevel'
 import sinon from 'sinon'
 import path, { join } from 'path'
-import { buildEnvironmentForProject, failureDescription, getFQN, handleError, problemDescription, validateEnvironment, Project, validateName } from '../src/utils'
+import { buildEnvironmentForProject, failureDescription, getFQN, handleError, problemDescription, validateEnvironment, Project, validateName, ValidationAction } from '../src/utils'
 import chaiAsPromised from 'chai-as-promised'
 import chai from 'chai'
 import { spyCalledWithSubstring } from './assertions'
@@ -23,14 +23,19 @@ describe('build & validating environment', () => {
     await expect(buildEnvironmentForProject(join(badProjectPath, 'parse-errors'), ['fileWithParseErrors.wlk'])).to.eventually.be.rejectedWith(/Failed to parse fileWithParseErrors.wlk/)
   })
 
+  it('should return all problems if validation fails', async () => {
+    const environment = await buildEnvironmentForProject(join(badProjectPath, 'validation-errors'), ['fileWithValidationErrors.wlk'])
+    chai.expect(validateEnvironment(environment, ValidationAction.RETURN_ERRORS).length).to.equal(1)
+  })
+
   it('should throw an exception if validation fails', async () => {
     const environment = await buildEnvironmentForProject(join(badProjectPath, 'validation-errors'), ['fileWithValidationErrors.wlk'])
-    chai.expect(() => { validateEnvironment(environment, false) }).to.throw(/Fatal error while running validations/)
+    chai.expect(() => { validateEnvironment(environment, ValidationAction.THROW_ON_ERRORS) }).to.throw(/Fatal error while running validations/)
   })
 
   it('should not throw an exception if validation fails but you want to skip validation', async () => {
     const environment = await buildEnvironmentForProject(join(badProjectPath, 'validation-errors'), ['fileWithValidationErrors.wlk'])
-    chai.expect(() => { validateEnvironment(environment, true) }).to.not.throw()
+    chai.expect(() => { validateEnvironment(environment, ValidationAction.SKIP_VALIDATION) }).to.not.throw()
   })
 
 })

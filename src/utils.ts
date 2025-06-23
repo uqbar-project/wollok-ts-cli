@@ -10,7 +10,7 @@ import logger from 'loglevel'
 import path, { join, relative } from 'path'
 import { Server, Socket } from 'socket.io'
 import { register } from 'ts-node'
-import { buildEnvironment, Environment, get, getDynamicDiagramData, getMessage, Interpreter, List, NativeFunction, Natives, natives, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException } from 'wollok-ts'
+import { buildEnvironment, Environment, get, getDynamicDiagramData, getMessage, Interpreter, List, NativeFunction, Natives, Node, natives, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException, isEmpty } from 'wollok-ts'
 import { Asset, getDataDiagram, VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools'
 
 register({
@@ -122,27 +122,44 @@ export async function buildEnvironmentForProject(project: string, files: string[
   finally { if (debug) timeEnd('Building environment') }
 }
 
-export const validateEnvironment = (environment: Environment, skipValidations: boolean = false): void => {
-  if (!skipValidations) {
-    try {
-      const problems = validate(environment)
-      problems.forEach(problem => logger.info(problemDescription(problem)))
-      if (!problems.length) {
-        logger.info(successDescription('No problems found building the environment!'))
-      }
-      else if (problems.some(_ => _.level === 'error')) {
-        throw new Error('Aborting run due to validation errors!')
-      }
-    } catch (error: any) {
-      logger.debug(error)
-      throw new Error(`Fatal error while running validations. ${error.message}`)
+export enum ValidationAction {
+  SKIP_VALIDATION,
+  RETURN_ERRORS,
+  THROW_ON_ERRORS
+}
+
+export const validateEnvironment = (node: Node, validationAction = ValidationAction.SKIP_VALIDATION): List<Problem> => {
+  if (validationAction === ValidationAction.SKIP_VALIDATION) {
+    return []
+  }
+  try {
+    const problems = validate(node)
+    problems.forEach(problem => logger.info(problemDescription(problem)))
+    if (!problems.length) {
+      logger.info(successDescription('No problems found building the environment!'))
     }
+    else if (validationAction === ValidationAction.THROW_ON_ERRORS && problems.some(_ => _.level === 'error')) {
+      throw new Error('Aborting run due to validation errors!')
+    }
+    const errors = problems.filter(problem => problem.level === 'error')
+    const warnings = problems.filter(problem => problem.level === 'warning')
+    const allErrors = errors.concat(warnings)
+    const isOk = isEmpty(allErrors)
+    const singularOrPlural = (count: number): string => count === 1 ? '' : 's'
+    logger.info(
+      isOk ? successDescription('No errors or warnings found!') : `${errorIcon} ${errors.length} Error${singularOrPlural(errors.length)}, ${warningIcon} ${warnings.length} Warning${singularOrPlural(warnings.length)}`,
+      ENTER,
+    )
+    return problems
+  } catch (error: any) {
+    logger.debug(error)
+    throw new Error(`Fatal error while running validations. ${error.message}`)
   }
 }
 
 export const buildEnvironmentCommand = async (project: string, skipValidations = false): Promise<Environment> => {
   const environment = await buildEnvironmentForProject(project)
-  validateEnvironment(environment, skipValidations)
+  validateEnvironment(environment, skipValidations ? ValidationAction.SKIP_VALIDATION : ValidationAction.THROW_ON_ERRORS)
   return environment
 }
 
@@ -337,7 +354,7 @@ export function initializeDynamicDiagram(_interpreter: Interpreter, options: Dyn
 // WOLLOK GAME
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-export const getAssetsFolder = (project: Project, assets: string): string => assets || project.properties.resourceFolder || 'assets'
+export const getAssetsFolder = (project: Project, assets: string): string => assets || project.properties.resourceFolder || ''
 
 export const getSoundsFolder = (projectPath: string, assetsOptions: string): string =>
   fs.readdirSync(projectPath).includes('sounds') ? 'sounds' : assetsOptions

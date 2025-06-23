@@ -40,21 +40,21 @@ describe('lint', () => {
   })
 
   it('filtering by file finds errors and warnings', async () => {
-    await lint({ project: projectPath + '/error-project', file: 'testExample' })
+    await lint({ project: projectPath + '/error-project', entityFQN: 'testExample' })
     expect (processExitSpy.calledWith(2)).to.be.true
     expect(spyCalledWithSubstring(consoleLogSpy, '1 Error')).to.be.true
     expect(spyCalledWithSubstring(consoleLogSpy, '0 Warnings')).to.be.true
   })
 
   it('filtering by file finds errors and warnings', async () => {
-    await lint({ project: projectPath + '/error-project', file: 'example' })
+    await lint({ project: projectPath + '/error-project', entityFQN: 'example' })
     expect (processExitSpy.calledWith(2)).to.be.true
     expect(spyCalledWithSubstring(consoleLogSpy, '1 Warning')).to.be.true
     expect(spyCalledWithSubstring(consoleLogSpy, '0 Errors')).to.be.true
   })
 
-  it('filtering by unexistent file return error exit code', async () => {
-    await lint({ project: projectPath + '/error-project', file: 'non-existent-file' })
+  it('filtering by unexistent entity return error exit code', async () => {
+    await lint({ project: projectPath + '/error-project', entityFQN: 'nonExistentEntity' })
     expect (processExitSpy.calledWith(1)).to.be.true
   })
 

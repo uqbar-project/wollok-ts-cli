@@ -5,12 +5,9 @@ import { Literal, Node, notEmpty, Send } from 'wollok-ts'
 import { logger as fileLogger } from '../logger'
 import { TimeMeasurer } from '../time-measurer'
 
-const { log } = console
-
 export type AstOptions = {
   project: string,
-  file?: string,
-  entity?: string,
+  entityFQN?: string,
 }
 
 export default async function (options: AstOptions): Promise<void> {
@@ -20,15 +17,12 @@ export default async function (options: AstOptions): Promise<void> {
 
     const timeMeasurer = new TimeMeasurer()
     validateOptions(options)
-    const { project, file, entity } = options
+    const { project, entityFQN } = options
 
     logger.info(`${buildEnvironmentIcon} Building environment for ${valueDescription(project)}...`)
     const environment = await buildEnvironmentForProject(project)
-    logger.info(`${astIcon} AST - [${file}] ${entity ? ` ${valueDescription(entity)}` : ''}...`)
-    const baseNode = (entity || file)!
-    const node = environment.getNodeOrUndefinedByFQN(baseNode)
-    if (!node) throw new Error(`'${baseNode}' not found`)
-    log()
+    const node = entityFQN ? environment.getNodeByFQN(entityFQN) : environment
+    logger.info(`${astIcon} AST - [${valueDescription(node)}]...`)
     if (debug) timeEnd('AST process')
 
     const astResult = ast(node)
@@ -64,5 +58,4 @@ const ast = (node: Node): astResult => {
 
 const validateOptions = (options: AstOptions): void => {
   if (!options.project) throw new Error('Project path is required')
-  if (!options.file && !options.entity) throw new Error('File or entity is required')
 }

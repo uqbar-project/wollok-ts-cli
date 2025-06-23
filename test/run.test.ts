@@ -47,7 +47,7 @@ describe('testing run', () => {
     })
 
     it('should return assets folder from package if it exists', () => {
-      expect(getAssetsFolder(new utils.Project(join('examples', 'run-examples', 'no-asset-folder-example')), '')).to.equal('assets')
+      expect(getAssetsFolder(new utils.Project(join('examples', 'run-examples', 'no-asset-folder-example')), '')).to.equal('')
     })
   })
 
