@@ -38,12 +38,16 @@ describe('testing run', () => {
 
   describe('getAssetsPath', () => {
 
-    it('should return assets folder from package if it exists', () => {
-      expect(getAssetsFolder(proj, 'myAssets' /** Ignored :( */)).to.equal('specialAssets')
+    it('should return assets folder from asset options if passed', () => {
+      expect(getAssetsFolder(proj, 'myAssets')).to.equal('myAssets')
     })
 
-    it('should return assets folder from package with default option', () => {
-      expect(getAssetsFolder(proj, assets)).to.equal('specialAssets')
+    it('should return assets folder from project if asset option is empty', () => {
+      expect(getAssetsFolder(proj, '')).to.equal('specialAssets')
+    })
+
+    it('should return assets folder from package if it exists', () => {
+      expect(getAssetsFolder(new utils.Project(join('examples', 'run-examples', 'no-asset-folder-example')), '')).to.equal('')
     })
   })
 

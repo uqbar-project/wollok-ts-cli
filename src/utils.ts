@@ -4,13 +4,13 @@ import { ElementDefinition } from 'cytoscape'
 import express from 'express'
 import fs, { Dirent, existsSync, mkdirSync } from 'fs'
 import { readFile } from 'fs/promises'
-import globby from 'globby'
+import { globby } from 'globby'
 import http from 'http'
 import logger from 'loglevel'
 import path, { join, relative } from 'path'
 import { Server, Socket } from 'socket.io'
 import { register } from 'ts-node'
-import { buildEnvironment, Environment, get, getDynamicDiagramData, Interpreter, List, NativeFunction, Natives, natives, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException } from 'wollok-ts'
+import { buildEnvironment, Environment, get, getDynamicDiagramData, getMessage, Interpreter, List, NativeFunction, Natives, Node, natives, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException, isEmpty } from 'wollok-ts'
 import { Asset, getDataDiagram, VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools'
 
 register({
@@ -33,8 +33,12 @@ export const gameIcon = '👾'
 export const testIcon = '🧪'
 export const replIcon = '🖥️'
 export const buildEnvironmentIcon = '🌏'
+export const lintIcon = '🔦'
+export const astIcon = '🌲'
 export const folderIcon = '🗂️'
 export const diagramIcon = '🔀'
+export const errorIcon = '❌'
+export const warningIcon = '⚠️'
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // FILE / PATH HANDLING
@@ -105,7 +109,7 @@ export const createFolderIfNotExists = (folder: string): void => {
 export async function buildEnvironmentForProject(project: string, files: string[] = []): Promise<Environment> {
   const debug = logger.getLevel() <= logger.levels.DEBUG
 
-  const paths = files.length ? files : await globby('**/*.@(wlk|wtest|wpgm)', { cwd: project })
+  const paths = files.length ? files : await globby(['**/*.wlk', '**/*.wtest', '**/*.wpgm'], { cwd: project })
 
   if (debug) time('Reading project files')
   const environmentFiles = await Promise.all(paths.map(async name =>
@@ -118,27 +122,44 @@ export async function buildEnvironmentForProject(project: string, files: string[
   finally { if (debug) timeEnd('Building environment') }
 }
 
-export const validateEnvironment = (environment: Environment, skipValidations: boolean = false): void => {
-  if (!skipValidations) {
-    try {
-      const problems = validate(environment)
-      problems.forEach(problem => logger.info(problemDescription(problem)))
-      if (!problems.length) {
-        logger.info(successDescription('No problems found building the environment!'))
-      }
-      else if (problems.some(_ => _.level === 'error')) {
-        throw new Error('Aborting run due to validation errors!')
-      }
-    } catch (error: any) {
-      logger.debug(error)
-      throw new Error(`Fatal error while running validations. ${error.message}`)
+export enum ValidationAction {
+  SKIP_VALIDATION,
+  RETURN_ERRORS,
+  THROW_ON_ERRORS
+}
+
+export const validateEnvironment = (node: Node, validationAction = ValidationAction.SKIP_VALIDATION): List<Problem> => {
+  if (validationAction === ValidationAction.SKIP_VALIDATION) {
+    return []
+  }
+  try {
+    const problems = validate(node)
+    problems.forEach(problem => logger.info(problemDescription(problem)))
+    if (!problems.length) {
+      logger.info(successDescription('No problems found building the environment!'))
     }
+    else if (validationAction === ValidationAction.THROW_ON_ERRORS && problems.some(_ => _.level === 'error')) {
+      throw new Error('Aborting run due to validation errors!')
+    }
+    const errors = problems.filter(problem => problem.level === 'error')
+    const warnings = problems.filter(problem => problem.level === 'warning')
+    const allErrors = errors.concat(warnings)
+    const isOk = isEmpty(allErrors)
+    const singularOrPlural = (count: number): string => count === 1 ? '' : 's'
+    logger.info(
+      isOk ? successDescription('No errors or warnings found!') : `${errorIcon} ${errors.length} Error${singularOrPlural(errors.length)}, ${warningIcon} ${warnings.length} Warning${singularOrPlural(warnings.length)}`,
+      ENTER,
+    )
+    return problems
+  } catch (error: any) {
+    logger.debug(error)
+    throw new Error(`Fatal error while running validations. ${error.message}`)
   }
 }
 
 export const buildEnvironmentCommand = async (project: string, skipValidations = false): Promise<Environment> => {
   const environment = await buildEnvironmentForProject(project)
-  validateEnvironment(environment, skipValidations)
+  validateEnvironment(environment, skipValidations ? ValidationAction.SKIP_VALIDATION : ValidationAction.THROW_ON_ERRORS)
   return environment
 }
 
@@ -149,7 +170,7 @@ export const handleError = (error: any): void => {
 }
 
 export async function readNatives(nativeFolder: string): Promise<Natives> {
-  const paths = await globby('**/*.@(ts|cjs|js)', { cwd: nativeFolder })
+  const paths = await globby(['**/*.ts', '**/*.cjs', '**/*.js'], { cwd: nativeFolder })
 
   const debug = logger.getLevel() <= logger.levels.DEBUG
 
@@ -191,7 +212,7 @@ export const sanitizeStackTrace = (e?: Error): string[] => {
 }
 
 export const warningDescription = (description: string): string =>
-  yellow(`${bold('⚠️')} ${description}`)
+  yellow(`${bold(warningIcon)} ${description}`)
 
 export const assertionError = (error: Error): boolean =>
   error instanceof WollokException && error.instance?.module?.name === 'AssertionException'
@@ -206,7 +227,7 @@ export const failureDescription = (description: string, error?: Error): string =
 export const problemDescription = (problem: Problem): string => {
   const color = problem.level === 'warning' ? yellowBright : red
   const header = bold(`[${problem.level.toUpperCase()}]`)
-  return color(`${header}: ${problem.code} at ${problem.node?.sourceInfo ?? 'unknown'}`)
+  return color(`${header}: ${getMessage({ message: problem.code, values: problem.values.concat() })} at ${problem.node?.sourceInfo ?? 'unknown'}`)
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -225,6 +246,15 @@ const assetsExtensions = VALID_IMAGE_EXTENSIONS.concat(VALID_SOUND_EXTENSIONS)
 export const isValidAsset = (file: Named): boolean => assetsExtensions.some(extension => file.name.endsWith(extension))
 export const isValidImage = (file: Named): boolean => VALID_IMAGE_EXTENSIONS.some(extension => file.name.endsWith(extension))
 export const isValidSound = (file: Named): boolean => VALID_SOUND_EXTENSIONS.some(extension => file.name.endsWith(extension))
+
+export const validateName = (name: string): void => {
+  if (!name.length) {
+    throw new Error('Name cannot be empty')
+  }
+  if (!name.match(/^[A-Za-z][A-Za-z0-9_-]*$/g)) {
+    throw new Error(`Invalid name: [${name}]`)
+  }
+}
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // WOLLOK AST
@@ -324,9 +354,7 @@ export function initializeDynamicDiagram(_interpreter: Interpreter, options: Dyn
 // WOLLOK GAME
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-//TODO: No sería mejor al revés? si me pasaron una opción usar esa, si no usar la del package.json
-export const getAssetsFolder = (project: Project, assets: string): string => project.properties.resourceFolder ?? assets
-
+export const getAssetsFolder = (project: Project, assets: string): string => assets || project.properties.resourceFolder || ''
 
 export const getSoundsFolder = (projectPath: string, assetsOptions: string): string =>
   fs.readdirSync(projectPath).includes('sounds') ? 'sounds' : assetsOptions

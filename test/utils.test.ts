@@ -2,7 +2,7 @@ import { bold, red, yellowBright } from 'chalk'
 import logger from 'loglevel'
 import sinon from 'sinon'
 import path, { join } from 'path'
-import { buildEnvironmentForProject, failureDescription, getFQN, handleError, problemDescription, validateEnvironment, Project } from '../src/utils'
+import { buildEnvironmentForProject, failureDescription, getFQN, handleError, problemDescription, validateEnvironment, Project, validateName, ValidationAction } from '../src/utils'
 import chaiAsPromised from 'chai-as-promised'
 import chai from 'chai'
 import { spyCalledWithSubstring } from './assertions'
@@ -23,14 +23,19 @@ describe('build & validating environment', () => {
     await expect(buildEnvironmentForProject(join(badProjectPath, 'parse-errors'), ['fileWithParseErrors.wlk'])).to.eventually.be.rejectedWith(/Failed to parse fileWithParseErrors.wlk/)
   })
 
+  it('should return all problems if validation fails', async () => {
+    const environment = await buildEnvironmentForProject(join(badProjectPath, 'validation-errors'), ['fileWithValidationErrors.wlk'])
+    chai.expect(validateEnvironment(environment, ValidationAction.RETURN_ERRORS).length).to.equal(1)
+  })
+
   it('should throw an exception if validation fails', async () => {
     const environment = await buildEnvironmentForProject(join(badProjectPath, 'validation-errors'), ['fileWithValidationErrors.wlk'])
-    chai.expect(() => { validateEnvironment(environment, false) }).to.throw(/Fatal error while running validations/)
+    chai.expect(() => { validateEnvironment(environment, ValidationAction.THROW_ON_ERRORS) }).to.throw(/Fatal error while running validations/)
   })
 
   it('should not throw an exception if validation fails but you want to skip validation', async () => {
     const environment = await buildEnvironmentForProject(join(badProjectPath, 'validation-errors'), ['fileWithValidationErrors.wlk'])
-    chai.expect(() => { validateEnvironment(environment, true) }).to.not.throw()
+    chai.expect(() => { validateEnvironment(environment, ValidationAction.SKIP_VALIDATION) }).to.not.throw()
   })
 
 })
@@ -102,16 +107,47 @@ describe('printing', () => {
       problems = validate(environment)
     })
 
-    it('shows a problem error', () => {
+    it('shows a problem error using internationalization message', () => {
       const firstError = problems?.find(problem => problem.level === 'error') as Problem
       const problem = problemDescription(firstError)
-      chai.expect(problem).to.contain(red(`${bold('[ERROR]')}: shouldNotReassignConst at example.wlk:5`))
+      chai.expect(problem).to.contain(red(`${bold('[ERROR]')}: Cannot modify constants at example.wlk:5`))
     })
 
-    it('shows a problem warning', () => {
+    it('shows a problem warning using internationalization message', () => {
       const firstError = problems?.find(problem => problem.level === 'warning') as Problem
       const problem = problemDescription(firstError)
-      chai.expect(problem).to.contain(yellowBright(`${bold('[WARNING]')}: nameShouldBeginWithUppercase at example.wlk:1`))
+      chai.expect(problem).to.contain(yellowBright(`${bold('[WARNING]')}: The name bird must start with uppercase at example.wlk:1`))
+    })
+
+  })
+
+  describe('validate name', () => {
+    it('passes ok with a valid name', () => {
+      chai.expect(() => validateName('valid')).to.not.throw()
+    })
+
+    it('passes ok with a valid name in camel case', () => {
+      chai.expect(() => validateName('validName')).to.not.throw()
+    })
+
+    it('passes ok with a valid name in kebab case', () => {
+      chai.expect(() => validateName('valid-name')).to.not.throw()
+    })
+
+    it('passes ok with a valid name in snake case', () => {
+      chai.expect(() => validateName('valid_name')).to.not.throw()
+    })
+
+    it('throws an error for invalid name', () => {
+      chai.expect(() => validateName('')).to.throw('Name cannot be empty')
+    })
+
+    it('throws an error for invalid name', () => {
+      chai.expect(() => validateName('invalidName!')).to.throw('Invalid name: [invalidName!]')
+    })
+
+    it('throws an error for invalid name', () => {
+      chai.expect(() => validateName('2024-o-tpiJuego')).to.throw('Invalid name: [2024-o-tpiJuego]')
     })
 
   })

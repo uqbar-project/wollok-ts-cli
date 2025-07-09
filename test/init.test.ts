@@ -62,7 +62,7 @@ describe('testing init', () => {
       describe: undefined,
       test: undefined,
     })
-    expect(processExitSpy.callCount).to.equal(0)
+    expect(processExitSpy.calledWith(0)).to.be.true
   })
 
   it('should create files successfully for game project with ci & custom example name', () => {
@@ -80,6 +80,7 @@ describe('testing init', () => {
     expect(join(project, 'README.md')).to.pathExists()
     expect(join(project, '.gitignore')).to.pathExists()
     expect(getResourceFolder()).to.be.equal('assets')
+    expect(processExitSpy.calledWith(0)).to.be.true
   })
 
   it('should create files successfully for game project with no ci & no test custom example name', async () => {
@@ -98,6 +99,7 @@ describe('testing init', () => {
     expect(join(project, GITHUB_FOLDER, 'ci.yml')).not.pathExists()
     expect(join(project, '.gitignore')).to.pathExists()
     expect(join(project, 'README.md')).to.pathExists()
+    expect(processExitSpy.calledWith(0)).to.be.true
   })
 
   it('should create files successfully with an argument for the folder name working in combination with project option', async () => {
@@ -110,6 +112,7 @@ describe('testing init', () => {
     expect(join(customFolderProject, GITHUB_FOLDER, 'ci.yml')).to.pathExists()
     expect(join(customFolderProject, 'README.md')).to.pathExists()
     expect(join(customFolderProject, '.gitignore')).to.pathExists()
+    expect(processExitSpy.calledWith(0)).to.be.true
   })
 
   it('should skip the initialization of a git repository if notGit flag es enabled', async () => {
@@ -124,6 +127,7 @@ describe('testing init', () => {
     expect(join(project, 'README.md')).to.pathExists()
     expect(join(project, '.gitignore')).to.pathExists()
     expect(getResourceFolder()).to.be.undefined
+    expect(processExitSpy.calledWith(0)).to.be.true
   })
 
   it('should exit with code 1 if folder already exists', () => {
@@ -159,6 +163,42 @@ describe('testing init', () => {
       natives: absoluteFolder,
     })
     expect(absoluteFolder).to.pathExists
+  })
+
+  it('should exit with code 1 if name is not valid', () => {
+    init(undefined, {
+      ...baseOptions,
+      name: 'invalid@name',
+    })
+    expect(processExitSpy.calledWith(1)).to.be.true
+  })
+
+  it('should use kebab case in package json if name is in camel case', () => {
+    const project = join('examples', 'init-examples', 'camelCaseProject')
+    init(undefined, {
+      ...baseOptions,
+      project,
+    })
+    expect(processExitSpy.calledWith(0)).to.be.true
+    const path = join(project, 'package.json')
+    const packageJson = readFileSync(path, 'utf8')
+    const { name } = JSON.parse(packageJson)
+    expect(name).to.be.equal('camel-case-project')
+    rmSync(project, { recursive: true, force: true })
+  })
+
+  it('should keep snake case in package json if name is in snake case', () => {
+    const project = join('examples', 'init-examples', 'snake_case_project')
+    init(undefined, {
+      ...baseOptions,
+      project,
+    })
+    expect(processExitSpy.calledWith(0)).to.be.true
+    const path = join(project, 'package.json')
+    const packageJson = readFileSync(path, 'utf8')
+    const { name } = JSON.parse(packageJson)
+    expect(name).to.be.equal('snake_case_project')
+    rmSync(project, { recursive: true, force: true })
   })
 })
 

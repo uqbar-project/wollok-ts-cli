@@ -4,6 +4,8 @@ import repl from './commands/repl'
 import run from './commands/run'
 import test from './commands/test'
 import init from './commands/init'
+import lint from './commands/lint'
+import ast from './commands/ast'
 import { addDependency, removeDependency, synchronizeDependencies } from './commands/dependencies'
 import logger from 'loglevel'
 import pkg from '../package.json'
@@ -23,7 +25,7 @@ updateNotifier().finally(() => {
     .description('Run a Wollok program')
     .argument('<program>', 'program\'s fully qualified name')
     .option('-p, --project <path>', 'path to project', process.cwd())
-    .option('-a, --assets [path]', 'path relative to project for game assets. By default, it takes the assets definition from package.json.', 'assets')
+    .option('-a, --assets [path]', 'path relative to project for game assets. By default, it takes the assets definition from package.json.', '')
     .option('--skipValidations', 'skip code validation', false)
     .option('--host [host]', 'host to run (bind) the server', 'localhost')
     .option('--port [port]', 'port to run the server', '3000')
@@ -46,7 +48,7 @@ updateNotifier().finally(() => {
     .description('Start Wollok interactive console')
     .argument('[file]', 'main Wollok file to auto import')
     .option('-p, --project [filter]', 'path to project', process.cwd())
-    .option('-a, --assets [path]', 'path relative to project for game assets. By default, it takes the assets definition from package.json.', 'assets')
+    .option('-a, --assets [path]', 'path relative to project for game assets. By default, it takes the assets definition from package.json.', '')
     .option('--skipValidations', 'skip code validation', false)
     .option('--darkMode', 'dark mode', false)
     .option('--skipDiagram', 'avoid starting the server for the dynamic diagram', false)
@@ -67,6 +69,20 @@ updateNotifier().finally(() => {
     .option('-N, --natives [natives]', 'folder name for native files (default: root folder).', undefined)
     .allowUnknownOption()
     .action(init)
+
+  program.command('lint')
+    .description('Validate Wollok code')
+    .option('-p, --project [project]', 'path to project', process.cwd())
+    .option('-e, --entityFQN [entity]', 'entity (use the fully qualified name or leave it blank in order to use the whole project)', undefined)
+    .allowUnknownOption()
+    .action(lint)
+
+  program.command('ast')
+    .description('Show abstract syntax tree')
+    .option('-p, --project [project]', 'path to project', process.cwd())
+    .option('-e, --entityFQN [entity]', 'entity (use the fully qualified name or leave it blank in order to use the whole project)', undefined)
+    .allowUnknownOption()
+    .action(ast)
 
   const dependencyCommand = new Command('dependencies')
     .description('Manage dependencies for a Wollok project')

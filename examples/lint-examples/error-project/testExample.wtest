@@ -1,0 +1,12 @@
+import example.pepita
+
+describe "group of tests for pepita" {
+
+  test "pepita has initial energy" {
+    assert.equals(100, pepita.energy())
+  }
+
+  test "puede ser" {
+    assert.equals(queVariable, 2)
+  }
+}
