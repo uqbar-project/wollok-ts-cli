@@ -1,6 +1,6 @@
 {
   "name": "wollok-ts-cli",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "Wollok Command Line Interface",
   "repository": "https://github.com/uqbar-project/wollok-ts-cli",
   "license": "MIT",
@@ -75,8 +75,8 @@
     "ts-node": "10.9.1",
     "typescript": "~5.5.1",
     "winston": "^3.11.0",
-    "wollok-ts": "^4.2.1",
-    "wollok-web-tools": "^1.1.7"
+    "wollok-ts": "^4.2.3",
+    "wollok-web-tools": "^1.1.9"
   },
   "devDependencies": {
     "@stylistic/eslint-plugin-ts": "^2.8.0",
