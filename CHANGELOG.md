@@ -14,3 +14,4 @@ Since 3.4.0 version, the Wollok language adheres to [Semantic Versioning](https:
 - ✅ Added a `wollok lint` command to show Wollok validations by @fdodino
 - 1️⃣ `wollok init` enhancements: avoid using special characters in project name, use Wollok version and fix package name when generating package.json
 - 🖌️ asset folder set from cli params prior to package.json definition
+- Starting CHANGELOG.md file
