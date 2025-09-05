@@ -1,8 +1,8 @@
 import { expect, should } from 'chai'
 import { join } from 'path'
-import ast from '../src/commands/ast'
+import ast from '../src/commands/ast.ts'
 import sinon from 'sinon'
-import { spyCalledWithSubstring } from './assertions'
+import { spyCalledWithSubstring } from './assertions.ts'
 import logger from 'loglevel'
 
 should()

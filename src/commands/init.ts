@@ -1,12 +1,14 @@
-import { bold, cyan, yellow, green } from 'chalk'
+import chalk from 'chalk'
 import logger from 'loglevel'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import kebabCase from 'kebab-case'
 import  { userInfo } from 'os'
-import { ENTER, createFolderIfNotExists, failureDescription, validateName } from '../utils'
+import { ENTER, createFolderIfNotExists, failureDescription, validateName } from '../utils.ts'
 import { PROGRAM_FILE_EXTENSION, TEST_FILE_EXTENSION, WOLLOK_FILE_EXTENSION } from 'wollok-ts'
 import { execSync } from 'node:child_process'
+
+const { bold, cyan, yellow, green } = chalk
 
 export type Options = {
   project: string,

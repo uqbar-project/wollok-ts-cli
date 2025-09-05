@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 import { Command } from 'commander'
-import repl from './commands/repl'
-import run from './commands/run'
-import test from './commands/test'
-import init from './commands/init'
-import lint from './commands/lint'
-import ast from './commands/ast'
-import { addDependency, removeDependency, synchronizeDependencies } from './commands/dependencies'
+import repl from './commands/repl.ts'
+import run from './commands/run.ts'
+import test from './commands/test.ts'
+import init from './commands/init.ts'
+import lint from './commands/lint.ts'
+import ast from './commands/ast.ts'
+import { addDependency, removeDependency, synchronizeDependencies } from './commands/dependencies.ts'
 import logger from 'loglevel'
-import pkg from '../package.json'
-import { cyan } from 'chalk'
-import updateNotifier from './update-notifier'
+import pkg from '../package.json' with { type: 'json' }
+import chalk from 'chalk'
+import updateNotifier from './update-notifier.ts'
+
+const { cyan } = chalk
 
 updateNotifier().finally(() => {
   const program = new Command()

@@ -1,13 +1,15 @@
-import { bold, red, yellowBright } from 'chalk'
+import chalk from 'chalk'
 import logger from 'loglevel'
 import sinon from 'sinon'
 import path, { join } from 'path'
-import { buildEnvironmentForProject, failureDescription, getFQN, handleError, problemDescription, validateEnvironment, Project, validateName, ValidationAction } from '../src/utils'
+import { buildEnvironmentForProject, failureDescription, getFQN, handleError, problemDescription, validateEnvironment, Project, validateName, ValidationAction } from '../src/utils.ts'
 import chaiAsPromised from 'chai-as-promised'
 import chai from 'chai'
-import { spyCalledWithSubstring } from './assertions'
+import { spyCalledWithSubstring } from './assertions.ts'
 import { Problem, WOLLOK_EXTRA_STACK_TRACE_HEADER, validate, List } from 'wollok-ts'
 import * as wollok from 'wollok-ts'
+
+const { bold, red, yellowBright } = chalk
 
 describe('build & validating environment', () => {
 

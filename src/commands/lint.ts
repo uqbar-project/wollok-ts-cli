@@ -1,9 +1,9 @@
 import { time, timeEnd } from 'console'
 import logger from 'loglevel'
 import { getMessage, isEmpty, Problem } from 'wollok-ts'
-import { buildEnvironmentForProject, valueDescription, handleError, buildEnvironmentIcon, lintIcon, validateEnvironment, ValidationAction } from '../utils'
-import { logger as fileLogger } from '../logger'
-import { TimeMeasurer } from '../time-measurer'
+import { buildEnvironmentForProject, valueDescription, handleError, buildEnvironmentIcon, lintIcon, validateEnvironment, ValidationAction } from '../utils.ts'
+import { logger as fileLogger } from '../logger.ts'
+import { TimeMeasurer } from '../time-measurer.ts'
 
 export type LinterOptions = {
   project: string,

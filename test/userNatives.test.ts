@@ -2,9 +2,9 @@ import { expect } from 'chai'
 import logger from 'loglevel'
 import { join } from 'path'
 import sinon from 'sinon'
-import test from '../src/commands/test'
-import { logger as fileLogger } from '../src/logger'
-import { spyCalledWithSubstring } from './assertions'
+import test from '../src/commands/test.ts'
+import { logger as fileLogger } from '../src/logger.ts'
+import { spyCalledWithSubstring } from './assertions.ts'
 
 describe('UserNatives', () => {
   let fileLoggerInfoSpy: sinon.SinonStub

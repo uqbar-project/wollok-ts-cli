@@ -1,12 +1,14 @@
-import latestVersion from '@badisi/latest-version'
-import { cyan, greenBright, red, yellow } from 'chalk'
+import packageLatestVersion from '@badisi/latest-version'
+import chalk from 'chalk'
 import Box from 'cli-box'
 import { compareVersions } from 'compare-versions'
-import pkg from '../package.json'
-import { logger } from './logger'
+import pkg from '../package.json' with { type: 'json' }
+import { logger } from './logger.ts'
 
+const { cyan, greenBright, red, yellow } = chalk
 
 export default async (): Promise<void> => {
+  const latestVersion = packageLatestVersion as unknown as (name: string | string[]) => Promise<any>
   const publishedPackage = await latestVersion('wollok-ts-cli')
   if(publishedPackage.latest){
     if(compareVersions(publishedPackage.latest, pkg.version) === 1) {

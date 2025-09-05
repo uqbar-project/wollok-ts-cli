@@ -6,10 +6,11 @@ import { Interface } from 'readline'
 import sinon from 'sinon'
 import { Server } from 'socket.io'
 import * as wollok from 'wollok-ts'
-import { Options, replFn } from '../src/commands/repl'
-import { ENTER } from '../src/utils'
-import { spyCalledWithSubstring } from './assertions'
-import { fakeIO } from './mocks'
+import { Options, replFn } from '../src/commands/repl.ts'
+import { ENTER } from '../src/utils.ts'
+import { spyCalledWithSubstring } from './assertions.ts'
+import { fakeIO } from './mocks.ts'
+import * as gameModule from '../src/game.ts'
 
 chai.should()
 chai.use(chaiHttp)
@@ -51,8 +52,7 @@ describe('REPL command', () => {
     processExitSpy = sinon.stub(process, 'exit')
     consoleLogSpy = sinon.stub(console, 'log')
     io = fakeIO()
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    initializeGameClientSpy = sinon.stub(require('../src/game'), 'initializeGameClient').returns(io)
+    initializeGameClientSpy = sinon.stub(gameModule, 'initializeGameClient').returns(io)
     repl = await replFn(undefined, options)
   })
 

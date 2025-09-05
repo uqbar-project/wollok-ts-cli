@@ -1,4 +1,4 @@
-import { blue, bold, green, italic, red, yellow, yellowBright } from 'chalk'
+import chalk from 'chalk'
 import cors from 'cors'
 import { ElementDefinition } from 'cytoscape'
 import express from 'express'
@@ -9,19 +9,13 @@ import http from 'http'
 import logger from 'loglevel'
 import path, { join, relative } from 'path'
 import { Server, Socket } from 'socket.io'
-import { register } from 'ts-node'
 import { buildEnvironment, Environment, get, getDynamicDiagramData, getMessage, Interpreter, List, NativeFunction, Natives, Node, natives, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException, isEmpty } from 'wollok-ts'
 import { Asset, getDataDiagram, VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools'
+import { fileURLToPath } from 'url'
 
-register({
-  transpileOnly: true,
-  compilerOptions: {
-    module: 'NodeNext',
-    moduleResolution: 'NodeNext',
-  },
-})
 
 const { time, timeEnd } = console
+const { blue, bold, green, italic, red, yellow, yellowBright } = chalk
 
 export const ENTER = '\n'
 
@@ -234,9 +228,11 @@ export const problemDescription = (problem: Problem): string => {
 // RESOURCES
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-export const publicPath = (...paths: string[]): string =>
-  path.join(__dirname, '..', 'public', ...paths)
-
+export const publicPath = (...paths: string[]): string => {
+  const __filename = fileURLToPath(import.meta.url)
+  const __dirname = path.dirname(__filename)
+  return path.join(__dirname, '..', 'public', ...paths)
+}
 
 interface Named {
   name: string

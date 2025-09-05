@@ -1,9 +1,9 @@
 import { should, use } from 'chai'
 import { join } from 'path'
 import { interprete, Interpreter } from 'wollok-ts'
-import { initializeInterpreter } from '../src/commands/repl'
-import { getDynamicDiagram } from '../src/utils'
-import { diagramAssertions } from './assertions'
+import { initializeInterpreter } from '../src/commands/repl.ts'
+import { getDynamicDiagram } from '../src/utils.ts'
+import { diagramAssertions } from './assertions.ts'
 
 use(diagramAssertions)
 should()
@@ -14,6 +14,7 @@ const fileWithImports = join(projectPath, 'using-imports', 'base.wlk')
 
 describe('Dynamic diagram', () => {
   const options = {
+    assets: 'assets',
     project: projectPath,
     skipValidations: true,
     port: '8080',

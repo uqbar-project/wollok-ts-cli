@@ -1,4 +1,4 @@
-import { bold } from 'chalk'
+import chalk from 'chalk'
 import cors from 'cors'
 import express from 'express'
 import http from 'http'
@@ -7,8 +7,10 @@ import { join } from 'path'
 import { Server } from 'socket.io'
 import { GAME_MODULE, Interpreter, RuntimeObject, WollokException } from 'wollok-ts'
 import { Asset, boardState, buildKeyPressEvent, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools'
-import { DummyProfiler, EventProfiler, TimeMeasurer } from './time-measurer'
-import { DynamicDiagramClient, failureDescription, gameIcon, getSoundsFolder, isValidImage, isValidSound, publicPath, successDescription } from './utils'
+import { DummyProfiler, EventProfiler, TimeMeasurer } from './time-measurer.ts'
+import { DynamicDiagramClient, failureDescription, gameIcon, getSoundsFolder, isValidImage, isValidSound, publicPath, successDescription } from './utils.ts'
+
+const { bold } = chalk
 
 export const initializeGameClient = (project: string, assets: string, host: string, port: string): Server => {
   const app = express()

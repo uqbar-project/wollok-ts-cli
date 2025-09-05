@@ -2,9 +2,9 @@ import chai, { use } from 'chai'
 import { join } from 'path'
 import { readFileSync, rmSync } from 'fs'
 import sinon from 'sinon'
-import init, { Options } from '../src/commands/init'
-import test from '../src/commands/test'
-import { pathAssertions } from './assertions'
+import init, { Options } from '../src/commands/init.ts'
+import test from '../src/commands/test.ts'
+import { pathAssertions } from './assertions.ts'
 import { homedir } from 'os'
 
 chai.should()

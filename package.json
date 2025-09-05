@@ -1,6 +1,7 @@
 {
   "name": "wollok-ts-cli",
-  "version": "0.4.0",
+  "version": "1.0.0",
+  "type": "module",
   "description": "Wollok Command Line Interface",
   "repository": "https://github.com/uqbar-project/wollok-ts-cli",
   "license": "MIT",
@@ -17,47 +18,35 @@
     "cli",
     "typescript"
   ],
-  "main": "./build/src/index.js",
+  "main": "./dist/src/index.js",
   "scripts": {
     "prepare": "node ./scripts/download-libs.js && npm run build:tools",
-    "start": "node ./build/src/index.js",
+    "start": "node ./dist/src/index.js",
+    "dev": "tsx src/index.ts",
     "test": "npm run lint && npm run test:unit",
-    "test:ast": "mocha -r ts-node/register/transpile-only test/**/ast.test.ts --timeout 2000",
-    "test:diagram": "mocha -r ts-node/register/transpile-only test/**/diagram.test.ts --timeout 5000",
-    "test:init": "mocha -r ts-node/register/transpile-only test/**/init.test.ts --timeout 2000",
-    "test:lint": "mocha -r ts-node/register/transpile-only test/**/lint.test.ts --timeout 2000",
-    "test:run": "mocha -r ts-node/register/transpile-only test/**/run.test.ts --timeout 2000",
-    "test:repl": "mocha -r ts-node/register/transpile-only test/**/*epl.test.ts --timeout 2000",
-    "test:utils": "mocha -r ts-node/register/transpile-only test/**/*utils.test.ts --timeout 2000",
+    "test:ast": "mocha -r tsx test/**/ast.test.ts --timeout 2000",
+    "test:diagram": "mocha -r tsx test/**/diagram.test.ts --timeout 5000",
+    "test:init": "mocha -r tsx test/**/init.test.ts --timeout 2000",
+    "test:lint": "mocha -r tsx test/**/lint.test.ts --timeout 2000",
+    "test:run": "mocha -r tsx test/**/run.test.ts --timeout 2000",
+    "test:repl": "mocha -r tsx test/**/*epl.test.ts --timeout 2000",
+    "test:utils": "mocha -r tsx test/**/*utils.test.ts --timeout 2000",
     "test-with-coverage": "npm run lint && nyc --reporter=json --lines 70 npm run test:unit",
-    "lint": "eslint . ",
+    "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test:unit": "mocha --parallel -r ts-node/register/transpile-only test/**/*.test.ts --timeout 5000",
-    "test:file": "mocha --parallel -r ts-node/register/transpile-only",
+    "test:unit": "mocha --parallel -r tsx test/**/*.test.ts --timeout 5000",
+    "test:file": "mocha --parallel -r tsx",
     "build:tools": "shx cp ./node_modules/wollok-web-tools/dist/web/game-index.js ./public/game/lib && shx cp ./node_modules/wollok-web-tools/dist/dynamicDiagram/diagram-index.js ./public/diagram",
-    "build": "shx rm -rf build && shx mkdir ./build && shx cp -r ./public ./build/public && tsc -p ./tsconfig.build.json",
+    "build": "shx rm -rf dist && shx mkdir ./dist && shx cp -r ./public ./dist/public && tsc -p ./tsconfig.build.json",
     "watch": "npm run build -- -w",
     "pack": "pkg .",
     "prepublishOnly": "npm run prepare && npm run build && npm run test"
   },
   "bin": {
-    "wollok": "./build/src/index.js"
-  },
-  "pkg": {
-    "scripts": "build/**/*.js",
-    "targets": [
-      "node18-macos-x64",
-      "node18-linux-x64",
-      "node18-macos-arm64",
-      "node18-win-x64"
-    ],
-    "assets": [
-      "./build/public/**/*"
-    ],
-    "outputPath": "dist"
+    "wollok": "./dist/src/index.js"
   },
   "dependencies": {
-    "@badisi/latest-version": "^7.0.10",
+    "@badisi/latest-version": "^7.0.15",
     "chalk": "^4.1.2",
     "cli-box": "^6.0.10",
     "commander": "^11.1.0",
@@ -69,10 +58,8 @@
     "kebab-case": "^2.0.2",
     "loglevel": "^1.8.1",
     "p5": "^1.8.0",
-    "pkg": "^5.8.1",
     "print-message": "^3.0.1",
     "socket.io": "^4.5.1",
-    "ts-node": "10.9.1",
     "typescript": "~5.5.1",
     "winston": "^3.11.0",
     "wollok-ts": "^4.2.3",
@@ -99,6 +86,7 @@
     "nyc": "^15.1.0",
     "shx": "^0.3.4",
     "sinon": "^17.0.1",
-    "socket.io-client": "^4.7.5"
+    "socket.io-client": "^4.7.5",
+    "tsx": "^4.20.5"
   }
 }
