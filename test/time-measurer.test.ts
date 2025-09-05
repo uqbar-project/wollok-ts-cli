@@ -1,6 +1,6 @@
 import { expect, should } from 'chai'
 import sinon from 'sinon'
-import { TimeMeasurer } from '../src/time-measurer.ts'
+import { TimeMeasurer } from '../src/time-measurer.js'
 
 should()
 

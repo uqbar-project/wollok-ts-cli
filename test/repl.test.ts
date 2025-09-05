@@ -1,8 +1,8 @@
 import { should } from 'chai'
 import { join } from 'path'
 import { Interpreter, REPL } from 'wollok-ts'
-import { initializeInterpreter, interpreteLine } from '../src/commands/repl.ts'
-import { failureDescription, successDescription } from '../src/utils.ts'
+import { initializeInterpreter, interpreteLine } from '../src/commands/repl.js'
+import { failureDescription, successDescription } from '../src/utils.js'
 
 should()
 

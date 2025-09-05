@@ -7,8 +7,8 @@ import { join } from 'path'
 import { Server } from 'socket.io'
 import { GAME_MODULE, Interpreter, RuntimeObject, WollokException } from 'wollok-ts'
 import { Asset, boardState, buildKeyPressEvent, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools'
-import { DummyProfiler, EventProfiler, TimeMeasurer } from './time-measurer.ts'
-import { DynamicDiagramClient, failureDescription, gameIcon, getSoundsFolder, isValidImage, isValidSound, publicPath, successDescription } from './utils.ts'
+import { DummyProfiler, EventProfiler, TimeMeasurer } from './time-measurer.js'
+import { DynamicDiagramClient, failureDescription, gameIcon, getSoundsFolder, isValidImage, isValidSound, publicPath, successDescription } from './utils.js'
 
 const { bold } = chalk
 

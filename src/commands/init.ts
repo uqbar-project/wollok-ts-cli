@@ -4,7 +4,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import kebabCase from 'kebab-case'
 import  { userInfo } from 'os'
-import { ENTER, createFolderIfNotExists, failureDescription, validateName } from '../utils.ts'
+import { ENTER, createFolderIfNotExists, failureDescription, validateName } from '../utils.js'
 import { PROGRAM_FILE_EXTENSION, TEST_FILE_EXTENSION, WOLLOK_FILE_EXTENSION } from 'wollok-ts'
 import { execSync } from 'node:child_process'
 

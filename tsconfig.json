@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "allowImportingTsExtensions": true,
-    "noEmit": true,
+    "sourceMap": true,
+    "allowImportingTsExtensions": false,
     "target": "es2022",
     "module": "nodenext",
     "moduleResolution": "nodenext",
@@ -12,7 +12,7 @@
     "removeComments": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
   },
   "include": ["test/**/*.ts", "src/**/*.ts", "examples/**/*.ts"],
   "exclude": ["**/*.js", "node_modules"]

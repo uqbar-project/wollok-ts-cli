@@ -6,11 +6,11 @@ import { Interface } from 'readline'
 import sinon from 'sinon'
 import { Server } from 'socket.io'
 import * as wollok from 'wollok-ts'
-import { Options, replFn } from '../src/commands/repl.ts'
-import { ENTER } from '../src/utils.ts'
-import { spyCalledWithSubstring } from './assertions.ts'
-import { fakeIO } from './mocks.ts'
-import * as gameModule from '../src/game.ts'
+import { Options, replFn } from '../src/commands/repl.js'
+import { ENTER } from '../src/utils.js'
+import { spyCalledWithSubstring } from './assertions.js'
+import { fakeIO } from './mocks.js'
+import * as gameModule from '../src/game.js'
 
 chai.should()
 chai.use(chaiHttp)

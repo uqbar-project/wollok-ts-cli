@@ -1,9 +1,9 @@
 import { should, use } from 'chai'
 import { join } from 'path'
 import { interprete, Interpreter } from 'wollok-ts'
-import { initializeInterpreter } from '../src/commands/repl.ts'
-import { getDynamicDiagram } from '../src/utils.ts'
-import { diagramAssertions } from './assertions.ts'
+import { initializeInterpreter } from '../src/commands/repl.js'
+import { getDynamicDiagram } from '../src/utils.js'
+import { diagramAssertions } from './assertions.js'
 
 use(diagramAssertions)
 should()

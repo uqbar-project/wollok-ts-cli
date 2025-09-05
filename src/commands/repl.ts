@@ -4,10 +4,10 @@ import { Command } from 'commander'
 import logger from 'loglevel'
 import { CompleterResult, Interface, createInterface as Repl } from 'readline'
 import { Entity, Environment, Evaluation, Execution, Interpreter, NativeFunction, Package, REPL, RuntimeValue, interprete, link } from 'wollok-ts'
-import { eventsFor, initializeGameClient } from '../game.ts'
-import { logger as fileLogger } from '../logger.ts'
-import { TimeMeasurer } from '../time-measurer.ts'
-import { ENTER, Project, buildEnvironmentCommand, buildNativesForGame, failureDescription, getAllAssets, getAssetsFolder, getFQN, handleError, initializeDynamicDiagram, nextPort, replIcon, sanitizeStackTrace, successDescription, valueDescription } from '../utils.ts'
+import { eventsFor, initializeGameClient } from '../game.js'
+import { logger as fileLogger } from '../logger.js'
+import { TimeMeasurer } from '../time-measurer.js'
+import { ENTER, Project, buildEnvironmentCommand, buildNativesForGame, failureDescription, getAllAssets, getAssetsFolder, getFQN, handleError, initializeDynamicDiagram, nextPort, replIcon, sanitizeStackTrace, successDescription, valueDescription } from '../utils.js'
 
 const { bold } = chalk
 

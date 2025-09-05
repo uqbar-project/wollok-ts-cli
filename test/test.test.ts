@@ -3,10 +3,10 @@ import logger from 'loglevel'
 import { join } from 'path'
 import sinon from 'sinon'
 import { Environment } from 'wollok-ts'
-import test, { getTarget, matchingTestDescription, sanitize, tabulationForNode, validateParameters } from '../src/commands/test.ts'
-import { logger as fileLogger } from '../src/logger.ts'
-import { buildEnvironmentForProject } from '../src/utils.ts'
-import { spyCalledWithSubstring } from './assertions.ts'
+import test, { getTarget, matchingTestDescription, sanitize, tabulationForNode, validateParameters } from '../src/commands/test.js'
+import { logger as fileLogger } from '../src/logger.js'
+import { buildEnvironmentForProject } from '../src/utils.js'
+import { spyCalledWithSubstring } from './assertions.js'
 
 describe('Test', () => {
 

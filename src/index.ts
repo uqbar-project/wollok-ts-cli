@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 import { Command } from 'commander'
-import repl from './commands/repl.ts'
-import run from './commands/run.ts'
-import test from './commands/test.ts'
-import init from './commands/init.ts'
-import lint from './commands/lint.ts'
-import ast from './commands/ast.ts'
-import { addDependency, removeDependency, synchronizeDependencies } from './commands/dependencies.ts'
+import repl from './commands/repl.js'
+import run from './commands/run.js'
+import test from './commands/test.js'
+import init from './commands/init.js'
+import lint from './commands/lint.js'
+import ast from './commands/ast.js'
+import { addDependency, removeDependency, synchronizeDependencies } from './commands/dependencies.js'
 import logger from 'loglevel'
 import pkg from '../package.json' with { type: 'json' }
 import chalk from 'chalk'
-import updateNotifier from './update-notifier.ts'
+import updateNotifier from './update-notifier.js'
 
 const { cyan } = chalk
 

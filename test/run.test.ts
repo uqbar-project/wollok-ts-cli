@@ -7,13 +7,13 @@ import { join } from 'path'
 import sinon from 'sinon'
 import { Server } from 'socket.io'
 import { interpret } from 'wollok-ts'
-import run, { Options } from '../src/commands/run.ts'
-import { getVisuals } from '../src/game.ts'
-import { logger as fileLogger } from '../src/logger.ts'
-import * as utils from '../src/utils.ts'
-import { buildEnvironmentCommand, getAllAssets, getAssetsFolder, getSoundsFolder, readNatives } from '../src/utils.ts'
-import { spyCalledWithSubstring } from './assertions.ts'
-import { fakeIO } from './mocks.ts'
+import run, { Options } from '../src/commands/run.js'
+import { getVisuals } from '../src/game.js'
+import { logger as fileLogger } from '../src/logger.js'
+import * as utils from '../src/utils.js'
+import { buildEnvironmentCommand, getAllAssets, getAssetsFolder, getSoundsFolder, readNatives } from '../src/utils.js'
+import { spyCalledWithSubstring } from './assertions.js'
+import { fakeIO } from './mocks.js'
 
 chai.should()
 chai.use(chaiHttp)
@@ -235,7 +235,7 @@ describe('testing run', () => {
       })
       processExitSpy = sinon.stub(process, 'exit')
       io = fakeIO()
-      sinon.stub(await import('../src/game.ts'), 'initializeGameClient').returns(io)
+      sinon.stub(await import('../src/game.js'), 'initializeGameClient').returns(io)
     })
 
     afterEach(() => {

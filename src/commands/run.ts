@@ -1,9 +1,9 @@
 import logger from 'loglevel'
 import { Execution, interpret, Name, NativeFunction, Program, RuntimeValue } from 'wollok-ts'
-import { eventsFor, initializeGameClient } from '../game.ts'
-import { logger as fileLogger } from '../logger.ts'
-import { buildEnvironmentCommand, buildEnvironmentIcon, buildNativesForGame, ENTER, gameIcon, getAllAssets, getAssetsFolder, handleError, initializeDynamicDiagram, nextPort, programIcon, Project, sanitizeStackTrace, successDescription, valueDescription } from '../utils.ts'
-import { TimeMeasurer } from './../time-measurer.ts'
+import { eventsFor, initializeGameClient } from '../game.js'
+import { logger as fileLogger } from '../logger.js'
+import { buildEnvironmentCommand, buildEnvironmentIcon, buildNativesForGame, ENTER, gameIcon, getAllAssets, getAssetsFolder, handleError, initializeDynamicDiagram, nextPort, programIcon, Project, sanitizeStackTrace, successDescription, valueDescription } from '../utils.js'
+import { TimeMeasurer } from './../time-measurer.js'
 
 const { time, timeEnd } = console
 

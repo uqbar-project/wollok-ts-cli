@@ -3,7 +3,7 @@ import chaiAsPromised from 'chai-as-promised'
 import chaiHttp from 'chai-http'
 import { join } from 'path'
 import { Evaluation, Interpreter, WRENatives } from 'wollok-ts'
-import { buildEnvironmentForProject, initializeDynamicDiagram } from '../src/utils.ts'
+import { buildEnvironmentForProject, initializeDynamicDiagram } from '../src/utils.js'
 
 chai.should()
 chai.use(chaiHttp)
