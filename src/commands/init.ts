@@ -170,13 +170,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - run: |
-          wget -O wollok-ts-cli https://github.com/uqbar-project/wollok-ts-cli/releases/latest/download/wollok-ts-cli-linux-x64
-          chmod a+x ./wollok-ts-cli
-        shell: bash
-        name: Setup Wollok CLI
-      - run: ./wollok-ts-cli test --skipValidations -p ./
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install wollok-ts-cli globally
+        run: npm install -g wollok-ts-cli
+
+      - run: wollok test --skipValidations -p ./
         name: Run tests
 `
 
