@@ -33,6 +33,8 @@ export const folderIcon = '🗂️'
 export const diagramIcon = '🔀'
 export const errorIcon = '❌'
 export const warningIcon = '⚠️'
+export const assetIcon = '🎨'
+export const projectIcon = '📁'
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // FILE / PATH HANDLING
@@ -356,20 +358,20 @@ export const getSoundsFolder = (projectPath: string, assetsOptions: string): str
   fs.readdirSync(projectPath).includes('sounds') ? 'sounds' : assetsOptions
 
 export const getAllAssets = (projectPath: string, assetsFolder: string): Asset[] => {
+  logger.info(`${projectIcon} Project path: [${valueDescription(projectPath)}]`)
+  logger.info(`${folderIcon}  Assets folder: [${valueDescription(assetsFolder)}]`)
   const baseFolder = join(projectPath, assetsFolder)
   if (!existsSync(baseFolder))
     throw new Error(`Folder image ${baseFolder} does not exist`)
-
-  logger.info(`${folderIcon}  Assets folder ${valueDescription(baseFolder)}`)
-
-  const fileRelativeFor = (fileName: string) => ({ name: fileName, url: fileName })
 
   const loadAssetsIn = (basePath: string): Asset[] =>
     fs.readdirSync(basePath, { withFileTypes: true })
       .flatMap((file: Dirent) =>
         file.isDirectory() ? loadAssetsIn(join(basePath, file.name)) :
-        isValidAsset(file) ? [fileRelativeFor(relative(baseFolder, join(basePath, file.name)))] : []
+        isValidAsset(file) ? [{ url: relative(projectPath, join(basePath, file.name)), name: file.name }] : []
       )
 
-  return loadAssetsIn(baseFolder)
+  const assets = loadAssetsIn(baseFolder)
+  logger.info(`${assetIcon} Assets ${JSON.stringify(assets, null, 2)}`)
+  return assets
 }
