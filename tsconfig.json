@@ -14,6 +14,10 @@
     "esModuleInterop": true,
     "experimentalDecorators": true,
   },
-  "include": ["test/**/*.ts", "src/**/*.ts", "examples/**/*.ts"],
+  "include": [
+    "test/**/*.ts",
+    "src/**/*.ts",
+    "examples/**/*.ts"
+  ],
   "exclude": ["**/*.js", "node_modules"]
 }
