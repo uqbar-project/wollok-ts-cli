@@ -1,35 +1,33 @@
-// import { ElementDefinition } from 'cytoscape'
-// import { existsSync } from 'fs'
-import { MockInstance } from 'vitest'
+import { existsSync } from 'fs'
+import { expect, MockInstance } from 'vitest'
 
 
-// declare global {
-//   export namespace Chai {
-//     interface Assertion { // TODO: split into the separate modules
-//       connect: (label: string, sourceLabel: string, targetLabel: string, width?: number, style?: string) => Assertion
-//       pathExists(): Assertion
-//     }
+declare module 'vitest' {
+  interface Assertion {
+    pathExists(): void
+  }
+  interface AsymmetricMatchersContaining {
+    pathExists(): void
+  }
+}
 
-//     interface Include {
-//       nodeWith: (query: ElementDefinitionQuery) => Assertion
-//     }
-//   }
-// }
+expect.extend({
+  pathExists(received: string) {
+    if (typeof received !== 'string' || received.length === 0) {
+      return {
+        pass: false,
+        message: () => `expected a non-empty string path, but got ${received}`,
+      }
+    }
 
-// export const pathAssertions: Chai.ChaiPlugin = (chai) => {
-//   const { Assertion } = chai
+    const pass = existsSync(received)
 
-//   Assertion.addMethod('pathExists', function () {
-//     new Assertion(this._obj).to.be.an('string').length.above(0)
-//     const exists = existsSync(this._obj)
-//     this.assert(
-//       exists,
-//       `expected path ${this._obj} to exist`,
-//       `expected path ${this._obj} not to exist`,
-//       this._obj
-//     )
-//   })
-// }
+    return {
+      pass,
+      message: () => `expected path '${received}' ${this.isNot ? 'not ' : ''}to exist`,
+    }
+  },
+})
 
 
 export const spyCalledWithSubstring = (spy: MockInstance, value: string, debug = false): boolean => {

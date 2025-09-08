@@ -1,7 +1,7 @@
 import chalk from 'chalk'
 import logger from 'loglevel'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
-import { basename, join } from 'node:path'
+import { basename, isAbsolute, join } from 'node:path'
 import kebabCase from 'kebab-case'
 import  { userInfo } from 'os'
 import { ENTER, createFolderIfNotExists, failureDescription, validateName } from '../utils.js'
@@ -23,7 +23,6 @@ export type Options = {
 export default function (folder: string | undefined, { project: _project, name, noTest = false, noCI = false, game = false, noGit = false, natives = undefined }: Options): void {
   try {
     const project = join(_project, folder ?? '')
-    const nativesFolder = join(project, natives ?? '')
 
     // Initialization
     if (existsSync(join(project, 'package.json'))) {
@@ -37,7 +36,10 @@ export default function (folder: string | undefined, { project: _project, name, 
 
     // Creating folders
     createFolderIfNotExists(project)
-    createFolderIfNotExists(nativesFolder)
+    if (natives) {
+      const nativesFolder = isAbsolute(natives) ? natives : join(project, natives)
+      createFolderIfNotExists(nativesFolder)
+    }
     createFolderIfNotExists(join(project, '.github'))
     createFolderIfNotExists(join(project, '.github', 'workflows'))
     if (game) {
