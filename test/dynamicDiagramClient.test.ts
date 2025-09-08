@@ -1,14 +1,7 @@
-import chai from 'chai'
-import chaiAsPromised from 'chai-as-promised'
-import chaiHttp from 'chai-http'
 import { join } from 'path'
 import { Evaluation, Interpreter, WRENatives } from 'wollok-ts'
 import { buildEnvironmentForProject, initializeDynamicDiagram } from '../src/utils.js'
-
-chai.should()
-chai.use(chaiHttp)
-chai.use(chaiAsPromised)
-const expect = chai.expect
+import { beforeEach, describe, expect, it } from 'vitest'
 
 describe('dynamic diagram client', () => {
   const projectPath = join('examples', 'repl-examples')
@@ -31,9 +24,9 @@ describe('dynamic diagram client', () => {
   it('should work for root path', async () => {
     const { enabled, server } = initializeDynamicDiagram(interpreter, options, interpreter.evaluation.environment.replNode())
     try {
-      expect(enabled).to.be.true
-      const result = await chai.request(server).get('/index.html')
-      expect(result).to.have.status(200)
+      expect(enabled).toBe(true)
+      const response = await fetch(`http://${options.host}:${options.port}/index.html`)
+      expect(response.status).toBe(200)
     } finally {
       server?.close()
     }
