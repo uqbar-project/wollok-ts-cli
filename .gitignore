@@ -16,3 +16,4 @@ coverage
 /public/game/lib/*
 log/*
 wollok.log
+.editorconfig
