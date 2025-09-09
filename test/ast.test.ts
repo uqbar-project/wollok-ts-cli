@@ -12,7 +12,7 @@ describe('ast', () => {
   let consoleLogSpy: MockInstance<(message?: any, ...optionalParams: any[]) => void>
 
   beforeEach(() => {
-    processExitSpy = vi.spyOn(process, 'exit').mockImplementation((_code?: number) => undefined as never)
+    processExitSpy = vi.spyOn(process, 'exit').mockImplementation(((_code?: string | number | null | undefined) => {}) as (code?: string | number | null | undefined) => never)
     consoleLogSpy = vi.spyOn(logger, 'info').mockImplementation((_info: string) => {
     })
   })

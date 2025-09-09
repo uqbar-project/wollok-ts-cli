@@ -34,7 +34,7 @@ describe('REPL command', () => {
     skipValidations: false,
     ...baseOptions,
   }
-  let processExitSpy: MockInstance<(code?: number) => never>
+  let processExitSpy: MockInstance<(code?: string | number | null | undefined) => never>
   let consoleLogSpy: MockInstance<(message?: any, ...optionalParams: any[]) => void>
   let initializeGameClientSpy: MockInstance<(project: string, assets: string, host: string, port: string) => Server>
   let repl: Interface
@@ -80,9 +80,9 @@ describe('REPL command', () => {
 
 describe('REPL command - invalid project', () => {
   beforeEach(async () => {
-    vi.spyOn(process, 'exit').mockImplementation((code?: number | undefined) => {
-      throw new Error(code && code > 0 ? `exit with ${code} error code` : 'ok')
-    })
+    vi.spyOn(process, 'exit').mockImplementation(((code?: string | number | null | undefined) => {
+      throw new Error(code && Number(code) > 0 ? `exit with ${code} error code` : 'ok')
+    }) as (code?: string | number | null | undefined) => never)
   })
 
   afterEach(() => {

@@ -231,7 +231,7 @@ describe('Test', () => {
       loggerErrorSpy = vi.spyOn(logger, 'error').mockImplementation(() => {})
       fileLoggerInfoSpy = vi.spyOn(fileLogger, 'info')
         .mockImplementation(((_message: string, ..._meta: any[]) => fileLogger as any) as LeveledLogMethod)
-      processExitSpy = vi.spyOn(process, 'exit').mockImplementation(((_code?: number) => {}) as (code?: number) => never)
+      processExitSpy = vi.spyOn(process, 'exit').mockImplementation(((_code?: string | number | null | undefined) => {}) as (code?: string | number | null | undefined) => never)
     })
 
     afterEach(() => {
