@@ -1,64 +1,64 @@
 import chalk from 'chalk'
 import logger from 'loglevel'
-import sinon from 'sinon'
 import path, { join } from 'path'
 import { buildEnvironmentForProject, failureDescription, getFQN, handleError, problemDescription, validateEnvironment, Project, validateName, ValidationAction } from '../src/utils.js'
-import chaiAsPromised from 'chai-as-promised'
-import chai from 'chai'
 import { spyCalledWithSubstring } from './assertions.js'
 import { Problem, WOLLOK_EXTRA_STACK_TRACE_HEADER, validate, List } from 'wollok-ts'
 import * as wollok from 'wollok-ts'
+import { describe, it, beforeEach, afterEach, expect, vi } from 'vitest'
+import type { MockInstance } from 'vitest'
 
 const { bold, red, yellowBright } = chalk
 
 describe('build & validating environment', () => {
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  let buildEnvironmentSpy: MockInstance<(...args: any[]) => any>
+
   afterEach(() => {
-    sinon.restore()
+    vi.restoreAllMocks()
   })
+
   const badProjectPath = join('examples', 'bad-files-examples')
 
   it('should throw an exception if parsing fails', async () => {
-    chai.use(chaiAsPromised)
-    const expect = chai.expect
-    sinon.stub(wollok, 'buildEnvironment').throws(new Error('Failed to parse fileWithParseErrors.wlk'))
-    await expect(buildEnvironmentForProject(join(badProjectPath, 'parse-errors'), ['fileWithParseErrors.wlk'])).to.eventually.be.rejectedWith(/Failed to parse fileWithParseErrors.wlk/)
+    buildEnvironmentSpy = vi.spyOn(wollok, 'buildEnvironment').mockImplementation(() => { throw new Error('Failed to parse fileWithParseErrors.wlk') })
+    await expect(buildEnvironmentForProject(join(badProjectPath, 'parse-errors'), ['fileWithParseErrors.wlk'])).rejects.toThrow(/Failed to parse fileWithParseErrors.wlk/)
   })
 
   it('should return all problems if validation fails', async () => {
     const environment = await buildEnvironmentForProject(join(badProjectPath, 'validation-errors'), ['fileWithValidationErrors.wlk'])
-    chai.expect(validateEnvironment(environment, ValidationAction.RETURN_ERRORS).length).to.equal(1)
+    expect(validateEnvironment(environment, ValidationAction.RETURN_ERRORS).length).toBe(1)
   })
 
   it('should throw an exception if validation fails', async () => {
     const environment = await buildEnvironmentForProject(join(badProjectPath, 'validation-errors'), ['fileWithValidationErrors.wlk'])
-    chai.expect(() => { validateEnvironment(environment, ValidationAction.THROW_ON_ERRORS) }).to.throw(/Fatal error while running validations/)
+    expect(() => validateEnvironment(environment, ValidationAction.THROW_ON_ERRORS)).toThrow(/Fatal error while running validations/)
   })
 
   it('should not throw an exception if validation fails but you want to skip validation', async () => {
     const environment = await buildEnvironmentForProject(join(badProjectPath, 'validation-errors'), ['fileWithValidationErrors.wlk'])
-    chai.expect(() => { validateEnvironment(environment, ValidationAction.SKIP_VALIDATION) }).to.not.throw()
+    expect(() => validateEnvironment(environment, ValidationAction.SKIP_VALIDATION)).not.toThrow()
   })
 
 })
 
 describe('handle error', () => {
 
-  let loggerInfoSpy: sinon.SinonStub
+  let loggerErrorSpy: MockInstance<(...args: any[]) => any>
 
   beforeEach(() => {
-    loggerInfoSpy = sinon.stub(logger, 'error')
+    loggerErrorSpy = vi.spyOn(logger, 'error').mockImplementation(() => {})
   })
 
   afterEach(() => {
-    sinon.restore()
+    vi.restoreAllMocks()
   })
 
   it('shows error message', async () => {
     await handleError(new Error('Parse validation failed'))
-
-    chai.expect(spyCalledWithSubstring(loggerInfoSpy, 'Uh-oh... Unexpected Error')).to.be.true
-    chai.expect(spyCalledWithSubstring(loggerInfoSpy, 'Parse validation failed')).to.be.true
+    expect(spyCalledWithSubstring(loggerErrorSpy, 'Uh-oh... Unexpected Error')).toBe(true)
+    expect(spyCalledWithSubstring(loggerErrorSpy, 'Parse validation failed')).toBe(true)
   })
 
 })
@@ -66,18 +66,18 @@ describe('handle error', () => {
 describe('resources', () => {
 
   it('returns the right FQN for an element inside the project - using path join', () => {
-    chai.expect(getFQN(path.join('usr', 'alf', 'workspace', 'test-project'), path.join('usr', 'alf', 'workspace', 'test-project', 'example', 'aves.wlk'))).to.equal('example.aves')
+    expect(getFQN(path.join('usr', 'alf', 'workspace', 'test-project'), path.join('usr', 'alf', 'workspace', 'test-project', 'example', 'aves.wlk'))).toBe('example.aves')
   })
 
   it('returns package.json content for a valid project', () => {
     const packageData = new Project(join('examples', 'package-examples', 'good-project')).properties
-    chai.expect(packageData.name).to.equal('parcialBiblioteca')
-    chai.expect(packageData.wollokVersion).to.equal('4.0.0')
+    expect(packageData.name).toBe('parcialBiblioteca')
+    expect(packageData.wollokVersion).toBe('4.0.0')
   })
 
   it('returns empty for an invalid project (no package.json)', () => {
     const packageData = new Project(join('examples', 'package-examples', 'bad-project')).properties
-    chai.expect(packageData).to.be.empty
+    expect(packageData).toEqual({})
   })
 
 })
@@ -92,11 +92,11 @@ describe('printing', () => {
     \t${WOLLOK_EXTRA_STACK_TRACE_HEADER}\tat Evaluation.execThrow (/snapshot/wollok-ts-cli/node_modules/wollok-ts/dist/interpreter/runtimeModel.js:445:15)
     `
     const failure = failureDescription('Unexpected error', somethingBadError)
-    chai.expect(failure).to.contain('Unexpected error')
-    chai.expect(failure).to.contain('at Context.<anonymous> (/home/dodain/workspace/wollok-dev/wollok-ts-cli/test/utils.test.ts:64:56)')
-    chai.expect(failure).to.contain('at callFn (/home/dodain/workspace/wollok-dev/wollok-ts-cli/node_modules/mocha/lib/runnable.js:366:21)')
-    chai.expect(failure).not.to.contain(WOLLOK_EXTRA_STACK_TRACE_HEADER)
-    chai.expect(failure).not.to.contain('Evaluation.execThrow')
+    expect(failure).toContain('Unexpected error')
+    expect(failure).toContain('at Context.<anonymous> (/home/dodain/workspace/wollok-dev/wollok-ts-cli/test/utils.test.ts:64:56)')
+    expect(failure).toContain('at callFn (/home/dodain/workspace/wollok-dev/wollok-ts-cli/node_modules/mocha/lib/runnable.js:366:21)')
+    expect(failure).not.toContain(WOLLOK_EXTRA_STACK_TRACE_HEADER)
+    expect(failure).not.toContain('Evaluation.execThrow')
   })
 
   describe('problem description', () => {
@@ -112,44 +112,44 @@ describe('printing', () => {
     it('shows a problem error using internationalization message', () => {
       const firstError = problems?.find(problem => problem.level === 'error') as Problem
       const problem = problemDescription(firstError)
-      chai.expect(problem).to.contain(red(`${bold('[ERROR]')}: Cannot modify constants at example.wlk:5`))
+      expect(problem).toContain(red(`${bold('[ERROR]')}: Cannot modify constants at example.wlk:5`))
     })
 
     it('shows a problem warning using internationalization message', () => {
       const firstError = problems?.find(problem => problem.level === 'warning') as Problem
       const problem = problemDescription(firstError)
-      chai.expect(problem).to.contain(yellowBright(`${bold('[WARNING]')}: The name bird must start with uppercase at example.wlk:1`))
+      expect(problem).toContain(yellowBright(`${bold('[WARNING]')}: The name bird must start with uppercase at example.wlk:1`))
     })
 
   })
 
   describe('validate name', () => {
     it('passes ok with a valid name', () => {
-      chai.expect(() => validateName('valid')).to.not.throw()
+      expect(() => validateName('valid')).not.toThrow()
     })
 
     it('passes ok with a valid name in camel case', () => {
-      chai.expect(() => validateName('validName')).to.not.throw()
+      expect(() => validateName('validName')).not.toThrow()
     })
 
     it('passes ok with a valid name in kebab case', () => {
-      chai.expect(() => validateName('valid-name')).to.not.throw()
+      expect(() => validateName('valid-name')).not.toThrow()
     })
 
     it('passes ok with a valid name in snake case', () => {
-      chai.expect(() => validateName('valid_name')).to.not.throw()
+      expect(() => validateName('valid_name')).not.toThrow()
     })
 
     it('throws an error for invalid name', () => {
-      chai.expect(() => validateName('')).to.throw('Name cannot be empty')
+      expect(() => validateName('')).toThrow('Name cannot be empty')
     })
 
     it('throws an error for invalid name', () => {
-      chai.expect(() => validateName('invalidName!')).to.throw('Invalid name: [invalidName!]')
+      expect(() => validateName('invalidName!')).toThrow('Invalid name: [invalidName!]')
     })
 
     it('throws an error for invalid name', () => {
-      chai.expect(() => validateName('2024-o-tpiJuego')).to.throw('Invalid name: [2024-o-tpiJuego]')
+      expect(() => validateName('2024-o-tpiJuego')).toThrow('Invalid name: [2024-o-tpiJuego]')
     })
 
   })

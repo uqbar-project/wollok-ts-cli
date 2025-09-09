@@ -6,7 +6,8 @@
   "ignorePatterns": [
     "**/*.js",
     "dist/**",
-    "build/**"
+    "build/**",
+    "vitest.config.ts"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
