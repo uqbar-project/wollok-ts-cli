@@ -20,7 +20,7 @@
   ],
   "main": "./dist/src/index.js",
   "scripts": {
-    "prepare": "node ./scripts/download-libs.js && npm run build:tools",
+    "prepare": "ls -laR ./node_modules/wollok-web-tools && node ./scripts/download-libs.js && npm run build:tools",
     "start": "node ./dist/src/index.js",
     "dev": "tsx src/index.ts",
     "test": "npm run lint && npm run test:unit",
@@ -45,7 +45,6 @@
     "wollok": "./dist/src/index.js"
   },
   "dependencies": {
-    "@badisi/latest-version": "^7.0.15",
     "chalk": "^4.1.2",
     "cli-box": "^6.0.10",
     "commander": "^11.1.0",
