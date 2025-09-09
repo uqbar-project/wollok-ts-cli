@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "sourceMap": true,
+    "outDir": "build",
     "allowImportingTsExtensions": false,
     "target": "es2022",
     "module": "nodenext",
