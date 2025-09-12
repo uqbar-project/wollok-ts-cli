@@ -67,7 +67,7 @@ updateNotifier().finally(() => {
     .option('-g, --game', 'adds a game program to the project', false)
     .option('-t, --noTest', 'avoids creating a test file', false)
     .option('-c, --noCI', 'avoids creating a file for CI', false)
-    .option('-ng, --noGit', 'avoids initializing a git repository', false)
+    .option('--noGit', 'avoids initializing a git repository', false)
     .option('-N, --natives [natives]', 'folder name for native files (default: root folder).', undefined)
     .allowUnknownOption()
     .action(init)

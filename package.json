@@ -18,6 +18,7 @@
     "cli",
     "typescript"
   ],
+  "packageManager": "bun@1.1.18",
   "main": "./dist/src/index.js",
   "scripts": {
     "prepare": "node ./scripts/download-libs.js && npm run build:tools",
@@ -36,9 +37,9 @@
     "lint:fix": "eslint . --fix",
     "test:unit": "vitest run",
     "build:tools": "shx cp ./node_modules/wollok-web-tools/dist/web/game-index.js ./public/game/lib && shx cp ./node_modules/wollok-web-tools/dist/dynamicDiagram/diagram-index.js ./public/diagram",
-    "build": "shx rm -rf dist && shx mkdir ./dist && shx cp -r ./public ./dist/public && tsc -p ./tsconfig.build.json",
-    "build:bin:mac": "bun build dist/src/index.js --compile --outfile dist/bin/wollok-ts-cli-mac --target=bun-darwin-arm64 --format esm",
-    "build:bin:win": "bun build dist/src/index.js --compile --outfile dist/bin/wollok-ts-cli-win --target=bun-windows-x64 --format esm",
+    "copy-public": "shx rm -rf dist && shx mkdir dist && shx cp -R ./public ./dist/public",
+    "build": "npm run copy-public && tsc -p ./tsconfig.build.json",
+    "exe:mac": "npm run copy-public && npx bun build src/index.ts --compile --outfile dist/bin/wollok-ts-cli-mac --target bun-darwin-arm64 --format esm --tsconfig-file tsconfig.build.json",
     "watch": "npm run build -- -w",
     "pack": "pkg .",
     "prepublishOnly": "npm run prepare && npm run build && npm run test"
