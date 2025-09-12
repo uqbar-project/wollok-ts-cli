@@ -39,7 +39,7 @@
     "build:tools": "shx cp ./node_modules/wollok-web-tools/dist/web/game-index.js ./public/game/lib && shx cp ./node_modules/wollok-web-tools/dist/dynamicDiagram/diagram-index.js ./public/diagram",
     "copy-public": "shx rm -rf dist && shx mkdir dist && shx cp -R ./public ./dist/public",
     "build": "npm run copy-public && tsc -p ./tsconfig.build.json",
-    "exe:mac": "npm run copy-public && npx bun build src/index.ts --compile --outfile dist/bin/wollok-ts-cli-mac --target bun-darwin-arm64 --format esm --tsconfig-file tsconfig.build.json",
+    "exe:mac": "npx bun install --force && npm run copy-public && npx bun build src/index.ts --compile --outfile dist/bin/wollok-ts-cli-mac --target bun-darwin-arm64 --format esm --tsconfig-file tsconfig.build.json",
     "watch": "npm run build -- -w",
     "pack": "pkg .",
     "prepublishOnly": "npm run prepare && npm run build && npm run test"
