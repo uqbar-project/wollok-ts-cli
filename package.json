@@ -37,6 +37,8 @@
     "test:unit": "vitest run",
     "build:tools": "shx cp ./node_modules/wollok-web-tools/dist/web/game-index.js ./public/game/lib && shx cp ./node_modules/wollok-web-tools/dist/dynamicDiagram/diagram-index.js ./public/diagram",
     "build": "shx rm -rf dist && shx mkdir ./dist && shx cp -r ./public ./dist/public && tsc -p ./tsconfig.build.json",
+    "build:bin:mac": "bun build dist/src/index.js --compile --outfile dist/bin/wollok-ts-cli-mac --target=bun-darwin-arm64 --format esm",
+    "build:bin:win": "bun build dist/src/index.js --compile --outfile dist/bin/wollok-ts-cli-win --target=bun-windows-x64 --format esm",
     "watch": "npm run build -- -w",
     "pack": "pkg .",
     "prepublishOnly": "npm run prepare && npm run build && npm run test"
@@ -51,7 +53,7 @@
     "compare-versions": "^6.1.1",
     "cors": "^2.8.5",
     "cytoscape": "^3.15.2",
-    "express": "^4.18.1",
+    "express": "^4.21.2",
     "globby": "^14.1.0",
     "kebab-case": "^2.0.2",
     "latest-version": "^9.0.0",
@@ -62,7 +64,7 @@
     "typescript": "~5.5.1",
     "winston": "^3.11.0",
     "wollok-ts": "^4.2.3",
-    "wollok-web-tools": "^1.1.9"
+    "wollok-web-tools": "file:../wollok-web-tools"
   },
   "devDependencies": {
     "@stylistic/eslint-plugin-ts": "^2.8.0",
