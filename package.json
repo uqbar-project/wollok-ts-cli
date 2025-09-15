@@ -18,7 +18,6 @@
     "cli",
     "typescript"
   ],
-  "packageManager": "bun@1.1.18",
   "main": "./dist/src/index.js",
   "scripts": {
     "prepare": "node ./scripts/download-libs.js && npm run build:tools",
@@ -39,7 +38,6 @@
     "build:tools": "shx cp ./node_modules/wollok-web-tools/dist/web/game-index.js ./public/game/lib && shx cp ./node_modules/wollok-web-tools/dist/dynamicDiagram/diagram-index.js ./public/diagram",
     "copy-public": "shx rm -rf dist && shx mkdir dist && shx cp -R ./public ./dist/public",
     "build": "npm run copy-public && tsc -p ./tsconfig.build.json",
-    "exe:mac": "npx bun install --force && npm run copy-public && npx bun build src/index.ts --compile --outfile dist/bin/wollok-ts-cli-mac --target bun-darwin-arm64 --format esm --tsconfig-file tsconfig.build.json",
     "watch": "npm run build -- -w",
     "pack": "pkg .",
     "prepublishOnly": "npm run prepare && npm run build && npm run test"
@@ -67,6 +65,7 @@
     "wollok-web-tools": "file:../wollok-web-tools"
   },
   "devDependencies": {
+    "pkg": "^5.8.1",
     "@eslint/js": "^9.35.0",
     "@stylistic/eslint-plugin": "^5.3.1",
     "@types/cli-box": "^6.0.4",
