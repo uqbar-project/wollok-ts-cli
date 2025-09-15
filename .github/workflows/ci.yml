@@ -15,7 +15,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
-      - run: npm i
+      - run: npm ci
+      - name: Debug wollok-web-tools files
+        run: |
+          npm ls wollok-web-tools
+          ls -R node_modules/wollok-web-tools/dist || true
       - name: Unit Tests
         run: npm run test-with-coverage
       - name: Update coverage badge
