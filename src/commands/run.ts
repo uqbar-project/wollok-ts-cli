@@ -62,7 +62,7 @@ export default async function (programFQN: Name, options: Options): Promise<unde
 const configProcessForGame = (programFQN: Name, timeMeasurer: TimeMeasurer, project: string) => {
   const logGameFinished = (exitCode: any) => {
     fileLogger.info({ message: `${gameIcon} Game executed ${programFQN} on ${project}`, timeElapsed: timeMeasurer.elapsedTime(), exitCode })
-    process.exit(exitCode)
+    process.exit(exitCode instanceof TypeError ? 1 : exitCode)
   }
   Array.from(['exit', 'SIGINT', 'SIGUSR1', 'SIGUSR2', 'SIGTERM', 'SIGHUP', 'uncaughtException']).forEach((eventType: string) => {
     process.on(eventType, logGameFinished)
