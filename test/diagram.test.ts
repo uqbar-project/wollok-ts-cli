@@ -70,7 +70,7 @@ expect.extend({
       ...style && { style },
     }
 
-    // reutilizamos el matcher nodeWith internamente
+    // we reuse the nodeWith matcher internally
     const pass = received.some(({ data }) =>
       Object.entries(connection).every(([k, v]) => data[k] === v)
     )

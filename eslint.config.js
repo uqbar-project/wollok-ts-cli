@@ -13,7 +13,6 @@ export default tseslint.config(
     ignores: [
       '**/*.js',
       'dist/**',
-      'build/**',
       'vitest.config.ts',
     ],
   },
