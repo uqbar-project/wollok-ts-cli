@@ -1,7 +1,17 @@
 {
-    "files.trimTrailingWhitespace": true,
-    "typescript.preferences.quoteStyle": "single",
-    "typescript.format.semicolons": "remove",
-    "editor.tabSize": 2,
-    "editor.insertSpaces": true
+  "files.trimTrailingWhitespace": true,
+  "typescript.preferences.quoteStyle": "single",
+  "typescript.format.semicolons": "remove",
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "eslint.useFlatConfig": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
 }

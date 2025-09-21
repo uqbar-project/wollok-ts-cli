@@ -1,9 +1,9 @@
 import { time, timeEnd } from 'console'
 import logger from 'loglevel'
-import { buildEnvironmentForProject, valueDescription, handleError, ENTER, buildEnvironmentIcon, astIcon } from '../utils'
+import { buildEnvironmentForProject, valueDescription, handleError, ENTER, buildEnvironmentIcon, astIcon } from '../utils.js'
 import { Literal, Node, notEmpty, Send } from 'wollok-ts'
-import { logger as fileLogger } from '../logger'
-import { TimeMeasurer } from '../time-measurer'
+import { logger as fileLogger } from '../logger.js'
+import { TimeMeasurer } from '../time-measurer.js'
 
 export type AstOptions = {
   project: string,

@@ -1,54 +1,52 @@
-import { expect, should } from 'chai'
+import { describe, it, expect, beforeEach, afterEach, vi, type MockInstance } from 'vitest'
 import { join } from 'path'
-import ast from '../src/commands/ast'
-import sinon from 'sinon'
-import { spyCalledWithSubstring } from './assertions'
+import ast from '../src/commands/ast.js'
+import { spyCalledWithSubstring } from './assertions.js'
 import logger from 'loglevel'
-
-should()
 
 const projectPath = join('examples', 'ast-examples')
 
 describe('ast', () => {
 
-  let processExitSpy: sinon.SinonStub
-  let consoleLogSpy: sinon.SinonStub
+  let processExitSpy: MockInstance<(code?: number) => never>
+  let consoleLogSpy: MockInstance<(message?: any, ...optionalParams: any[]) => void>
 
   beforeEach(() => {
-    processExitSpy = sinon.stub(process, 'exit')
-    consoleLogSpy = sinon.stub(logger, 'info')
+    processExitSpy = vi.spyOn(process, 'exit').mockImplementation(((_code?: string | number | null | undefined) => {}) as (code?: string | number | null | undefined) => never)
+    consoleLogSpy = vi.spyOn(logger, 'info').mockImplementation((_info: string) => {
+    })
   })
 
   it('returns ast as json for project', async () => {
     await ast({ project: projectPath + '/ok-project', entityFQN: 'example' })
-    expect (processExitSpy.calledWith(0)).to.be.true
-    expect(spyCalledWithSubstring(consoleLogSpy, '"name": "example"')).to.be.true
-    expect(spyCalledWithSubstring(consoleLogSpy, '"name": "Animal"')).to.be.true
-    expect(spyCalledWithSubstring(consoleLogSpy, '"name": "pepita"')).to.be.true
+    expect(processExitSpy).toHaveBeenCalledWith(0)
+    expect(spyCalledWithSubstring(consoleLogSpy, '"name": "example"')).toBe(true)
+    expect(spyCalledWithSubstring(consoleLogSpy, '"name": "Animal"')).toBe(true)
+    expect(spyCalledWithSubstring(consoleLogSpy, '"name": "pepita"')).toBe(true)
   })
 
   it('if entity is provided, it filters ast correctly', async () => {
     await ast({ project: projectPath + '/ok-project', entityFQN: 'example.Animal' })
-    expect (processExitSpy.calledWith(0)).to.be.true
-    expect(spyCalledWithSubstring(consoleLogSpy, '"name": "Animal"')).to.be.true
-    expect(spyCalledWithSubstring(consoleLogSpy, '"name": "pepita"')).to.be.false
+    expect(processExitSpy).toHaveBeenCalledWith(0)
+    expect(spyCalledWithSubstring(consoleLogSpy, '"name": "Animal"')).toBe(true)
+    expect(spyCalledWithSubstring(consoleLogSpy, '"name": "pepita"')).toBe(false)
   })
 
   it('if no file and not entity is provided, it returns all the nodes from the project', async () => {
     await ast({ project: projectPath + '/ok-project' })
-    expect (processExitSpy.calledWith(0)).to.be.true
-    expect(spyCalledWithSubstring(consoleLogSpy, '"name": "example"')).to.be.true
-    expect(spyCalledWithSubstring(consoleLogSpy, '"name": "Animal"')).to.be.true
-    expect(spyCalledWithSubstring(consoleLogSpy, '"name": "pepita"')).to.be.true
-    expect(spyCalledWithSubstring(consoleLogSpy, '"name": "Extra"')).to.be.true
+    expect(processExitSpy).toHaveBeenCalledWith(0)
+    expect(spyCalledWithSubstring(consoleLogSpy, '"name": "example"')).toBe(true)
+    expect(spyCalledWithSubstring(consoleLogSpy, '"name": "Animal"')).toBe(true)
+    expect(spyCalledWithSubstring(consoleLogSpy, '"name": "pepita"')).toBe(true)
+    expect(spyCalledWithSubstring(consoleLogSpy, '"name": "Extra"')).toBe(true)
   })
 
   it('if no project is provided, it returns an error', async () => {
     await ast({ project: '' })
-    expect (processExitSpy.calledWith(1)).to.be.true
+    expect(processExitSpy).toHaveBeenCalledWith(1)
   })
 
   afterEach(() => {
-    sinon.restore()
+    vi.restoreAllMocks()
   })
 })

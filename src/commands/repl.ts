@@ -1,13 +1,15 @@
 /* eslint-disable no-console */
-import { bold } from 'chalk'
+import chalk from 'chalk'
 import { Command } from 'commander'
 import logger from 'loglevel'
 import { CompleterResult, Interface, createInterface as Repl } from 'readline'
 import { Entity, Environment, Evaluation, Execution, Interpreter, NativeFunction, Package, REPL, RuntimeValue, interprete, link } from 'wollok-ts'
-import { eventsFor, initializeGameClient } from '../game'
-import { logger as fileLogger } from '../logger'
-import { TimeMeasurer } from '../time-measurer'
-import { ENTER, Project, buildEnvironmentCommand, buildNativesForGame, failureDescription, getAllAssets, getAssetsFolder, getFQN, handleError, initializeDynamicDiagram, nextPort, replIcon, sanitizeStackTrace, successDescription, valueDescription } from '../utils'
+import { eventsFor, initializeGameClient } from '../game.js'
+import { logger as fileLogger } from '../logger.js'
+import { TimeMeasurer } from '../time-measurer.js'
+import { ENTER, Project, buildEnvironmentCommand, buildNativesForGame, failureDescription, getAllAssets, getAssetsFolder, getFQN, handleError, initializeDynamicDiagram, nextPort, replIcon, sanitizeStackTrace, successDescription, valueDescription } from '../utils.js'
+
+const { bold } = chalk
 
 // TODO:
 // - autocomplete piola

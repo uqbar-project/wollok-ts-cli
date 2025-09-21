@@ -1,5 +1,4 @@
 dist
-build
 language
 perf
 *.tgz
@@ -16,3 +15,4 @@ coverage
 /public/game/lib/*
 log/*
 wollok.log
+.editorconfig

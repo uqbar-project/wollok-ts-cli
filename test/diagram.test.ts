@@ -1,12 +1,96 @@
-import { should, use } from 'chai'
 import { join } from 'path'
 import { interprete, Interpreter } from 'wollok-ts'
-import { initializeInterpreter } from '../src/commands/repl'
-import { getDynamicDiagram } from '../src/utils'
-import { diagramAssertions } from './assertions'
+import { initializeInterpreter } from '../src/commands/repl.js'
+import { getDynamicDiagram } from '../src/utils.js'
+import { beforeEach, describe, expect, it } from 'vitest'
 
-use(diagramAssertions)
-should()
+type ElementDefinitionQuery = Record<string, any>
+
+expect.extend({
+  nodeWith(received: any[], query: ElementDefinitionQuery) {
+    if (!Array.isArray(received)) {
+      return {
+        pass: false,
+        message: () =>
+          `Expected an array of elements, but got ${typeof received}`,
+      }
+    }
+
+    const diagram = received.map(({ data }) =>
+      Object.fromEntries(
+        Object.entries(data).filter(([key]) => Object.keys(query).includes(key))
+      )
+    )
+
+    const pass = diagram.some((entry) =>
+      Object.entries(query).every(([k, v]) => entry[k] === v)
+    )
+
+    return {
+      pass,
+      message: () =>
+        pass
+          ? `Expected diagram NOT to contain node with ${JSON.stringify(query)}`
+          : `Expected diagram to contain node with ${JSON.stringify(query)}`,
+    }
+  },
+
+  connect(
+    received: any[],
+    label: string,
+    source: string,
+    target: string,
+    width = 1,
+    style = 'solid'
+  ) {
+    if (!Array.isArray(received)) {
+      return {
+        pass: false,
+        message: () =>
+          `Expected an array of elements, but got ${typeof received}`,
+      }
+    }
+
+    const sourceNode = received.find(({ data }) => data.label === source)
+    const targetNode = received.find(({ data }) => data.label === target)
+
+    if (!sourceNode || !targetNode) {
+      return {
+        pass: false,
+        message: () =>
+          `Could not find source "${source}" or target "${target}" in diagram`,
+      }
+    }
+
+    const connection = {
+      label,
+      source: sourceNode.data.id,
+      target: targetNode.data.id,
+      ...width && { width },
+      ...style && { style },
+    }
+
+    // we reuse the nodeWith matcher internally
+    const pass = received.some(({ data }) =>
+      Object.entries(connection).every(([k, v]) => data[k] === v)
+    )
+
+    return {
+      pass,
+      message: () =>
+        pass
+          ? `Expected diagram NOT to contain connection ${JSON.stringify(connection)}`
+          : `Expected diagram to contain connection ${JSON.stringify(connection)}`,
+    }
+  },
+})
+
+declare module 'vitest' {
+  interface Assertion {
+    nodeWith(query: ElementDefinitionQuery): void
+    connect(label: string, source: string, target: string, width?: number, style?: string): void
+  }
+}
 
 const projectPath = join('examples', 'diagram-examples')
 const simpleFile = join(projectPath, 'fish.wlk')
@@ -14,6 +98,7 @@ const fileWithImports = join(projectPath, 'using-imports', 'base.wlk')
 
 describe('Dynamic diagram', () => {
   const options = {
+    assets: 'assets',
     project: projectPath,
     skipValidations: true,
     port: '8080',
@@ -29,95 +114,98 @@ describe('Dynamic diagram', () => {
   })
 
   it('should include WKOs', () => {
-    getDynamicDiagram(interpreter).should
-      .include.nodeWith({ type: 'object', label: 'george' }).and.to
-      .include.nodeWith({ type: 'object', label: 'bobbyTheShark' })
+    const diagram = getDynamicDiagram(interpreter)
+
+    expect(diagram).nodeWith({ type: 'object', label: 'george' })
+    expect(diagram).nodeWith({ type: 'object', label: 'bobbyTheShark' })
   })
 
   it('should include edges between WKOs', () => {
-    getDynamicDiagram(interpreter).should.connect('friend', 'bobbyTheShark', 'george')
+    const diagram = getDynamicDiagram(interpreter)
+    expect(diagram).connect('friend', 'bobbyTheShark', 'george')
   })
 
   it('should include edges between WKOs and custom classes', () => {
-    getDynamicDiagram(interpreter).should.connect('bird', 'bobbyTheShark', 'Bird')
+    const diagram = getDynamicDiagram(interpreter)
+    expect(diagram).connect('bird', 'bobbyTheShark', 'Bird')
   })
 
   it('should include edges between WKOs and literal attributes', () => {
-    getDynamicDiagram(interpreter).should.connect('age', 'bobbyTheShark', '5')
-      .and.to.connect('name', 'bobbyTheShark', '"Bobby"')
-      .and.to.connect('born', 'bobbyTheShark', '2/14/1971')
-      .and.to.connect('isHappy', 'bobbyTheShark', 'true')
-      .and.to.connect('range1', 'bobbyTheShark', '2..11')
-      .and.to.connect('range2', 'bobbyTheShark', '[2, 7, 12]')
-      .and.to.connect('aClosure', 'bobbyTheShark', '{ 5 + 2 }')
-      .and.to.connect('someObject', 'bobbyTheShark', 'Object')
-      .and.to.connect('dictionary', 'bobbyTheShark', 'a Dictionary []')
+    const diagram = getDynamicDiagram(interpreter)
+    expect(diagram).connect('age', 'bobbyTheShark', '5')
+    expect(diagram).connect('name', 'bobbyTheShark', '"Bobby"')
+    expect(diagram).connect('born', 'bobbyTheShark', '2/14/1971')
+    expect(diagram).connect('isHappy', 'bobbyTheShark', 'true')
+    expect(diagram).connect('range1', 'bobbyTheShark', '2..11')
+    expect(diagram).connect('range2', 'bobbyTheShark', '[2, 7, 12]')
+    expect(diagram).connect('aClosure', 'bobbyTheShark', '{ 5 + 2 }')
+    expect(diagram).connect('someObject', 'bobbyTheShark', 'Object')
+    expect(diagram).connect('dictionary', 'bobbyTheShark', 'a Dictionary []')
   })
 
   it('should include edges with extra info for constants', () => {
-    getDynamicDiagram(interpreter).should.connect('fixedValue🔒', 'bobbyTheShark', '"Fixed"')
+    expect(getDynamicDiagram(interpreter)).connect('fixedValue🔒', 'bobbyTheShark', '"Fixed"')
   })
 
   it('should include edges between classes and literal attributes', () => {
-    getDynamicDiagram(interpreter).should.connect('energy', 'Bird', '100')
+    expect(getDynamicDiagram(interpreter)).connect('energy', 'Bird', '100')
   })
 
   it('should resolve circular references successfully', () => {
-    getDynamicDiagram(interpreter).should.connect('friend', 'Bird', 'bobbyTheShark')
-      .and.to.connect('bird', 'bobbyTheShark', 'Bird')
+    const diagram = getDynamicDiagram(interpreter)
+    expect(diagram).connect('friend', 'Bird', 'bobbyTheShark')
+    expect(diagram).connect('bird', 'bobbyTheShark', 'Bird')
   })
 
   it('should include the REPL object', () => {
     interprete(interpreter, 'var x')
-    getDynamicDiagram(interpreter).should.include.nodeWith({ label: 'REPL', type: 'REPL' })
+    expect(getDynamicDiagram(interpreter)).nodeWith({ label: 'REPL', type: 'REPL' })
   })
 
   it('should include edges between REPL and WKOs', () => {
     interprete(interpreter, 'var x')
-    getDynamicDiagram(interpreter).should.connect('x', 'REPL', 'null', 1.5)
+    expect(getDynamicDiagram(interpreter)).connect('x', 'REPL', 'null', 1.5)
   })
 
   it('should include constant edges between REPL and WKOs', () => {
     interprete(interpreter, 'const x = 7')
-    getDynamicDiagram(interpreter).should.connect('x🔒', 'REPL', '7', 1.5)
+    expect(getDynamicDiagram(interpreter)).connect('x🔒', 'REPL', '7', 1.5)
   })
 
   it('should have a specific type for null object', () => {
     interprete(interpreter, 'var x')
-    getDynamicDiagram(interpreter).should.include.nodeWith({ label: 'null', type: 'null' })
+    expect(getDynamicDiagram(interpreter)).nodeWith({ label: 'null', type: 'null' })
   })
 
   it('should include lists and their elements', () => {
-    getDynamicDiagram(interpreter).should
-      .include.nodeWith({ type: 'literal', label: 'List' }).and.to
-      .include.nodeWith({ type: 'literal', label: '"blue"' }).and.to
-      .include.nodeWith({ type: 'literal', label: '"orange"' }).and.to
-      .include.nodeWith({ type: 'literal', label: '"grey"' }).and.to
-      .connect('0', 'List', '"blue"', 1, 'dotted').and.to
-      .connect('1', 'List', '"orange"', 1, 'dotted').and.to
-      .connect('2', 'List', '"grey"', 1, 'dotted')
+    const diagram = getDynamicDiagram(interpreter)
+    expect(diagram).nodeWith({ type: 'literal', label: 'List' })
+    expect(diagram).nodeWith({ type: 'literal', label: '"blue"' })
+    expect(diagram).nodeWith({ type: 'literal', label: '"orange"' })
+    expect(diagram).nodeWith({ type: 'literal', label: '"grey"' })
+    expect(diagram).connect('0', 'List', '"blue"', 1, 'dotted')
+    expect(diagram).connect('1', 'List', '"orange"', 1, 'dotted')
+    expect(diagram).connect('2', 'List', '"grey"', 1, 'dotted')
   })
 
   it('should include sets and their elements', () => {
-    getDynamicDiagram(interpreter).should
-      .include.nodeWith({ type: 'literal', label: 'Set' }).and.to
-      .include.nodeWith({ type: 'literal', label: '"blue"' }).and.to
-      .include.nodeWith({ type: 'literal', label: '"orange"' }).and.to
-      .include.nodeWith({ type: 'literal', label: '"grey"' }).and.to
-      .connect('', 'Set', '"blue"', 1, 'dotted').and.to
-      .connect('', 'Set', '"orange"', 1, 'dotted').and.to
-      .connect('', 'Set', '"grey"', 1, 'dotted')
+    const diagram = getDynamicDiagram(interpreter)
+    expect(diagram).nodeWith({ type: 'literal', label: 'Set' })
+    expect(diagram).nodeWith({ type: 'literal', label: '"blue"' })
+    expect(diagram).nodeWith({ type: 'literal', label: '"orange"' })
+    expect(diagram).nodeWith({ type: 'literal', label: '"grey"' })
+    expect(diagram).connect('', 'Set', '"blue"', 1, 'dotted')
+    expect(diagram).connect('', 'Set', '"orange"', 1, 'dotted')
+    expect(diagram).connect('', 'Set', '"grey"', 1, 'dotted')
   })
-
 
   it('should only include imported WKOs', async () => {
     interpreter = await initializeInterpreter(fileWithImports, options)
     const dataDiagram = getDynamicDiagram(interpreter)
-    dataDiagram.should
-      .include.nodeWith({ type: 'object', label: 'a' }).and.to
-      .include.nodeWith({ type: 'object', label: 'b' }).and.to
-      .include.nodeWith({ type: 'object', label: 'c' }).and.to
-      .include.nodeWith({ type: 'object', label: 'd' })
-    dataDiagram.filter(_ => _.data.type == 'object' ).should.have.length(4)
+    expect(dataDiagram).nodeWith({ type: 'object', label: 'a' })
+    expect(dataDiagram).nodeWith({ type: 'object', label: 'b' })
+    expect(dataDiagram).nodeWith({ type: 'object', label: 'c' })
+    expect(dataDiagram).nodeWith({ type: 'object', label: 'd' })
+    expect(dataDiagram.filter(_ => _.data.type == 'object' ).length).toBe(4)
   })
 })

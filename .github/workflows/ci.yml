@@ -1,6 +1,3 @@
-# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
-
 name: CI build
 
 on:
@@ -13,37 +10,21 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version-file: '.nvmrc'
-    - run: npm ci
-    - name: Unit Tests
-      run: npm run test-with-coverage
-    - name: Update coverage badge
-      uses: codecov/codecov-action@v3
-      with:
-        files: ./coverage/coverage-final.json
-        verbose: true
-        token: ${{ secrets.CODECOV_TOKEN }}
-    - name: Build & Pack
-      if: github.ref == 'refs/heads/master'
-      run: |
-        npm run build && npm run pack
-        chmod a+x ./dist/*
-        ls -la ./dist
-    - name: Add distribution to the latest release
-      if: github.ref == 'refs/heads/master'
-      uses: "marvinpinto/action-automatic-releases@latest"
-      with:
-        repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        automatic_release_tag: "draft"
-        prerelease: true
-        title: "Draft"
-        # doesn't work with wildcards 🤷🏼
-        files: |
-          ./dist/wollok-ts-cli-linux-x64
-          ./dist/wollok-ts-cli-macos-arm64
-          ./dist/wollok-ts-cli-macos-x64
-          ./dist/wollok-ts-cli-win-x64.exe
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+      - run: npm ci
+      - name: Debug wollok-web-tools files
+        run: |
+          npm ls wollok-web-tools
+          ls -R node_modules/wollok-web-tools/dist || true
+      - name: Unit Tests
+        run: npm run test-with-coverage
+      - name: Update coverage badge
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/coverage-final.json
+          verbose: true
+          token: ${{ secrets.CODECOV_TOKEN }}

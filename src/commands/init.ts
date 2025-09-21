@@ -1,12 +1,14 @@
-import { bold, cyan, yellow, green } from 'chalk'
+import chalk from 'chalk'
 import logger from 'loglevel'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
-import { basename, join } from 'node:path'
+import { basename, isAbsolute, join } from 'node:path'
 import kebabCase from 'kebab-case'
 import  { userInfo } from 'os'
-import { ENTER, createFolderIfNotExists, failureDescription, validateName } from '../utils'
+import { ENTER, createFolderIfNotExists, failureDescription, validateName } from '../utils.js'
 import { PROGRAM_FILE_EXTENSION, TEST_FILE_EXTENSION, WOLLOK_FILE_EXTENSION } from 'wollok-ts'
 import { execSync } from 'node:child_process'
+
+const { bold, cyan, yellow, green } = chalk
 
 export type Options = {
   project: string,
@@ -21,7 +23,6 @@ export type Options = {
 export default function (folder: string | undefined, { project: _project, name, noTest = false, noCI = false, game = false, noGit = false, natives = undefined }: Options): void {
   try {
     const project = join(_project, folder ?? '')
-    const nativesFolder = join(project, natives ?? '')
 
     // Initialization
     if (existsSync(join(project, 'package.json'))) {
@@ -35,7 +36,10 @@ export default function (folder: string | undefined, { project: _project, name, 
 
     // Creating folders
     createFolderIfNotExists(project)
-    createFolderIfNotExists(nativesFolder)
+    if (natives) {
+      const nativesFolder = isAbsolute(natives) ? natives : join(project, natives)
+      createFolderIfNotExists(nativesFolder)
+    }
     createFolderIfNotExists(join(project, '.github'))
     createFolderIfNotExists(join(project, '.github', 'workflows'))
     if (game) {
@@ -168,13 +172,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - run: |
-          wget -O wollok-ts-cli https://github.com/uqbar-project/wollok-ts-cli/releases/latest/download/wollok-ts-cli-linux-x64
-          chmod a+x ./wollok-ts-cli
-        shell: bash
-        name: Setup Wollok CLI
-      - run: ./wollok-ts-cli test --skipValidations -p ./
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install wollok-ts-cli globally
+        run: npm install -g wollok-ts-cli
+
+      - run: wollok test --skipValidations -p ./
         name: Run tests
 `
 

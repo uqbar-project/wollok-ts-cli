@@ -1,9 +1,9 @@
 import logger from 'loglevel'
 import { Execution, interpret, Name, NativeFunction, Program, RuntimeValue } from 'wollok-ts'
-import { eventsFor, initializeGameClient } from '../game'
-import { logger as fileLogger } from '../logger'
-import { buildEnvironmentCommand, buildEnvironmentIcon, buildNativesForGame, ENTER, gameIcon, getAllAssets, getAssetsFolder, handleError, initializeDynamicDiagram, nextPort, programIcon, Project, sanitizeStackTrace, successDescription, valueDescription } from '../utils'
-import { TimeMeasurer } from './../time-measurer'
+import { eventsFor, initializeGameClient } from '../game.js'
+import { logger as fileLogger } from '../logger.js'
+import { buildEnvironmentCommand, buildEnvironmentIcon, buildNativesForGame, ENTER, gameIcon, getAllAssets, getAssetsFolder, handleError, initializeDynamicDiagram, nextPort, programIcon, Project, sanitizeStackTrace, successDescription, valueDescription } from '../utils.js'
+import { TimeMeasurer } from './../time-measurer.js'
 
 const { time, timeEnd } = console
 
@@ -62,7 +62,7 @@ export default async function (programFQN: Name, options: Options): Promise<unde
 const configProcessForGame = (programFQN: Name, timeMeasurer: TimeMeasurer, project: string) => {
   const logGameFinished = (exitCode: any) => {
     fileLogger.info({ message: `${gameIcon} Game executed ${programFQN} on ${project}`, timeElapsed: timeMeasurer.elapsedTime(), exitCode })
-    process.exit(exitCode)
+    process.exit(exitCode instanceof TypeError ? 1 : exitCode)
   }
   Array.from(['exit', 'SIGINT', 'SIGUSR1', 'SIGUSR2', 'SIGTERM', 'SIGHUP', 'uncaughtException']).forEach((eventType: string) => {
     process.on(eventType, logGameFinished)

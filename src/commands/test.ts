@@ -1,12 +1,13 @@
-import { bold, red } from 'chalk'
+import chalk from 'chalk'
 import { time, timeEnd } from 'console'
 import logger from 'loglevel'
 import { Entity, Environment, Node, Test, is, match, when, interpret, Describe, count } from 'wollok-ts'
-import { buildEnvironmentForProject, failureDescription, successDescription, valueDescription, validateEnvironment, handleError, ENTER, sanitizeStackTrace, buildEnvironmentIcon, testIcon, assertionError, warningDescription, Project, ValidationAction } from '../utils'
-import { logger as fileLogger } from '../logger'
-import { TimeMeasurer } from '../time-measurer'
+import { buildEnvironmentForProject, failureDescription, successDescription, valueDescription, validateEnvironment, handleError, ENTER, sanitizeStackTrace, buildEnvironmentIcon, testIcon, assertionError, warningDescription, Project, ValidationAction } from '../utils.js'
+import { logger as fileLogger } from '../logger.js'
+import { TimeMeasurer } from '../time-measurer.js'
 import { Package } from 'wollok-ts'
 
+const { bold, red } = chalk
 const { log } = console
 
 export type Options = {

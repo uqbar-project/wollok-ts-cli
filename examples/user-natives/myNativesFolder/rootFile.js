@@ -1,5 +1,5 @@
 const myModel = {
-  *nativeOne(this: any, _self: any): any {
+  *nativeOne(_self) {
     return yield* this.reify(1)
   },
 }

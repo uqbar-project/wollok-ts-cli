@@ -1,4 +1,4 @@
-import { blue, bold, green, italic, red, yellow, yellowBright } from 'chalk'
+import chalk from 'chalk'
 import cors from 'cors'
 import { ElementDefinition } from 'cytoscape'
 import express from 'express'
@@ -9,19 +9,13 @@ import http from 'http'
 import logger from 'loglevel'
 import path, { join, relative } from 'path'
 import { Server, Socket } from 'socket.io'
-import { register } from 'ts-node'
 import { buildEnvironment, Environment, get, getDynamicDiagramData, getMessage, Interpreter, List, NativeFunction, Natives, Node, natives, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException, isEmpty } from 'wollok-ts'
 import { Asset, getDataDiagram, VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools'
+import { fileURLToPath } from 'url'
 
-register({
-  transpileOnly: true,
-  compilerOptions: {
-    module: 'NodeNext',
-    moduleResolution: 'NodeNext',
-  },
-})
 
 const { time, timeEnd } = console
+const { blue, bold, green, italic, red, yellow, yellowBright } = chalk
 
 export const ENTER = '\n'
 
@@ -39,6 +33,8 @@ export const folderIcon = '🗂️'
 export const diagramIcon = '🔀'
 export const errorIcon = '❌'
 export const warningIcon = '⚠️'
+export const assetIcon = '🎨'
+export const projectIcon = '📁'
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // FILE / PATH HANDLING
@@ -170,7 +166,7 @@ export const handleError = (error: any): void => {
 }
 
 export async function readNatives(nativeFolder: string): Promise<Natives> {
-  const paths = await globby(['**/*.ts', '**/*.cjs', '**/*.js'], { cwd: nativeFolder })
+  const paths = await globby(['**/*.js', '**/*.cjs', '**/*.js'], { cwd: nativeFolder })
 
   const debug = logger.getLevel() <= logger.levels.DEBUG
 
@@ -234,9 +230,11 @@ export const problemDescription = (problem: Problem): string => {
 // RESOURCES
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-export const publicPath = (...paths: string[]): string =>
-  path.join(__dirname, '..', 'public', ...paths)
-
+export const publicPath = (...paths: string[]): string => {
+  const __filename = fileURLToPath(import.meta.url)
+  const __dirname = path.dirname(__filename)
+  return path.join(__dirname, '..', 'public', ...paths)
+}
 
 interface Named {
   name: string
@@ -280,8 +278,7 @@ export const serverError = ({ port, code }: { port: string, code: string }): voi
   logger.info('')
   if (code === 'EADDRINUSE') {
     logger.info(yellow(bold(`⚡ We couldn't start dynamic diagram at port ${port}, because it is already in use. ⚡`)))
-    // eslint-disable-next-line @stylistic/ts/quotes
-    logger.info(yellow(`Please make sure you don't have another REPL session running in another terminal. \nIf you want to start another instance, you can use "--port xxxx" option, where xxxx should be any available port.`))
+    logger.info(yellow('Please make sure you don\'t have another REPL session running in another terminal. \nIf you want to start another instance, you can use "--port xxxx" option, where xxxx should be any available port.'))
   } else {
     logger.info(yellow(bold(`⚡ REPL couldn't be started at port ${port}, error code ["${code}]. ⚡`)))
   }
@@ -360,20 +357,20 @@ export const getSoundsFolder = (projectPath: string, assetsOptions: string): str
   fs.readdirSync(projectPath).includes('sounds') ? 'sounds' : assetsOptions
 
 export const getAllAssets = (projectPath: string, assetsFolder: string): Asset[] => {
+  logger.info(`${projectIcon} Project path: [${valueDescription(projectPath)}]`)
+  logger.info(`${folderIcon}  Assets folder: [${valueDescription(assetsFolder)}]`)
   const baseFolder = join(projectPath, assetsFolder)
   if (!existsSync(baseFolder))
     throw new Error(`Folder image ${baseFolder} does not exist`)
-
-  logger.info(`${folderIcon}  Assets folder ${valueDescription(baseFolder)}`)
-
-  const fileRelativeFor = (fileName: string) => ({ name: fileName, url: fileName })
 
   const loadAssetsIn = (basePath: string): Asset[] =>
     fs.readdirSync(basePath, { withFileTypes: true })
       .flatMap((file: Dirent) =>
         file.isDirectory() ? loadAssetsIn(join(basePath, file.name)) :
-        isValidAsset(file) ? [fileRelativeFor(relative(baseFolder, join(basePath, file.name)))] : []
+        isValidAsset(file) ? [{ url: relative(projectPath, join(basePath, file.name)), name: file.name }] : []
       )
 
-  return loadAssetsIn(baseFolder)
+  const assets = loadAssetsIn(baseFolder)
+  logger.info(`${assetIcon} Assets ${JSON.stringify(assets, null, 2)}`)
+  return assets
 }

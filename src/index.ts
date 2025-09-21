@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 import { Command } from 'commander'
-import repl from './commands/repl'
-import run from './commands/run'
-import test from './commands/test'
-import init from './commands/init'
-import lint from './commands/lint'
-import ast from './commands/ast'
-import { addDependency, removeDependency, synchronizeDependencies } from './commands/dependencies'
+import repl from './commands/repl.js'
+import run from './commands/run.js'
+import test from './commands/test.js'
+import init from './commands/init.js'
+import lint from './commands/lint.js'
+import ast from './commands/ast.js'
+import { addDependency, removeDependency, synchronizeDependencies } from './commands/dependencies.js'
 import logger from 'loglevel'
-import pkg from '../package.json'
-import { cyan } from 'chalk'
-import updateNotifier from './update-notifier'
+import pkg from '../package.json' with { type: 'json' }
+import chalk from 'chalk'
+import updateNotifier from './update-notifier.js'
+
+const { cyan } = chalk
 
 updateNotifier().finally(() => {
   const program = new Command()
@@ -65,7 +67,7 @@ updateNotifier().finally(() => {
     .option('-g, --game', 'adds a game program to the project', false)
     .option('-t, --noTest', 'avoids creating a test file', false)
     .option('-c, --noCI', 'avoids creating a file for CI', false)
-    .option('-ng, --noGit', 'avoids initializing a git repository', false)
+    .option('--noGit', 'avoids initializing a git repository', false)
     .option('-N, --natives [natives]', 'folder name for native files (default: root folder).', undefined)
     .allowUnknownOption()
     .action(init)
