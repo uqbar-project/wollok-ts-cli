@@ -6,8 +6,14 @@ The goal of this file is to document the changes to the Wollok language definiti
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Since 0.4.0 version, the Wollok language adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.0.2
+
+- ⬆️ Wollok version 4.2.3
+- 🐛 Another hotfix for wollok init
+
 ## v1.0.1
 
+- ⬆️ Wollok version 4.2.3
 - 🐛 Hotfix for wollok init
 
 ## v1.0.0

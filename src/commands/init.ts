@@ -1,6 +1,6 @@
 import chalk from 'chalk'
 import logger from 'loglevel'
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, writeFileSync } from 'node:fs'
 import { basename, isAbsolute, join } from 'node:path'
 import kebabCase from 'kebab-case'
 import  { userInfo } from 'os'
@@ -147,8 +147,6 @@ program PepitaGame {
 `
 
 const packageJsonDefinition = (projectName: string, game: boolean, natives?: string) => {
-  const raw = readFileSync('./package.json', 'utf-8')
-  const pkg = JSON.parse(raw)
   const wollokVersion = '4.2.3' // TODO: obtain it from package.json dependency
 
   return `{
