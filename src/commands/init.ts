@@ -149,7 +149,7 @@ program PepitaGame {
 const packageJsonDefinition = (projectName: string, game: boolean, natives?: string) => {
   const raw = readFileSync('./package.json', 'utf-8')
   const pkg = JSON.parse(raw)
-  const wollokVersion = pkg.dependencies['wollok-ts'].replace(/^[^0-9]*/, '')
+  const wollokVersion = '4.2.3' // TODO: obtain it from package.json dependency
 
   return `{
     "name": "${kebabCase(basename(projectName))}",

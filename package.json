@@ -1,6 +1,6 @@
 {
   "name": "wollok-ts-cli",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "Wollok Command Line Interface",
   "repository": "https://github.com/uqbar-project/wollok-ts-cli",
