@@ -9,7 +9,7 @@ COPY package*.json ./
 COPY scripts ./scripts
 
 # Install dependencies
-RUN npm install
+RUN npm ci
 
 # Copy source code
 COPY . .
