@@ -27,6 +27,11 @@ COPY --from=builder /app/package*.json ./
 
 RUN npm link
 
+RUN addgroup -g 1001 -S wollok && \
+    adduser -S wollok -u 1001 -G wollok
+
+USER wollok
+
 WORKDIR /work
 
 ENTRYPOINT ["wollok"]
