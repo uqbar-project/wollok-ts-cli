@@ -2,9 +2,9 @@ import express from 'express'
 import http from 'http'
 import { Server } from 'socket.io'
 import { io as client, Socket } from 'socket.io-client'
-import { vi } from 'vitest'
-import * as utils from '../src/utils.js'
+import { MockInstance, vi } from 'vitest'
 import * as game from '../src/game.js'
+import * as utils from '../src/utils.js'
 
 const port = '8787'
 
@@ -29,11 +29,11 @@ export const received = (socket: Socket, event: string): Promise<any> =>
     socket.on(event, done)
   })
 
-export const handleErrorMock = (handler: (error: Error) => void) =>
+export const handleErrorMock = (handler: (error: Error) => void): MockInstance =>
   vi.spyOn(utils, 'handleError').mockImplementation(handler)
 
-export const exitMock = (handler: () => never = () => undefined as never) =>
+export const exitMock = (handler: () => never = () => undefined as never): MockInstance =>
   vi.spyOn(process, 'exit').mockImplementation(handler)
 
-export const initializeGameClientMock = (io: Server) =>
+export const initializeGameClientMock = (io: Server): MockInstance =>
   vi.spyOn(game, 'initializeGameClient').mockReturnValue(io)
