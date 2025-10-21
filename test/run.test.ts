@@ -2,16 +2,16 @@ import { mkdirSync, rmdirSync } from 'fs'
 import logger from 'loglevel'
 import { join } from 'path'
 import { Server } from 'socket.io'
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest'
+import { LeveledLogMethod } from 'winston'
 import { interpret } from 'wollok-ts'
-import { describe, it, expect, beforeEach, afterEach, vi, type MockInstance } from 'vitest'
 import run, { type Options } from '../src/commands/run.js'
 import { getVisuals } from '../src/game.js'
 import { logger as fileLogger } from '../src/logger.js'
 import * as utils from '../src/utils.js'
 import { buildEnvironmentCommand, getAllAssets, getAssetsFolder, getSoundsFolder, readNatives } from '../src/utils.js'
 import { spyCalledWithSubstring } from './assertions.js'
-import { fakeIO } from './mocks.js'
-import { LeveledLogMethod } from 'winston'
+import { connectClient, fakeIO, received } from './mocks.js'
 
 const project = join('examples', 'run-examples', 'basic-example')
 const proj = new utils.Project(project)
@@ -128,9 +128,9 @@ describe('testing run', () => {
 
     beforeEach(() => {
       processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
-      consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+      consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => { })
       fileLoggerInfoSpy = vi.spyOn(fileLogger, 'info').mockImplementation(((_message: string, ..._meta: any[]) => fileLogger as any) as LeveledLogMethod)
-      consoleLoggerInfoSpy = vi.spyOn(logger, 'info').mockImplementation(() => {})
+      consoleLoggerInfoSpy = vi.spyOn(logger, 'info').mockImplementation(() => { })
     })
 
     afterEach(() => {
@@ -186,7 +186,7 @@ describe('testing run', () => {
     beforeEach(async () => {
       errorReturned = undefined
       handleErrorSpy = vi.spyOn(utils, 'handleError').mockImplementation((error: Error) => {
-        console.info(`👾👾👾 ${error.message} 👾👾👾`)
+        // console.info(`👾👾👾 ${error.message} 👾👾👾`)
         errorReturned = error.message
       })
       processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
@@ -199,28 +199,41 @@ describe('testing run', () => {
       io.close()
     })
 
-    it('smoke test - should work if program has no errors', async () => {
+    async function runProgram(project: string) {
       await run('mainGame.PepitaGame', {
-        project: join('examples', 'run-examples', 'basic-game'),
+        project: join('examples', 'run-examples', project),
         skipValidations: false,
         startDiagram: false,
         assets: 'specialAssets',
         port: '3000',
         host: 'localhost',
       })
+    }
+
+    it('should work if program has no errors', async () => {
+      await runProgram('basic-game')
       expect(processExitSpy).not.toHaveBeenCalledWith(0)
       expect(errorReturned).toBeUndefined()
     })
 
-    it('smoke test - should not work if program has errors', async () => {
-      await run('mainGame.PepitaGame', {
-        project: join('examples', 'run-examples', 'basic-example'),
-        skipValidations: false,
-        startDiagram: false,
-        assets: 'specialAssets',
-        port: '3000',
-        host: 'localhost',
-      })
+    it('should send static information and start', async () => {
+      const clientSocket = connectClient(io)
+      const [, board, images, music] = await Promise.all([
+        runProgram('basic-game'),
+        received(clientSocket, 'board'),
+        received(clientSocket, 'images'),
+        received(clientSocket, 'music'),
+        received(clientSocket, 'start')])
+
+      expect(board).be.eql({ cellSize: 50, ground: 'ground.png', width: 5, height: 5 })
+      expect(images).be.eql([
+        { name: 'pepita.png', url: 'specialAssets/pepita.png' },
+      ])
+      expect(music).be.eql([])
+    }, { retry: 2 })
+
+    it('should not work if assets folder does not exist', async () => {
+      await runProgram('basic-example')
       expect(processExitSpy).not.toHaveBeenCalledWith(21)
       expect(errorReturned?.split('\n')[0]).toBe(
         'Folder image examples/run-examples/basic-example/specialAssets does not exist'
