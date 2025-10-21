@@ -357,20 +357,22 @@ export const getSoundsFolder = (projectPath: string, assetsOptions: string): str
   fs.readdirSync(projectPath).includes('sounds') ? 'sounds' : assetsOptions
 
 export const getAllAssets = (projectPath: string, assetsFolder: string): Asset[] => {
-  logger.info(`${projectIcon} Project path: [${valueDescription(projectPath)}]`)
-  logger.info(`${folderIcon}  Assets folder: [${valueDescription(assetsFolder)}]`)
+  logger.info(`${projectIcon} Project path: ${valueDescription(projectPath)}`)
+  logger.info(`${folderIcon}  Assets folder: ${valueDescription(assetsFolder ?? '/')}`)
   const baseFolder = join(projectPath, assetsFolder)
   if (!existsSync(baseFolder))
     throw new Error(`Folder image ${baseFolder} does not exist`)
+
+  const fileRelativeFor = (path: string) => ({ name: path, url: path })
 
   const loadAssetsIn = (basePath: string): Asset[] =>
     fs.readdirSync(basePath, { withFileTypes: true })
       .flatMap((file: Dirent) =>
         file.isDirectory() ? loadAssetsIn(join(basePath, file.name)) :
-        isValidAsset(file) ? [{ url: relative(projectPath, join(basePath, file.name)), name: file.name }] : []
+        isValidAsset(file) ? [fileRelativeFor(relative(baseFolder, join(basePath, file.name)))] : []
       )
 
   const assets = loadAssetsIn(baseFolder)
-  logger.info(`${assetIcon} Assets ${JSON.stringify(assets, null, 2)}`)
+  logger.debug(`${assetIcon} Assets ${JSON.stringify(assets, null, 2)}`)
   return assets
 }

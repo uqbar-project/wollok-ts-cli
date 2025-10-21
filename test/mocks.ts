@@ -2,6 +2,9 @@ import express from 'express'
 import http from 'http'
 import { Server } from 'socket.io'
 import { io as client, Socket } from 'socket.io-client'
+import { vi } from 'vitest'
+import * as utils from '../src/utils.js'
+import * as game from '../src/game.js'
 
 const port = '8787'
 
@@ -25,3 +28,12 @@ export const received = (socket: Socket, event: string): Promise<any> =>
   new Promise((done) => {
     socket.on(event, done)
   })
+
+export const handleErrorMock = (handler: (error: Error) => void) =>
+  vi.spyOn(utils, 'handleError').mockImplementation(handler)
+
+export const exitMock = (handler: () => never = () => undefined as never) =>
+  vi.spyOn(process, 'exit').mockImplementation(handler)
+
+export const initializeGameClientMock = (io: Server) =>
+  vi.spyOn(game, 'initializeGameClient').mockReturnValue(io)

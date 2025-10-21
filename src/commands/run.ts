@@ -32,9 +32,9 @@ export default async function (programFQN: Name, options: Options): Promise<unde
 
     const serveGame: NativeFunction = function* (): Execution<RuntimeValue> {
       game = true
-      const path = getAssetsFolder(proj, assets)
-      const ioGame = initializeGameClient(project, assets, host, port)
-      const assetFiles = getAllAssets(project, path)
+      const assetsFolder = getAssetsFolder(proj, assets)
+      const ioGame = initializeGameClient(project, assetsFolder, host, port)
+      const assetFiles = getAllAssets(project, assetsFolder)
       configProcessForGame(programFQN, timeMeasurer, project)
       eventsFor(ioGame, interpreter, dynamicDiagramClient, assetFiles)
       return yield* this.reify(true)
@@ -45,7 +45,7 @@ export default async function (programFQN: Name, options: Options): Promise<unde
 
     interpreter.run(programFQN)
 
-    if (debug) timeEnd(successDescription('Run finalized successfully'))
+    if (debug) timeEnd(successDescription('Run initiated successfully'))
 
     fileLogger.info({ message: `${programIcon} Program executed ${valueDescription(programFQN)} on ${valueDescription(project)}`, timeElapsed: timeMeasurer.elapsedTime(), ok: true })
     if (!game) {

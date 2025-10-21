@@ -11,7 +11,7 @@ import { logger as fileLogger } from '../src/logger.js'
 import * as utils from '../src/utils.js'
 import { buildEnvironmentCommand, getAllAssets, getAssetsFolder, getSoundsFolder, readNatives } from '../src/utils.js'
 import { spyCalledWithSubstring } from './assertions.js'
-import { connectClient, fakeIO, received } from './mocks.js'
+import { connectClient, exitMock, fakeIO, handleErrorMock, initializeGameClientMock, received } from './mocks.js'
 
 const project = join('examples', 'run-examples', 'basic-example')
 const proj = new utils.Project(project)
@@ -94,22 +94,22 @@ describe('testing run', () => {
     const imageProject = join('examples', 'run-examples', 'asset-example')
 
     it('should return all images for a single assets folder', () => {
-      expect(getAllAssets(project, 'assets')).toEqual([{ name: join('pepita.png'), url: join('assets', 'pepita.png') }])
+      expect(getAllAssets(project, 'assets')).toEqual([{ name: join('pepita.png'), url: join('pepita.png') }])
     })
 
-    it('should return all images in assets folder recursively', () => {
+    it('should return all images relative to assets folder (recursively)', () => {
       expect(getAllAssets(imageProject, 'assets')).toEqual([
-        { name: join('3.png'), url: join('assets', 'medium', '3.png') },
-        { name: join('1.png'), url: join('assets', 'smalls', '1.png') },
-        { name: join('2.png'), url: join('assets', 'smalls', '2.png') },
+        { name: join('medium', '3.png'), url: join('medium', '3.png') },
+        { name: join('smalls', '1.png'), url: join('smalls', '1.png') },
+        { name: join('smalls', '2.png'), url: join('smalls', '2.png') },
       ])
     })
 
-    it('should return all images even if assets folder is not present', () => {
+    it('should return all images relative to project if assets folder is not present', () => {
       expect(getAllAssets(imageProject, '')).toEqual([
-        { name: join('3.png'), url: join('assets', 'medium', '3.png') },
-        { name: join('1.png'), url: join('assets', 'smalls', '1.png') },
-        { name: join('2.png'), url: join('assets', 'smalls', '2.png') },
+        { name: join('assets', 'medium', '3.png'), url: join('assets', 'medium', '3.png') },
+        { name: join('assets', 'smalls', '1.png'), url: join('assets', 'smalls', '1.png') },
+        { name: join('assets', 'smalls', '2.png'), url: join('assets', 'smalls', '2.png') },
       ])
     })
 
@@ -127,7 +127,7 @@ describe('testing run', () => {
     let consoleLoggerInfoSpy: MockInstance<(message?: any, ...optional: any[]) => void>
 
     beforeEach(() => {
-      processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
+      processExitSpy = exitMock()
       consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => { })
       fileLoggerInfoSpy = vi.spyOn(fileLogger, 'info').mockImplementation(((_message: string, ..._meta: any[]) => fileLogger as any) as LeveledLogMethod)
       consoleLoggerInfoSpy = vi.spyOn(logger, 'info').mockImplementation(() => { })
@@ -184,17 +184,17 @@ describe('testing run', () => {
     let io: Server
 
     beforeEach(async () => {
-      errorReturned = undefined
-      handleErrorSpy = vi.spyOn(utils, 'handleError').mockImplementation((error: Error) => {
+      handleErrorSpy = handleErrorMock((error: Error) => {
         // console.info(`👾👾👾 ${error.message} 👾👾👾`)
         errorReturned = error.message
       })
-      processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
+      processExitSpy = exitMock()
       io = fakeIO()
-      vi.spyOn(await import('../src/game.js'), 'initializeGameClient').mockReturnValue(io)
+      initializeGameClientMock(io)
     })
 
     afterEach(() => {
+      errorReturned = undefined
       vi.restoreAllMocks()
       io.close()
     })
@@ -227,10 +227,10 @@ describe('testing run', () => {
 
       expect(board).be.eql({ cellSize: 50, ground: 'ground.png', width: 5, height: 5 })
       expect(images).be.eql([
-        { name: 'pepita.png', url: 'specialAssets/pepita.png' },
+        { name: 'pepita.png', url: 'pepita.png' },
       ])
       expect(music).be.eql([])
-    }, { retry: 2 })
+    }, { timeout: 2 * 5000, retry: 2 })
 
     it('should not work if assets folder does not exist', async () => {
       await runProgram('basic-example')
