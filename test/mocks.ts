@@ -6,8 +6,6 @@ import { MockInstance, vi } from 'vitest'
 import * as game from '../src/game.js'
 import * as utils from '../src/utils.js'
 
-const port = '8787'
-
 export const fakeIO = (): Server => {
   const app = express()
   const server = http.createServer(app)
@@ -15,12 +13,11 @@ export const fakeIO = (): Server => {
   return io
 }
 
-export const connectClient = (io: Server): Socket => {
+export const connectClient = (port: number): Socket => {
   const socket = client(`http://localhost:${port}`)
   socket.on('connect', () => {
     socket.emit('ready')
   })
-  io.httpServer.listen(port)
   return socket
 }
 

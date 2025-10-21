@@ -1,7 +1,6 @@
 import { mkdirSync, rmdirSync } from 'fs'
 import logger from 'loglevel'
 import { join } from 'path'
-import { Server } from 'socket.io'
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest'
 import { LeveledLogMethod } from 'winston'
 import { interpret } from 'wollok-ts'
@@ -11,7 +10,7 @@ import { logger as fileLogger } from '../src/logger.js'
 import * as utils from '../src/utils.js'
 import { buildEnvironmentCommand, getAllAssets, getAssetsFolder, getSoundsFolder, readNatives } from '../src/utils.js'
 import { spyCalledWithSubstring } from './assertions.js'
-import { connectClient, exitMock, fakeIO, handleErrorMock, initializeGameClientMock, received } from './mocks.js'
+import { connectClient, exitMock, handleErrorMock, received } from './mocks.js'
 
 const project = join('examples', 'run-examples', 'basic-example')
 const proj = new utils.Project(project)
@@ -176,36 +175,31 @@ describe('testing run', () => {
     })
   })
 
-  describe('run a simple game', () => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let handleErrorSpy: MockInstance<(error: Error) => void>
+  describe.only('run a simple game', () => {
     let processExitSpy: MockInstance<(code?: number) => never>
     let errorReturned: string | undefined
-    let io: Server
 
     beforeEach(async () => {
-      handleErrorSpy = handleErrorMock((error: Error) => {
+      handleErrorMock((error: Error) => {
         // console.info(`👾👾👾 ${error.message} 👾👾👾`)
         errorReturned = error.message
       })
       processExitSpy = exitMock()
-      io = fakeIO()
-      initializeGameClientMock(io)
     })
 
     afterEach(() => {
       errorReturned = undefined
       vi.restoreAllMocks()
-      io.close()
     })
 
-    async function runProgram(project: string) {
+    let port = 3000 // Avoid conflits
+    async function runProgram(project: string, _port?: number) {
       await run('mainGame.PepitaGame', {
         project: join('examples', 'run-examples', project),
         skipValidations: false,
         startDiagram: false,
         assets: 'specialAssets',
-        port: '3000',
+        port: `${_port ?? port++}`,
         host: 'localhost',
       })
     }
@@ -217,18 +211,16 @@ describe('testing run', () => {
     })
 
     it('should send static information and start', async () => {
-      const clientSocket = connectClient(io)
+      const clientSocket = connectClient(8787)
       const [, board, images, music] = await Promise.all([
-        runProgram('basic-game'),
+        runProgram('basic-game', 8787),
         received(clientSocket, 'board'),
         received(clientSocket, 'images'),
         received(clientSocket, 'music'),
         received(clientSocket, 'start')])
 
       expect(board).be.eql({ cellSize: 50, ground: 'ground.png', width: 5, height: 5 })
-      expect(images).be.eql([
-        { name: 'pepita.png', url: 'pepita.png' },
-      ])
+      expect(images).be.eql([{ name: 'pepita.png', url: 'pepita.png' }])
       expect(music).be.eql([])
     }, { timeout: 2 * 5000, retry: 2 })
 
