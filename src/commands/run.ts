@@ -2,7 +2,7 @@ import logger from 'loglevel'
 import { Execution, interpret, Name, NativeFunction, Program, RuntimeValue } from 'wollok-ts'
 import { eventsFor, initializeGameClient } from '../game.js'
 import { logger as fileLogger } from '../logger.js'
-import { buildEnvironmentCommand, buildEnvironmentIcon, buildNativesForGame, ENTER, gameIcon, getAllAssets, getAssetsFolder, handleError, initializeDynamicDiagram, nextPort, programIcon, Project, sanitizeStackTrace, successDescription, valueDescription } from '../utils.js'
+import { buildEnvironmentCommand, buildEnvironmentIcon, buildNativesForGame, gameIcon, getAllAssets, getAssetsFolder, handleError, initializeDynamicDiagram, nextPort, programIcon, Project, sanitizeStackTrace, successDescription, valueDescription } from '../utils.js'
 import { TimeMeasurer } from './../time-measurer.js'
 
 const { time, timeEnd } = console
@@ -23,9 +23,7 @@ export default async function (programFQN: Name, options: Options): Promise<unde
   const proj = new Project(project)
 
   try {
-    logger.info(`${programIcon} Running program ${valueDescription(programFQN)} on ${valueDescription(project)}`)
-
-    logger.info(`${buildEnvironmentIcon} Building environment for ${valueDescription(programFQN)}...${ENTER}`)
+    logger.info(`${buildEnvironmentIcon} Building environment for ${valueDescription(project)}`)
     const environment = await buildEnvironmentCommand(project, skipValidations)
     const debug = logger.getLevel() <= logger.levels.DEBUG
     if (debug) time(successDescription('Run initiated successfully'))
@@ -43,6 +41,7 @@ export default async function (programFQN: Name, options: Options): Promise<unde
     const rootPackage = interpreter.evaluation.environment.getNodeByFQN<Program>(programFQN).parent
     const dynamicDiagramClient = initializeDynamicDiagram(interpreter, { ...options, port: nextPort(port) }, rootPackage, startDiagram)
 
+    logger.info(`${programIcon} Running program ${valueDescription(programFQN)}`)
     interpreter.run(programFQN)
 
     if (debug) timeEnd(successDescription('Run initiated successfully'))

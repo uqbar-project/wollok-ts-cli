@@ -33,8 +33,11 @@ export const folderIcon = '🗂️'
 export const diagramIcon = '🔀'
 export const errorIcon = '❌'
 export const warningIcon = '⚠️'
-export const assetIcon = '🎨'
+export const imageIcon = '🎨'
+export const soundIcon = '🔉'
+export const boardIcon = '📏'
 export const projectIcon = '📁'
+export const keyboardIcon = '🎹'
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // FILE / PATH HANDLING
@@ -357,8 +360,6 @@ export const getSoundsFolder = (projectPath: string, assetsOptions: string): str
   fs.readdirSync(projectPath).includes('sounds') ? 'sounds' : assetsOptions
 
 export const getAllAssets = (projectPath: string, assetsFolder: string): Asset[] => {
-  logger.info(`${projectIcon} Project path: ${valueDescription(projectPath)}`)
-  logger.info(`${folderIcon}  Assets folder: ${valueDescription(assetsFolder ?? '/')}`)
   const baseFolder = join(projectPath, assetsFolder)
   if (!existsSync(baseFolder))
     throw new Error(`Folder image ${baseFolder} does not exist`)
@@ -372,7 +373,5 @@ export const getAllAssets = (projectPath: string, assetsFolder: string): Asset[]
         isValidAsset(file) ? [fileRelativeFor(relative(baseFolder, join(basePath, file.name)))] : []
       )
 
-  const assets = loadAssetsIn(baseFolder)
-  logger.debug(`${assetIcon} Assets ${JSON.stringify(assets, null, 2)}`)
-  return assets
+  return loadAssetsIn(baseFolder)
 }
