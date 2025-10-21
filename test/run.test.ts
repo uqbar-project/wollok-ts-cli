@@ -175,7 +175,7 @@ describe('testing run', () => {
     })
   })
 
-  describe.only('run a simple game', () => {
+  describe('run a simple game', () => {
     let processExitSpy: MockInstance<(code?: number) => never>
     let errorReturned: string | undefined
 
