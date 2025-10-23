@@ -8,7 +8,7 @@ import { Server } from 'socket.io'
 import { GAME_MODULE, Interpreter, RuntimeObject, WollokException } from 'wollok-ts'
 import { Asset, boardState, buildKeyPressEvent, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools'
 import { DummyProfiler, EventProfiler, TimeMeasurer } from './time-measurer.js'
-import { DynamicDiagramClient, failureDescription, gameIcon, getSoundsFolder, isValidImage, isValidSound, publicPath, successDescription } from './utils.js'
+import { imageIcon, DynamicDiagramClient, ENTER, failureDescription, folderIcon, gameIcon, getSoundsFolder, isValidImage, isValidSound, publicPath, successDescription, valueDescription, boardIcon, soundIcon, keyboardIcon } from './utils.js'
 
 const { bold } = chalk
 
@@ -16,39 +16,54 @@ export const initializeGameClient = (project: string, assets: string, host: stri
   const app = express()
   const server = http.createServer(app)
   const io = new Server(server)
+  const assetsPath = assets ? join(project, assets) : project
 
   app.use(
     cors({ allowedHeaders: '*' }),
     express.static(publicPath('game'), { maxAge: '1d' }),
-    express.static(assets ? join(project, assets) : project, { maxAge: '1d' }))
+    express.static(assetsPath, { maxAge: '1d' }))
 
+  logger.info(`${folderIcon}  Serving assets from ${valueDescription(assetsPath)}`)
+
+  // Is this valid?
   const soundsFolder = getSoundsFolder(project, assets)
   if (soundsFolder !== assets) {
     app.use(cors({ allowedHeaders: '*' }), express.static(soundsFolder, { maxAge: '1d' }))
+    logger.info(`${folderIcon}  Serving sounds from: ${valueDescription(assetsPath)}`)
   }
 
   server.listen(parseInt(port), host)
-  logger.info(`${gameIcon} Game available at: ${bold(`http://${host}:${port}`)}`)
+  logger.info(`${ENTER}${gameIcon} Game available at ${bold(`http://${host}:${port}`)}`)
 
   return io
 }
 
 export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramClient: DynamicDiagramClient, assetFiles: Asset[]): void => {
   io.on('connection', socket => {
-    logger.info(successDescription('Running game!'))
+    logger.info(successDescription('New connection!'))
+
     socket.on('keyPressed', (events: string[]) => {
+      logger.debug(`${keyboardIcon} Key pressed: ${JSON.stringify(events, null, 2)}`)
       queueEvent(interpreter as any, ...events.map(code => buildKeyPressEvent(interpreter as any, code)))
     })
 
     const gameSingleton = interpreter.object(GAME_MODULE)
     // wait for client to be ready
     socket.on('ready', () => {
-      logger.info(successDescription('Ready!'))
+      logger.debug(successDescription('Client ready!'))
 
       // send static data
-      socket.emit('board', boardState(gameSingleton as any))
-      socket.emit('images', assetFiles.filter(isValidImage))
-      socket.emit('music', assetFiles.filter(isValidSound))
+      const board = boardState(gameSingleton as any)
+      logger.debug(`${boardIcon} Sending board: ${JSON.stringify(board, null, 2)}`)
+      socket.emit('board', board)
+
+      const images = assetFiles.filter(isValidImage)
+      socket.emit('images', images)
+      logger.debug(`${imageIcon} Sending images: ${JSON.stringify(images, null, 2)}`)
+
+      const sounds = assetFiles.filter(isValidSound)
+      socket.emit('music', sounds)
+      logger.debug(`${soundIcon} Sending sounds: ${JSON.stringify(sounds, null, 2)}`)
 
       // then start the game
       socket.emit('start')
@@ -81,7 +96,7 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
 
     socket.on('disconnect', () => {
       clearInterval(id)
-      logger.info(successDescription('Game finished'))
+      logger.info(successDescription('Game closed'))
     })
 
   })

@@ -1,17 +1,16 @@
 import { mkdirSync, rmdirSync } from 'fs'
 import logger from 'loglevel'
 import { join } from 'path'
-import { Server } from 'socket.io'
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest'
+import { LeveledLogMethod } from 'winston'
 import { interpret } from 'wollok-ts'
-import { describe, it, expect, beforeEach, afterEach, vi, type MockInstance } from 'vitest'
 import run, { type Options } from '../src/commands/run.js'
 import { getVisuals } from '../src/game.js'
 import { logger as fileLogger } from '../src/logger.js'
 import * as utils from '../src/utils.js'
 import { buildEnvironmentCommand, getAllAssets, getAssetsFolder, getSoundsFolder, readNatives } from '../src/utils.js'
 import { spyCalledWithSubstring } from './assertions.js'
-import { fakeIO } from './mocks.js'
-import { LeveledLogMethod } from 'winston'
+import { connectClient, exitMock, handleErrorMock, received } from './mocks.js'
 
 const project = join('examples', 'run-examples', 'basic-example')
 const proj = new utils.Project(project)
@@ -94,22 +93,22 @@ describe('testing run', () => {
     const imageProject = join('examples', 'run-examples', 'asset-example')
 
     it('should return all images for a single assets folder', () => {
-      expect(getAllAssets(project, 'assets')).toEqual([{ name: join('pepita.png'), url: join('assets', 'pepita.png') }])
+      expect(getAllAssets(project, 'assets')).toEqual([{ name: join('pepita.png'), url: join('pepita.png') }])
     })
 
-    it('should return all images in assets folder recursively', () => {
+    it('should return all images relative to assets folder (recursively)', () => {
       expect(getAllAssets(imageProject, 'assets')).toEqual([
-        { name: join('3.png'), url: join('assets', 'medium', '3.png') },
-        { name: join('1.png'), url: join('assets', 'smalls', '1.png') },
-        { name: join('2.png'), url: join('assets', 'smalls', '2.png') },
+        { name: join('medium', '3.png'), url: join('medium', '3.png') },
+        { name: join('smalls', '1.png'), url: join('smalls', '1.png') },
+        { name: join('smalls', '2.png'), url: join('smalls', '2.png') },
       ])
     })
 
-    it('should return all images even if assets folder is not present', () => {
+    it('should return all images relative to project if assets folder is not present', () => {
       expect(getAllAssets(imageProject, '')).toEqual([
-        { name: join('3.png'), url: join('assets', 'medium', '3.png') },
-        { name: join('1.png'), url: join('assets', 'smalls', '1.png') },
-        { name: join('2.png'), url: join('assets', 'smalls', '2.png') },
+        { name: join('assets', 'medium', '3.png'), url: join('assets', 'medium', '3.png') },
+        { name: join('assets', 'smalls', '1.png'), url: join('assets', 'smalls', '1.png') },
+        { name: join('assets', 'smalls', '2.png'), url: join('assets', 'smalls', '2.png') },
       ])
     })
 
@@ -127,10 +126,10 @@ describe('testing run', () => {
     let consoleLoggerInfoSpy: MockInstance<(message?: any, ...optional: any[]) => void>
 
     beforeEach(() => {
-      processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
-      consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+      processExitSpy = exitMock()
+      consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => { })
       fileLoggerInfoSpy = vi.spyOn(fileLogger, 'info').mockImplementation(((_message: string, ..._meta: any[]) => fileLogger as any) as LeveledLogMethod)
-      consoleLoggerInfoSpy = vi.spyOn(logger, 'info').mockImplementation(() => {})
+      consoleLoggerInfoSpy = vi.spyOn(logger, 'info').mockImplementation(() => { })
     })
 
     afterEach(() => {
@@ -177,50 +176,55 @@ describe('testing run', () => {
   })
 
   describe('run a simple game', () => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let handleErrorSpy: MockInstance<(error: Error) => void>
     let processExitSpy: MockInstance<(code?: number) => never>
     let errorReturned: string | undefined
-    let io: Server
 
     beforeEach(async () => {
-      errorReturned = undefined
-      handleErrorSpy = vi.spyOn(utils, 'handleError').mockImplementation((error: Error) => {
-        console.info(`👾👾👾 ${error.message} 👾👾👾`)
+      handleErrorMock((error: Error) => {
         errorReturned = error.message
       })
-      processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
-      io = fakeIO()
-      vi.spyOn(await import('../src/game.js'), 'initializeGameClient').mockReturnValue(io)
+      processExitSpy = exitMock()
     })
 
     afterEach(() => {
+      errorReturned = undefined
       vi.restoreAllMocks()
-      io.close()
     })
 
-    it('smoke test - should work if program has no errors', async () => {
+    let defaultPort = 3000 // Avoid conflicts
+    async function runProgram(project: string, port?: number) {
       await run('mainGame.PepitaGame', {
-        project: join('examples', 'run-examples', 'basic-game'),
+        project: join('examples', 'run-examples', project),
         skipValidations: false,
         startDiagram: false,
         assets: 'specialAssets',
-        port: '3000',
+        port: `${port ?? defaultPort++}`,
         host: 'localhost',
       })
+    }
+
+    it('should work if program has no errors', async () => {
+      await runProgram('basic-game')
       expect(processExitSpy).not.toHaveBeenCalledWith(0)
       expect(errorReturned).toBeUndefined()
     })
 
-    it('smoke test - should not work if program has errors', async () => {
-      await run('mainGame.PepitaGame', {
-        project: join('examples', 'run-examples', 'basic-example'),
-        skipValidations: false,
-        startDiagram: false,
-        assets: 'specialAssets',
-        port: '3000',
-        host: 'localhost',
-      })
+    it('should send static information and start', async () => {
+      const clientSocket = connectClient(8787)
+      const [, board, images, music] = await Promise.all([
+        runProgram('basic-game', 8787),
+        received(clientSocket, 'board'),
+        received(clientSocket, 'images'),
+        received(clientSocket, 'music'),
+        received(clientSocket, 'start')])
+
+      expect(board).be.eql({ cellSize: 50, ground: 'ground.png', width: 5, height: 5 })
+      expect(images).be.eql([{ name: 'pepita.png', url: 'pepita.png' }])
+      expect(music).be.eql([])
+    }, { timeout: 2 * 5000, retry: 2 })
+
+    it('should not work if assets folder does not exist', async () => {
+      await runProgram('basic-example')
       expect(processExitSpy).not.toHaveBeenCalledWith(21)
       expect(errorReturned?.split('\n')[0]).toBe(
         'Folder image examples/run-examples/basic-example/specialAssets does not exist'
