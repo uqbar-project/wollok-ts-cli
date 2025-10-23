@@ -181,7 +181,6 @@ describe('testing run', () => {
 
     beforeEach(async () => {
       handleErrorMock((error: Error) => {
-        // console.info(`👾👾👾 ${error.message} 👾👾👾`)
         errorReturned = error.message
       })
       processExitSpy = exitMock()
@@ -192,14 +191,14 @@ describe('testing run', () => {
       vi.restoreAllMocks()
     })
 
-    let port = 3000 // Avoid conflits
-    async function runProgram(project: string, _port?: number) {
+    let defaultPort = 3000 // Avoid conflicts
+    async function runProgram(project: string, port?: number) {
       await run('mainGame.PepitaGame', {
         project: join('examples', 'run-examples', project),
         skipValidations: false,
         startDiagram: false,
         assets: 'specialAssets',
-        port: `${_port ?? port++}`,
+        port: `${port ?? defaultPort++}`,
         host: 'localhost',
       })
     }
