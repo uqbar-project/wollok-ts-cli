@@ -8,25 +8,29 @@ import { logger } from './logger.js'
 const { cyan, greenBright, red, yellow } = chalk
 
 export default async (): Promise<void> => {
-  const latest = await latestVersion('wollok-ts-cli')
-  if(latest){
-    if(compareVersions(latest, pkg.version) === 1) {
-      const box = Box(
-        {
-          h: 10,
-          w: 72,
-          marks: {
-            nw: '╔', n: '═', ne: '╗',
-            e: '║', se: '╝', s: '═',
-            sw: '╚', w: '║', b: ' ',
+  try {
+    const latest = await latestVersion('wollok-ts-cli')
+    if(latest){
+      if(compareVersions(latest, pkg.version) === 1) {
+        const box = Box(
+          {
+            h: 10,
+            w: 72,
+            marks: {
+              nw: '╔', n: '═', ne: '╗',
+              e: '║', se: '╝', s: '═',
+              sw: '╚', w: '║', b: ' ',
+            },
           },
-        },
-        { text: content(latest), stretch: true, autoEOL: true, hAlign: 'middle', vAlign: 'center' }
-      )
-      process.stdout._write(box + '\n\n\n', 'utf-8', (_) => {
-        logger.debug('Update notifier failed to print')
-      })
+          { text: content(latest), stretch: true, autoEOL: true, hAlign: 'middle', vAlign: 'center' }
+        )
+        process.stdout._write(box + '\n\n\n', 'utf-8', (_) => {
+          logger.debug('Update notifier failed to print')
+        })
+      }
     }
+  } catch(e) {
+    logger.debug('Update notifier failed to check a new version:\n' + e)
   }
 }
 
