@@ -60,7 +60,7 @@
     "socket.io": "4.8.1",
     "typescript": "5.5.3",
     "winston": "3.11.0",
-    "wollok-ts": "4.2.3",
+    "wollok-ts": "4.2.4",
     "wollok-web-tools": "1.1.10"
   },
   "devDependencies": {
