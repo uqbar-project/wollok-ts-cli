@@ -6,6 +6,13 @@ The goal of this file is to document the changes to the Wollok language definiti
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Since 0.4.0 version, the Wollok language adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.0.3
+
+- ⬆️ Wollok version 4.2.4
+- 🌐 Run CLI without internet connection
+- 🖼️ Fix assets paths declaration
+- 🛥️ Support for Docker
+
 ## v1.0.2
 
 - ⬆️ Wollok version 4.2.3
