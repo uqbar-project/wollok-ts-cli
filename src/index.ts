@@ -9,16 +9,20 @@ import ast from './commands/ast.js'
 import { addDependency, removeDependency, synchronizeDependencies } from './commands/dependencies.js'
 import logger from 'loglevel'
 import pkg from '../package.json' with { type: 'json' }
+import pkgts from 'wollok-ts/package.json' with { type: 'json' }
 import chalk from 'chalk'
 import updateNotifier from './update-notifier.js'
 
 const { cyan } = chalk
 
+function versionInfo(): string {
+  return `Wollok-TS-CLI ${cyan('v' + pkg.version)}\nWollok-TS ${cyan('v' + pkgts.version)} \nWollok-Lang ${cyan('v' + pkgts.wollokVersion)}`
+}
 updateNotifier().finally(() => {
   const program = new Command()
     .name('wollok')
     .description('Wollok Language command line interpreter tool')
-    .version(cyan(pkg.version))
+    .version(versionInfo())
     .hook('preAction', (thisCommand, actionCommand) => {
       actionCommand.opts().verbose ? logger.setLevel('DEBUG') : logger.setLevel('INFO')
     })
