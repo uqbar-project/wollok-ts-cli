@@ -1,13 +1,16 @@
-import { describe, it, expect, beforeEach, afterEach, vi, type MockInstance } from 'vitest'
+import http from 'http'
+import logger from 'loglevel'
 import { join } from 'path'
 import { Interface } from 'readline'
 import { Server } from 'socket.io'
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest'
 import * as wollok from 'wollok-ts'
 import { Options, replFn } from '../src/commands/repl.js'
-import { ENTER } from '../src/utils.js'
-import { spyCalledWithSubstring } from './assertions.js'
-import { fakeIO } from './mocks.js'
 import * as gameModule from '../src/game.js'
+import { ENTER } from '../src/utils.js'
+import { expectCalledWithSubstring, spyCalledWithSubstring } from './assertions.js'
+import { fakeIO } from './mocks.js'
+import express from 'express'
 
 const baseOptions = {
   darkMode: true,
@@ -26,23 +29,26 @@ const buildOptionsFor = (path: string, skipValidations = false) => ({
 const startReplCommand = (autoImportPath: string, options: Options) =>
   replFn(join(options.project, autoImportPath), options)
 
-describe('REPL command', () => {
-  const projectPath = join('examples', 'repl-examples')
+const projectPath = join('examples', 'repl-examples')
 
-  const options = {
-    project: projectPath,
-    skipValidations: false,
-    ...baseOptions,
-  }
+const options = {
+  project: projectPath,
+  skipValidations: false,
+  ...baseOptions,
+}
+
+describe('REPL command', () => {
   let processExitSpy: MockInstance<(code?: string | number | null | undefined) => never>
   let consoleLogSpy: MockInstance<(message?: any, ...optionalParams: any[]) => void>
+  let loggerLogSpy: MockInstance<(message?: any) => void>
   let initializeGameClientSpy: MockInstance<(project: string, assets: string, host: string, port: string) => Server>
   let repl: Interface
   let io: Server
 
   beforeEach(async () => {
-    processExitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {}) as any)
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    processExitSpy = vi.spyOn(process, 'exit').mockImplementation((() => { }) as any)
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => { }) // TODO: Should we use always the logger?
+    loggerLogSpy = vi.spyOn(logger, 'info').mockImplementation(() => { })
     io = fakeIO()
     initializeGameClientSpy = vi.spyOn(gameModule, 'initializeGameClient').mockReturnValue(io)
     repl = await replFn(undefined, options)
@@ -75,6 +81,49 @@ describe('REPL command', () => {
     repl.emit('line', ':q')
     expect(processExitSpy).toHaveBeenCalledWith(0)
     repl.close()
+  })
+
+  describe('Logs', () => {
+
+    it('on start up', () => {
+      expectCalledWithSubstring(loggerLogSpy,
+        'Initializing Wollok REPL on examples/repl-examples',
+        'No problems found building the environment',
+        'No errors or warnings found')
+    })
+
+    it('on start up (with file)', async () => {
+      vi.resetAllMocks()
+      await startReplCommand('aves.wlk', options)
+      expectCalledWithSubstring(loggerLogSpy,
+        'Initializing Wollok REPL for file examples/repl-examples/aves.wlk on examples/repl-examples',
+        'No problems found building the environment',
+        'No errors or warnings found')
+    })
+
+    it('on start up (with dynamic diagram)', async () => {
+      vi.resetAllMocks()
+      //TODO: Mock http/io better
+      const createServer = http.createServer
+      vi
+        .spyOn(http, "createServer")
+        .mockImplementation((...args: any[]) => {
+          const server = createServer(...args)
+          server.addListener = (event: string, listener: (...args: any[]) => void) => {
+            if (event === 'listening') listener()
+            return server
+          }
+          return server
+        })
+
+      await replFn(undefined, { ...options, skipDiagram: false })
+      expectCalledWithSubstring(loggerLogSpy,
+        'Initializing Wollok REPL on examples/repl-examples',
+        'No problems found building the environment',
+        'No errors or warnings found',
+        'Dynamic diagram available at: http://localhost:8080')
+    })
+
   })
 })
 
