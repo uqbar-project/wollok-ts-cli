@@ -7,7 +7,7 @@ import { Entity, Environment, Evaluation, Execution, Interpreter, NativeFunction
 import { eventsFor, initializeGameClient } from '../game.js'
 import { logger as fileLogger } from '../logger.js'
 import { TimeMeasurer } from '../time-measurer.js'
-import { ENTER, Project, buildEnvironmentCommand, buildNativesForGame, failureDescription, getAllAssets, getAssetsFolder, getFQN, handleError, initializeDynamicDiagram, nextPort, replIcon, sanitizeStackTrace, successDescription, valueDescription } from '../utils.js'
+import { ENTER, Project, buildEnvironmentCommand, buildNativesForGame, dynamicDiagramAvailable, failureDescription, getAllAssets, getAssetsFolder, getFQN, handleError, initializeDynamicDiagram, nextPort, replIcon, sanitizeStackTrace, successDescription, valueDescription } from '../utils.js'
 
 const { bold } = chalk
 
@@ -59,15 +59,15 @@ export async function replFn(autoImportPath: string | undefined, options: Option
   const rootPackage = interpreter.evaluation.environment.replNode()
   let dynamicDiagramClient = initializeDynamicDiagram(interpreter, options, rootPackage, !options.skipDiagram)
 
-  const onReloadClient = async (diagramActivated: boolean, newInterpreter?: Interpreter) => {
+  const onReloadClient = async (openDiagram: boolean, newInterpreter?: Interpreter) => {
+    if (!openDiagram) return;
     const selectedInterpreter = newInterpreter ?? interpreter
-    if (diagramActivated && !dynamicDiagramClient.enabled) { // If the server was not initialized, do it now
-      options.skipDiagram = !diagramActivated // Hack for one time use
-      dynamicDiagramClient = initializeDynamicDiagram(selectedInterpreter, options, rootPackage, !options.skipDiagram)
-    } else {
+    if (dynamicDiagramClient.enabled) { // If the server is already enabled, reload it
       dynamicDiagramClient.onReload(selectedInterpreter)
-      logger.info(successDescription('Dynamic diagram reloaded at ' + bold(`http://${options.host}:${options.port}`)))
-      repl.prompt()
+      logger.info(dynamicDiagramAvailable(host, port))
+    } else { // else, initialize a new one
+      options.skipDiagram = !openDiagram // Hack for one time use
+      dynamicDiagramClient = initializeDynamicDiagram(selectedInterpreter, options, rootPackage, !options.skipDiagram)
     }
   }
 
@@ -81,7 +81,6 @@ export async function replFn(autoImportPath: string | undefined, options: Option
         repl.write(command + ENTER)
       })
     }
-    repl.prompt()
   }
 
   const commandHandler = defineCommands(autoImportPath, options, onReloadClient, onReloadInterpreter, serveGame)
@@ -97,9 +96,9 @@ export async function replFn(autoImportPath: string | undefined, options: Option
           history.push(line)
           console.log(interpreteLine(interpreter, line))
           dynamicDiagramClient.onReload(interpreter)
+          repl.prompt()
         }
       }
-      repl.prompt()
     })
 
   if (dynamicDiagramClient.enabled)
@@ -152,10 +151,10 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 function defineCommands(autoImportPath: string | undefined, options: Options, reloadClient: (activateDiagram: boolean, interpreter?: Interpreter) => Promise<void>, setInterpreter: (interpreter: Interpreter, rerun: boolean) => void, serveGame: NativeFunction): Command {
   const reload = (rerun = false) => async () => {
-    logger.info(successDescription('Reloading environment'))
     const interpreter = await initializeInterpreter(autoImportPath, options, serveGame)
     setInterpreter(interpreter, rerun)
-    reloadClient(options.skipDiagram, interpreter)
+    reloadClient(!options.skipDiagram, interpreter)
+    logger.info(successDescription('Environment reloaded'))
   }
 
   const commandHandler = new Command('Write a Wollok sentence or command to evaluate')
@@ -196,7 +195,10 @@ function defineCommands(autoImportPath: string | undefined, options: Options, re
     .alias(':h')
     .description('Show Wollok REPL help')
     .allowUnknownOption()
-    .action(() => commandHandler.outputHelp())
+    .action(() => {
+      commandHandler.outputHelp()
+      // commandHandler.prompt()
+    })
 
   return commandHandler
 }

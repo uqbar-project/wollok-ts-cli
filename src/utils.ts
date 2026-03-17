@@ -229,6 +229,9 @@ export const problemDescription = (problem: Problem): string => {
   return color(`${header}: ${getMessage({ message: problem.code, values: problem.values.concat() })} at ${problem.node?.sourceInfo ?? 'unknown'}`)
 }
 
+export const dynamicDiagramAvailable = (host: string, port: string): string =>
+  `${diagramIcon} Dynamic diagram available at: ${bold(`http://${host}:${port}`)}`
+
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // RESOURCES
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -334,7 +337,7 @@ export function initializeDynamicDiagram(_interpreter: Interpreter, options: Dyn
 
   server.addListener('error', serverError)
   server.addListener('listening', () => {
-    logger.info(`${diagramIcon} Dynamic diagram available at: ${bold(`http://${host}:${port}`)}`)
+    logger.info(dynamicDiagramAvailable(host, port))
   })
 
   server.listen(parseInt(port), host)

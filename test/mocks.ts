@@ -9,16 +9,17 @@ import * as utils from '../src/utils.js'
 export const fakeIO = (): Server => {
   const app = express()
   const server = http.createServer(app)
+  // Simulate listening
+  server.listen = () => server
   server.addListener = (event: string, listener: (...args: any[]) => void) => {
-    // Simulate listening
     if (event === 'listening') listener()
     return server
   }
+  // Avoid new servers
   vi
     .spyOn(http, 'createServer')
     .mockImplementation(() => server)
-  const io = new Server(server)
-  return io
+  return new Server(server)
 }
 
 export const connectClient = (port: number): Socket => {

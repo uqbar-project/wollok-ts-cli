@@ -7,7 +7,7 @@ import * as wollok from 'wollok-ts'
 import { Options, replFn } from '../src/commands/repl.js'
 import * as gameModule from '../src/game.js'
 import { ENTER } from '../src/utils.js'
-import { expectCalledWithSubstring, spyCalledWithSubstring } from './assertions.js'
+import { expectCalledWithSubstrings, spyCalledWithSubstring } from './assertions.js'
 import { fakeIO } from './mocks.js'
 
 const baseOptions = {
@@ -84,7 +84,7 @@ describe('REPL command', () => {
   describe('Logs', () => {
 
     it('on start up', () => {
-      expectCalledWithSubstring(loggerLogSpy,
+      expectCalledWithSubstrings(loggerLogSpy,
         'Initializing Wollok REPL on examples/repl-examples',
         'No problems found building the environment',
         'No errors or warnings found')
@@ -93,7 +93,7 @@ describe('REPL command', () => {
     it('on start up (with file)', async () => {
       loggerLogSpy.mockReset()
       const repl = await startReplCommand('aves.wlk', options)
-      expectCalledWithSubstring(loggerLogSpy,
+      expectCalledWithSubstrings(loggerLogSpy,
         'Initializing Wollok REPL for file examples/repl-examples/aves.wlk on examples/repl-examples',
         'No problems found building the environment',
         'No errors or warnings found')
@@ -103,7 +103,7 @@ describe('REPL command', () => {
     it('on start up (with dynamic diagram)', async () => {
       loggerLogSpy.mockReset()
       const repl = await replFn(undefined, { ...options, skipDiagram: false })
-      expectCalledWithSubstring(loggerLogSpy,
+      expectCalledWithSubstrings(loggerLogSpy,
         'Initializing Wollok REPL on examples/repl-examples',
         'No problems found building the environment',
         'No errors or warnings found',
@@ -113,14 +113,27 @@ describe('REPL command', () => {
 
     it('on reload', async () => {
       repl.emit('line', ':r')
-      await vi.waitFor(() =>
-        expect(loggerLogSpy).toHaveBeenCalledWith('✓ Environment reloaded')
-      )
-      expectCalledWithSubstring(loggerLogSpy,
+      await vi.waitFor(() => expect(loggerLogSpy).toHaveBeenCalledWith('✓ Environment reloaded'))
+      expectCalledWithSubstrings(loggerLogSpy,
         'No problems found building the environment',
         'No errors or warnings found',
         'Environment reloaded',
       )
+      expect(spyCalledWithSubstring(loggerLogSpy, 'Dynamic diagram')).toBe(false)
+    })
+
+    it('on reload (with dynamic diagram)', async () => {
+      loggerLogSpy.mockReset()
+      const repl = await replFn(undefined, { ...options, skipDiagram: false })
+      repl.emit('line', ':r')
+      await vi.waitFor(() => expect(loggerLogSpy).toHaveBeenCalledWith('✓ Environment reloaded'))
+      expectCalledWithSubstrings(loggerLogSpy,
+        'No problems found building the environment',
+        'No errors or warnings found',
+        'Dynamic diagram available at: http://localhost:8080',
+        'Environment reloaded',
+      )
+      repl.close()
     })
 
   })

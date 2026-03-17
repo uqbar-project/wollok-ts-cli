@@ -39,7 +39,7 @@ export const spyCalledWithSubstring = (spy: MockInstance, value: string, debug =
   )
 }
 
-export const expectCalledWithSubstring = (spy: MockInstance, ...expected: string[]): void => {
+export const expectCalledWithSubstrings = (spy: MockInstance, ...expected: string[]): void => {
   if (isEmpty(spy.mock.calls)) fail(`Unexpected calls ${expected}`)
   let nAsserted = 0
   for (const call of spy.mock.calls) {
