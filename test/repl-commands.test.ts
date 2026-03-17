@@ -1,4 +1,3 @@
-import http from 'http'
 import logger from 'loglevel'
 import { join } from 'path'
 import { Interface } from 'readline'
@@ -10,7 +9,6 @@ import * as gameModule from '../src/game.js'
 import { ENTER } from '../src/utils.js'
 import { expectCalledWithSubstring, spyCalledWithSubstring } from './assertions.js'
 import { fakeIO } from './mocks.js'
-import express from 'express'
 
 const baseOptions = {
   darkMode: true,
@@ -49,8 +47,8 @@ describe('REPL command', () => {
     processExitSpy = vi.spyOn(process, 'exit').mockImplementation((() => { }) as any)
     consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => { }) // TODO: Should we use always the logger?
     loggerLogSpy = vi.spyOn(logger, 'info').mockImplementation(() => { })
+    initializeGameClientSpy = vi.spyOn(gameModule, 'initializeGameClient')
     io = fakeIO()
-    initializeGameClientSpy = vi.spyOn(gameModule, 'initializeGameClient').mockReturnValue(io)
     repl = await replFn(undefined, options)
   })
 
@@ -93,35 +91,36 @@ describe('REPL command', () => {
     })
 
     it('on start up (with file)', async () => {
-      vi.resetAllMocks()
-      await startReplCommand('aves.wlk', options)
+      loggerLogSpy.mockReset()
+      const repl = await startReplCommand('aves.wlk', options)
       expectCalledWithSubstring(loggerLogSpy,
         'Initializing Wollok REPL for file examples/repl-examples/aves.wlk on examples/repl-examples',
         'No problems found building the environment',
         'No errors or warnings found')
+      repl.close()
     })
 
     it('on start up (with dynamic diagram)', async () => {
-      vi.resetAllMocks()
-      //TODO: Mock http/io better
-      const createServer = http.createServer
-      vi
-        .spyOn(http, "createServer")
-        .mockImplementation((...args: any[]) => {
-          const server = createServer(...args)
-          server.addListener = (event: string, listener: (...args: any[]) => void) => {
-            if (event === 'listening') listener()
-            return server
-          }
-          return server
-        })
-
-      await replFn(undefined, { ...options, skipDiagram: false })
+      loggerLogSpy.mockReset()
+      const repl = await replFn(undefined, { ...options, skipDiagram: false })
       expectCalledWithSubstring(loggerLogSpy,
         'Initializing Wollok REPL on examples/repl-examples',
         'No problems found building the environment',
         'No errors or warnings found',
         'Dynamic diagram available at: http://localhost:8080')
+      repl.close()
+    })
+
+    it('on reload', async () => {
+      repl.emit('line', ':r')
+      await vi.waitFor(() =>
+        expect(loggerLogSpy).toHaveBeenCalledWith('✓ Environment reloaded')
+      )
+      expectCalledWithSubstring(loggerLogSpy,
+        'No problems found building the environment',
+        'No errors or warnings found',
+        'Environment reloaded',
+      )
     })
 
   })
