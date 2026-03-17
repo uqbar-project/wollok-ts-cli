@@ -23,13 +23,13 @@ export const initializeGameClient = (project: string, assets: string, host: stri
     express.static(publicPath('game'), { maxAge: '1d' }),
     express.static(assetsPath, { maxAge: '1d' }))
 
-  logger.info(`${folderIcon}  Serving assets from ${valueDescription(assetsPath)}`)
+  logger.info(`${folderIcon} Serving assets from ${valueDescription(assetsPath)}`)
 
   // Is this valid?
   const soundsFolder = getSoundsFolder(project, assets)
   if (soundsFolder !== assets) {
     app.use(cors({ allowedHeaders: '*' }), express.static(soundsFolder, { maxAge: '1d' }))
-    logger.info(`${folderIcon}  Serving sounds from: ${valueDescription(assetsPath)}`)
+    logger.info(`${folderIcon} Serving sounds from: ${valueDescription(assetsPath)}`)
   }
 
   server.listen(parseInt(port), host)

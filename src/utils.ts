@@ -323,8 +323,7 @@ export function initializeDynamicDiagram(_interpreter: Interpreter, options: Dyn
   io.on('connection', (socket: Socket) => {
     logger.debug(successDescription('Connected to Dynamic diagram'))
     socket.on('disconnect', () => { logger.debug(failureDescription('Dynamic diagram closed')) })
-    // INITITALIZATION
-    socket.emit('initDiagram', options)
+    socket.emit('initDiagram', options) // INITITALIZATION
     socket.emit('updateDiagram', getDynamicDiagram(interpreter, rootPackage))
   })
 
