@@ -9,13 +9,15 @@ import http from 'http'
 import logger from 'loglevel'
 import path, { join, relative } from 'path'
 import { Server, Socket } from 'socket.io'
-import { buildEnvironment, Environment, get, getDynamicDiagramData, getMessage, Interpreter, List, NativeFunction, Natives, Node, natives, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException, isEmpty } from 'wollok-ts'
-import { Asset, getDataDiagram, VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools'
 import { fileURLToPath } from 'url'
+import { buildEnvironment, Environment, get, getDynamicDiagramData, getMessage, Interpreter, isEmpty, List, NativeFunction, Natives, natives, Node, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException } from 'wollok-ts'
+import { Asset, getDataDiagram, VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools'
+import pkgts from 'wollok-ts/package.json' with { type: 'json' }
+import pkg from '../package.json' with { type: 'json' }
 
 
 const { time, timeEnd } = console
-const { blue, bold, green, italic, red, yellow, yellowBright } = chalk
+const { blue, bold, cyan, green, italic, red, yellow, yellowBright } = chalk
 
 export const ENTER = '\n'
 
@@ -228,6 +230,10 @@ export const problemDescription = (problem: Problem): string => {
   const header = bold(`[${problem.level.toUpperCase()}]`)
   return color(`${header}: ${getMessage({ message: problem.code, values: problem.values.concat() })} at ${problem.node?.sourceInfo ?? 'unknown'}`)
 }
+
+export const versionInfo = (): string =>
+  `Wollok-TS-CLI ${cyan('v' + pkg.version)}\nWollok-TS ${cyan('v' + pkgts.version)}\nWollok-Lang ${cyan('v' + pkgts.wollokVersion)}`
+
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // RESOURCES
