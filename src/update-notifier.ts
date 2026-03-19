@@ -1,7 +1,7 @@
-import latestVersion from 'latest-version'
 import chalk from 'chalk'
 import Box from 'cli-box'
 import { compareVersions } from 'compare-versions'
+import latestVersion from 'latest-version'
 import pkg from '../package.json' with { type: 'json' }
 import { logger } from './logger.js'
 

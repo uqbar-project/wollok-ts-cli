@@ -4,7 +4,7 @@ import { readFileSync, rmSync } from 'fs'
 import { homedir } from 'os'
 import init, { type Options } from '../src/commands/init.js'
 import test from '../src/commands/test.js'
-import './assertions'
+import './assertions.js'
 
 const project = join('examples', 'init-examples', 'basic-example')
 const customFolderName = 'custom-folder'

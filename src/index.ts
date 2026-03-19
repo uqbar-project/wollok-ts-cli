@@ -1,23 +1,16 @@
 #!/usr/bin/env node
 import { Command } from 'commander'
+import logger from 'loglevel'
+import ast from './commands/ast.js'
+import { addDependency, removeDependency, synchronizeDependencies } from './commands/dependencies.js'
+import init from './commands/init.js'
+import lint from './commands/lint.js'
 import repl from './commands/repl.js'
 import run from './commands/run.js'
 import test from './commands/test.js'
-import init from './commands/init.js'
-import lint from './commands/lint.js'
-import ast from './commands/ast.js'
-import { addDependency, removeDependency, synchronizeDependencies } from './commands/dependencies.js'
-import logger from 'loglevel'
-import pkg from '../package.json' with { type: 'json' }
-import pkgts from 'wollok-ts/package.json' with { type: 'json' }
-import chalk from 'chalk'
 import updateNotifier from './update-notifier.js'
+import { versionInfo } from './utils.js'
 
-const { cyan } = chalk
-
-function versionInfo(): string {
-  return `Wollok-TS-CLI ${cyan('v' + pkg.version)}\nWollok-TS ${cyan('v' + pkgts.version)} \nWollok-Lang ${cyan('v' + pkgts.wollokVersion)}`
-}
 updateNotifier().finally(() => {
   const program = new Command()
     .name('wollok')
