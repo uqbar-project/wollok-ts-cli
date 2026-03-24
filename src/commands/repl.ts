@@ -60,7 +60,7 @@ export async function replFn(autoImportPath: string | undefined, options: Option
   let dynamicDiagramClient = initializeDynamicDiagram(interpreter, options, rootPackage, !options.skipDiagram)
 
   const onReloadClient = async (openDiagram: boolean, newInterpreter?: Interpreter) => {
-    if (!openDiagram) return;
+    if (!openDiagram) return
     const selectedInterpreter = newInterpreter ?? interpreter
     if (dynamicDiagramClient.enabled) { // If the server is already enabled, reload it
       dynamicDiagramClient.onReload(selectedInterpreter)
@@ -80,6 +80,8 @@ export async function replFn(autoImportPath: string | undefined, options: Option
         repl.prompt()
         repl.write(command + ENTER)
       })
+    } else {
+      repl.prompt()
     }
   }
 
@@ -152,9 +154,9 @@ export async function initializeInterpreter(autoImportPath: string | undefined, 
 function defineCommands(autoImportPath: string | undefined, options: Options, reloadClient: (activateDiagram: boolean, interpreter?: Interpreter) => Promise<void>, setInterpreter: (interpreter: Interpreter, rerun: boolean) => void, serveGame: NativeFunction): Command {
   const reload = (rerun = false) => async () => {
     const interpreter = await initializeInterpreter(autoImportPath, options, serveGame)
-    setInterpreter(interpreter, rerun)
-    reloadClient(!options.skipDiagram, interpreter)
     logger.info(successDescription('Environment reloaded'))
+    reloadClient(!options.skipDiagram, interpreter)
+    setInterpreter(interpreter, rerun)
   }
 
   const commandHandler = new Command('Write a Wollok sentence or command to evaluate')

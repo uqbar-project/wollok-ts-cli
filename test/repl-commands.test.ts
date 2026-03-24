@@ -39,6 +39,7 @@ describe('REPL command', () => {
   let processExitSpy: MockInstance<(code?: string | number | null | undefined) => never>
   let consoleLogSpy: MockInstance<(message?: any, ...optionalParams: any[]) => void>
   let loggerLogSpy: MockInstance<(message?: any) => void>
+  let promptSpy: MockInstance<(message?: any) => void>
   let initializeGameClientSpy: MockInstance<(project: string, assets: string, host: string, port: string) => Server>
   let repl: Interface
   let io: Server
@@ -47,6 +48,7 @@ describe('REPL command', () => {
     processExitSpy = vi.spyOn(process, 'exit').mockImplementation((() => { }) as any)
     consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => { }) // TODO: Should we use always the logger?
     loggerLogSpy = vi.spyOn(logger, 'info').mockImplementation(() => { })
+    promptSpy = vi.spyOn(Interface.prototype, 'prompt').mockImplementation(() => { })
     initializeGameClientSpy = vi.spyOn(gameModule, 'initializeGameClient')
     io = fakeIO()
     repl = await replFn(undefined, options)
@@ -63,6 +65,7 @@ describe('REPL command', () => {
     repl.write('const b = a + 5' + ENTER)
     repl.write('b' + ENTER)
     expect(spyCalledWithSubstring(consoleLogSpy, '6')).toBe(true)
+    expect(promptSpy).toBeCalledTimes(4)
     repl.emit('line', ':q')
     expect(processExitSpy).toHaveBeenCalledWith(0)
   })
@@ -79,6 +82,53 @@ describe('REPL command', () => {
     repl.emit('line', ':q')
     expect(processExitSpy).toHaveBeenCalledWith(0)
     repl.close()
+  })
+
+  describe('Prompt should be printed', () => {
+
+    it('on start up', async () => {
+      expect(promptSpy).toBeCalledTimes(1)
+    })
+
+    it('on start up (with dynamic diagram)', async () => {
+      promptSpy.mockReset()
+      const repl = await replFn(undefined, { ...options, skipDiagram: false })
+      expect(promptSpy).toBeCalledTimes(1)
+      repl.close()
+    })
+
+    it('after a query', () => {
+      expect(promptSpy).toBeCalledTimes(1)
+      repl.write('1 + 2' + ENTER)
+      expect(promptSpy).toBeCalledTimes(2)
+    })
+
+    it('after restart', async () => {
+      expect(promptSpy).toBeCalledTimes(1)
+      repl.emit('line', ':r')
+      await vi.waitFor(() => expect(promptSpy).toBeCalledTimes(2))
+    })
+
+    it('after restart (with dynamic diagram)', async () => {
+      promptSpy.mockReset()
+      const repl = await replFn(undefined, { ...options, skipDiagram: false })
+      expect(promptSpy).toBeCalledTimes(1)
+      repl.emit('line', ':r')
+      await vi.waitFor(() => expectCalledWithSubstrings(loggerLogSpy,
+        'Dynamic diagram available at: http://localhost:8080',
+      ))
+      expect(promptSpy).toBeCalledTimes(1)
+      await vi.waitFor(() => expect(promptSpy).toBeCalledTimes(2))
+      repl.close()
+    })
+
+    it('after restart and reload', async () => {
+      repl.write('1 + 2' + ENTER)
+      promptSpy.mockReset()
+      repl.emit('line', ':rr')
+      await vi.waitFor(() => expect(promptSpy).toBeCalledTimes(2))
+    })
+
   })
 
   describe('Logs', () => {

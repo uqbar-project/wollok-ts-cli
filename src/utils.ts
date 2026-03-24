@@ -146,8 +146,7 @@ export const validateEnvironment = (node: Node, validationAction = ValidationAct
     const isOk = isEmpty(allErrors)
     const singularOrPlural = (count: number): string => count === 1 ? '' : 's'
     logger.info(
-      isOk ? successDescription('No errors or warnings found!') : `${errorIcon} ${errors.length} Error${singularOrPlural(errors.length)}, ${warningIcon} ${warnings.length} Warning${singularOrPlural(warnings.length)}`,
-      ENTER,
+      isOk ? successDescription('No errors or warnings found!') : `${errorIcon} ${errors.length} Error${singularOrPlural(errors.length)}, ${warningIcon} ${warnings.length} Warning${singularOrPlural(warnings.length)}`
     )
     return problems
   } catch (error: any) {
