@@ -98,9 +98,9 @@ export async function replFn(autoImportPath: string | undefined, options: Option
           history.push(line)
           console.log(interpreteLine(interpreter, line))
           dynamicDiagramClient.onReload(interpreter)
-          repl.prompt()
         }
       }
+      if(!line.startsWith(':r')) repl.prompt()
     })
 
   if (dynamicDiagramClient.enabled)

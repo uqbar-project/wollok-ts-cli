@@ -129,6 +129,17 @@ describe('REPL command', () => {
       await vi.waitFor(() => expect(promptSpy).toBeCalledTimes(2))
     })
 
+    it.skip('after showing dynamic diagram', async () => {
+      promptSpy.mockReset()
+      repl.emit('line', ':d')
+      expect(promptSpy).toBeCalledTimes(1)
+    })
+
+    it('after help', async () => {
+      promptSpy.mockReset()
+      repl.emit('line', ':h')
+      expect(promptSpy).toBeCalledTimes(1)
+    })
   })
 
   describe('Logs', () => {
@@ -162,6 +173,7 @@ describe('REPL command', () => {
     })
 
     it('on reload', async () => {
+      loggerLogSpy.mockReset()
       repl.emit('line', ':r')
       await vi.waitFor(() => expect(loggerLogSpy).toHaveBeenCalledWith('✓ Environment reloaded'))
       expectCalledWithSubstrings(loggerLogSpy,
@@ -169,6 +181,7 @@ describe('REPL command', () => {
         'No errors or warnings found',
         'Environment reloaded',
       )
+      // TODO new test: should not open dynamic diagram
       expect(spyCalledWithSubstring(loggerLogSpy, 'Dynamic diagram')).toBe(false)
     })
 
