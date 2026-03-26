@@ -148,8 +148,7 @@ export const validateEnvironment = (node: Node, validationAction = ValidationAct
     const isOk = isEmpty(allErrors)
     const singularOrPlural = (count: number): string => count === 1 ? '' : 's'
     logger.info(
-      isOk ? successDescription('No errors or warnings found!') : `${errorIcon} ${errors.length} Error${singularOrPlural(errors.length)}, ${warningIcon} ${warnings.length} Warning${singularOrPlural(warnings.length)}`,
-      ENTER,
+      isOk ? successDescription('No errors or warnings found!') : `${errorIcon} ${errors.length} Error${singularOrPlural(errors.length)}, ${warningIcon} ${warnings.length} Warning${singularOrPlural(warnings.length)}`
     )
     return problems
   } catch (error: any) {
@@ -230,6 +229,9 @@ export const problemDescription = (problem: Problem): string => {
   const header = bold(`[${problem.level.toUpperCase()}]`)
   return color(`${header}: ${getMessage({ message: problem.code, values: problem.values.concat() })} at ${problem.node?.sourceInfo ?? 'unknown'}`)
 }
+
+export const dynamicDiagramAvailable = (host: string, port: string): string =>
+  `${diagramIcon} Dynamic diagram available at: ${bold(`http://${host}:${port}`)}`
 
 export const versionInfo = (): string =>
   `Wollok-TS-CLI ${cyan('v' + pkg.version)}\nWollok-TS ${cyan('v' + pkgts.version)}\nWollok-Lang ${cyan('v' + pkgts.wollokVersion)}`
@@ -329,8 +331,7 @@ export function initializeDynamicDiagram(_interpreter: Interpreter, options: Dyn
   io.on('connection', (socket: Socket) => {
     logger.debug(successDescription('Connected to Dynamic diagram'))
     socket.on('disconnect', () => { logger.debug(failureDescription('Dynamic diagram closed')) })
-    // INITITALIZATION
-    socket.emit('initDiagram', options)
+    socket.emit('initDiagram', options) // INITITALIZATION
     socket.emit('updateDiagram', getDynamicDiagram(interpreter, rootPackage))
   })
 
@@ -341,7 +342,7 @@ export function initializeDynamicDiagram(_interpreter: Interpreter, options: Dyn
 
   server.addListener('error', serverError)
   server.addListener('listening', () => {
-    logger.info(`${diagramIcon} Dynamic diagram available at: ${bold(`http://${host}:${port}`)}`)
+    logger.info(dynamicDiagramAvailable(host, port))
   })
 
   server.listen(parseInt(port), host)

@@ -29,7 +29,7 @@
     "test:init": "vitest run test/init.test.ts",
     "test:lint": "vitest run test/lint.test.ts",
     "test:run": "vitest run test/run.test.ts",
-    "test:repl": "vitest run test/repl.test.ts",
+    "test:repl": "vitest run test/repl*.test.ts",
     "test:utils": "vitest run test/utils.test.ts",
     "test-with-coverage": "npm run lint && vitest run --coverage",
     "lint": "eslint .",

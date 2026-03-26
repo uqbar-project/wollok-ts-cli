@@ -1,5 +1,7 @@
+import { fail } from 'assert'
 import { existsSync } from 'fs'
 import { expect, MockInstance } from 'vitest'
+import { isEmpty } from 'wollok-ts'
 
 
 declare module 'vitest' {
@@ -35,4 +37,13 @@ export const spyCalledWithSubstring = (spy: MockInstance, value: string, debug =
   return spy.mock.calls.some(call =>
     call.some(arg => typeof arg === 'string' && arg.includes(value))
   )
+}
+
+export const expectCalledWithSubstrings = (spy: MockInstance, ...expected: string[]): void => {
+  if (isEmpty(spy.mock.calls)) fail(`Unexpected calls ${expected}`)
+  let nAsserted = 0
+  for (const call of spy.mock.calls) {
+    if (call.some(arg => typeof arg === 'string' && arg.includes(expected[nAsserted]))) nAsserted++
+  }
+  if (nAsserted !== expected.length) fail(`Calls ${expected} not found in ${spy.mock.calls}`)
 }
