@@ -1,24 +1,21 @@
 #!/usr/bin/env node
 import { Command } from 'commander'
+import logger from 'loglevel'
+import ast from './commands/ast.js'
+import { addDependency, removeDependency, synchronizeDependencies } from './commands/dependencies.js'
+import init from './commands/init.js'
+import lint from './commands/lint.js'
 import repl from './commands/repl.js'
 import run from './commands/run.js'
 import test from './commands/test.js'
-import init from './commands/init.js'
-import lint from './commands/lint.js'
-import ast from './commands/ast.js'
-import { addDependency, removeDependency, synchronizeDependencies } from './commands/dependencies.js'
-import logger from 'loglevel'
-import pkg from '../package.json' with { type: 'json' }
-import chalk from 'chalk'
 import updateNotifier from './update-notifier.js'
-
-const { cyan } = chalk
+import { versionInfo } from './utils.js'
 
 updateNotifier().finally(() => {
   const program = new Command()
     .name('wollok')
     .description('Wollok Language command line interpreter tool')
-    .version(cyan(pkg.version))
+    .version(versionInfo())
     .hook('preAction', (thisCommand, actionCommand) => {
       actionCommand.opts().verbose ? logger.setLevel('DEBUG') : logger.setLevel('INFO')
     })

@@ -1,12 +1,14 @@
 import chalk from 'chalk'
 import logger from 'loglevel'
 import path, { join } from 'path'
-import { buildEnvironmentForProject, failureDescription, getFQN, handleError, problemDescription, validateEnvironment, Project, validateName, ValidationAction } from '../src/utils.js'
+import { buildEnvironmentForProject, failureDescription, getFQN, handleError, problemDescription, validateEnvironment, Project, validateName, ValidationAction, versionInfo } from '../src/utils.js'
 import { spyCalledWithSubstring } from './assertions.js'
 import { Problem, WOLLOK_EXTRA_STACK_TRACE_HEADER, validate, List } from 'wollok-ts'
 import * as wollok from 'wollok-ts'
 import { describe, it, beforeEach, afterEach, expect, vi } from 'vitest'
 import type { MockInstance } from 'vitest'
+import pkgts from 'wollok-ts/package.json' with { type: 'json' }
+import pkg from '../package.json' with { type: 'json' }
 
 const { bold, red, yellowBright } = chalk
 
@@ -151,7 +153,19 @@ describe('printing', () => {
     it('throws an error for invalid name', () => {
       expect(() => validateName('2024-o-tpiJuego')).toThrow('Invalid name: [2024-o-tpiJuego]')
     })
-
   })
 
+  describe('version info', () => {
+    it('should print CLI version', () => {
+      expect(versionInfo()).includes(`Wollok-TS-CLI v${pkg.version}`)
+    })
+
+    it('should print TS version', () => {
+      expect(versionInfo()).includes(`Wollok-TS v${pkgts.version}`)
+    })
+
+    it('should print Wollok version', () => {
+      expect(versionInfo()).includes(`Wollok-Lang v${pkgts.wollokVersion}`)
+    })
+  })
 })
