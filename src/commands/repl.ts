@@ -197,10 +197,7 @@ function defineCommands(autoImportPath: string | undefined, options: Options, re
     .alias(':h')
     .description('Show Wollok REPL help')
     .allowUnknownOption()
-    .action(() => {
-      commandHandler.outputHelp()
-      // commandHandler.prompt()
-    })
+    .action(() => commandHandler.outputHelp())
 
   return commandHandler
 }
