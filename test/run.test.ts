@@ -226,8 +226,9 @@ describe('testing run', () => {
     it('should not work if assets folder does not exist', async () => {
       await runProgram('basic-example')
       expect(processExitSpy).not.toHaveBeenCalledWith(21)
+      const image = join('examples', 'run-examples', 'basic-example', 'specialAssets')
       expect(errorReturned?.split('\n')[0]).toBe(
-        'Folder image examples/run-examples/basic-example/specialAssets does not exist'
+        'Folder image ' + image + ' does not exist'
       )
     })
   })
