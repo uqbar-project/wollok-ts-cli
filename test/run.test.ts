@@ -1,6 +1,6 @@
 import { mkdirSync, rmdirSync } from 'fs'
 import logger from 'loglevel'
-import path, { join } from 'path'
+import { join } from 'path'
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest'
 import { LeveledLogMethod } from 'winston'
 import { interpret } from 'wollok-ts'
@@ -226,11 +226,10 @@ describe('testing run', () => {
     it('should not work if assets folder does not exist', async () => {
       await runProgram('basic-example')
       expect(processExitSpy).not.toHaveBeenCalledWith(21)
-      const image = path.join('examples', 'run-examples','basic-example', 'specialAssets')
+      const image = join('examples', 'run-examples', 'basic-example', 'specialAssets')
       expect(errorReturned?.split('\n')[0]).toBe(
         'Folder image ' + image + ' does not exist'
       )
     })
   })
 })
-
