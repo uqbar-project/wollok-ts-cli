@@ -6,7 +6,7 @@ import logger from 'loglevel'
 import { join } from 'path'
 import { Server } from 'socket.io'
 import { GAME_MODULE, Interpreter, RuntimeObject, WollokException } from 'wollok-ts'
-import { Asset, boardState, buildKeyPressEvent, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools'
+import { Asset, boardState, buildKeyPressEvent, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools/dist/game/utils.js'
 import { DummyProfiler, EventProfiler, TimeMeasurer } from './time-measurer.js'
 import { imageIcon, DynamicDiagramClient, ENTER, failureDescription, folderIcon, gameIcon, getSoundsFolder, isValidImage, isValidSound, publicPath, successDescription, valueDescription, boardIcon, soundIcon, keyboardIcon } from './utils.js'
 

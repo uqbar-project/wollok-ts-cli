@@ -11,7 +11,8 @@ import path, { join, relative } from 'path'
 import { Server, Socket } from 'socket.io'
 import { fileURLToPath } from 'url'
 import { buildEnvironment, Environment, get, getDynamicDiagramData, getMessage, Interpreter, isEmpty, List, NativeFunction, Natives, natives, Node, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException } from 'wollok-ts'
-import { Asset, getDataDiagram, VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools'
+import { Asset, VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools/dist/game/utils.js'
+import { getDataDiagram } from 'wollok-web-tools/dist/dynamicDiagram/diagram-generator.js'
 import pkgts from 'wollok-ts/package.json' with { type: 'json' }
 import pkg from '../package.json' with { type: 'json' }
 
@@ -310,7 +311,7 @@ export type DynamicDiagramClient = {
 
 export function getDynamicDiagram(interpreter: Interpreter, rootFQN?: Package): ElementDefinition[] {
   const objects = getDynamicDiagramData(interpreter, rootFQN)
-  return getDataDiagram(objects)
+  return getDataDiagram(objects) as any
 }
 
 export type DynamicDiagramOptions = {
