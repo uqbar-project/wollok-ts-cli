@@ -6,7 +6,7 @@ import logger from 'loglevel'
 import { join } from 'path'
 import { Server } from 'socket.io'
 import { GAME_MODULE, Interpreter, RuntimeObject, WollokException } from 'wollok-ts'
-import { Asset, boardState, buildKeyPressEvent, buildKeyReleaseEvent, buildMouseClickedEvent, Position, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools/dist/game/utils.js'
+import { Asset, boardState, buildDoubleClickedEvent, buildKeyPressEvent, buildKeyReleaseEvent, buildMouseClickedEvent, Position, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools/dist/game/utils.js'
 import { DummyProfiler, EventProfiler, TimeMeasurer } from './time-measurer.js'
 import { boardIcon, DynamicDiagramClient, ENTER, failureDescription, folderIcon, gameIcon, getSoundsFolder, imageIcon, isValidImage, isValidSound, keyboardIcon, loopIcon, mouseIcon, publicPath, soundIcon, successDescription, valueDescription } from './utils.js'
 
@@ -59,7 +59,7 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
 
     socket.on('doubleClicked', (position: Position) => {
       logger.debug(`${mouseIcon} Double click: ${JSON.stringify(position, null, 2)}`)
-      queueEvent(interpreter as any, buildMouseClickedEvent(interpreter as any, position))
+      queueEvent(interpreter as any, buildDoubleClickedEvent(interpreter as any, position))
     })
 
     const gameSingleton = interpreter.object(GAME_MODULE)

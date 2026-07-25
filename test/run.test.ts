@@ -209,10 +209,10 @@ describe('testing run', () => {
       expect(errorReturned).toBeUndefined()
     })
 
-    it('should send static information and start', async () => {
+    it('should send static information and start', { timeout: 2 * 5000, retry: 2 }, async () => {
       const clientSocket = connectClient(8787)
-      const [, board, images, music] = await Promise.all([
-        runProgram('basic-game', 8787),
+      await runProgram('basic-game', 8787)
+      const [board, images, music, start] = await Promise.all([
         received(clientSocket, 'board'),
         received(clientSocket, 'images'),
         received(clientSocket, 'music'),
@@ -221,7 +221,40 @@ describe('testing run', () => {
       expect(board).be.eql({ cellSize: 50, ground: 'ground.png', width: 5, height: 5 })
       expect(images).be.eql([{ name: 'pepita.png', url: 'pepita.png' }])
       expect(music).be.eql([])
-    }, { timeout: 2 * 5000, retry: 2 })
+      expect(start).toBeUndefined()
+
+      clientSocket.close()
+    })
+
+    it('should send dynamic information', { timeout: 2 * 5000, retry: 2 }, async () => {
+      const clientSocket = connectClient(8787)
+      await runProgram('basic-game', 8787)
+      const [visuals, sounds] = await Promise.all([
+        received(clientSocket, 'visuals'),
+        received(clientSocket, 'sounds')
+      ])
+
+      expect(visuals).be.eql([
+        {
+          image: "pepita.png",
+          position: { x: 0, y: 1, },
+        },
+      ])
+      expect(sounds).be.eql([])
+
+      clientSocket.close()
+    })
+
+    it('should receive events information', { timeout: 2 * 5000, retry: 2 }, async () => {
+      const clientSocket = connectClient(8787)
+      await runProgram('basic-game', 8787)
+      clientSocket.emit('keyPressed', ['keyA'])
+      clientSocket.emit('keyReleased', ['keyA'])
+      clientSocket.emit('mouseClicked', { x: 0, y: 1, })
+      clientSocket.emit('doubleClicked', { x: 1, y: 2, })
+      // TODO: Expectations
+      clientSocket.close()
+    })
 
     it('should not work if assets folder does not exist', async () => {
       await runProgram('basic-example')
