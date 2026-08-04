@@ -231,13 +231,13 @@ describe('testing run', () => {
       await runProgram('basic-game', 8787)
       const [visuals, sounds] = await Promise.all([
         received(clientSocket, 'visuals'),
-        received(clientSocket, 'sounds')
+        received(clientSocket, 'sounds'),
       ])
 
       expect(visuals).be.eql([
         {
-          image: "pepita.png",
-          position: { x: 0, y: 1, },
+          image: 'pepita.png',
+          position: { x: 0, y: 1 },
         },
       ])
       expect(sounds).be.eql([])
@@ -250,8 +250,8 @@ describe('testing run', () => {
       await runProgram('basic-game', 8787)
       clientSocket.emit('keyPressed', ['keyA'])
       clientSocket.emit('keyReleased', ['keyA'])
-      clientSocket.emit('mouseClicked', { x: 0, y: 1, })
-      clientSocket.emit('doubleClicked', { x: 1, y: 2, })
+      clientSocket.emit('mouseClicked', { x: 0, y: 1 })
+      clientSocket.emit('doubleClicked', { x: 1, y: 2 })
       // TODO: Expectations
       clientSocket.close()
     })
