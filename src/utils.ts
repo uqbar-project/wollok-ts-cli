@@ -372,7 +372,7 @@ export const getAllAssets = (projectPath: string, assetsFolder: string): Asset[]
   if (!existsSync(baseFolder))
     throw new Error(`Folder image ${baseFolder} does not exist`)
 
-  const fileRelativeFor = (path: string) => ({ name: path, url: path })
+  const fileRelativeFor = (path: string) => ({ name: path.replace(/\\/g, '/'), url: path })
 
   const loadAssetsIn = (basePath: string): Asset[] =>
     fs.readdirSync(basePath, { withFileTypes: true })
