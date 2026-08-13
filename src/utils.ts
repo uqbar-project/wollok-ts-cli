@@ -117,7 +117,6 @@ export async function buildEnvironmentForProject(project: string, files: string[
   const environmentFiles = await Promise.all(paths.map(async name =>
     ({ name, content: await readFile(join(project, name), 'utf8') })
   ))
-  console.log({environmentFiles})
 
   if (debug) timeEnd('Reading project files')
   if (debug) time('Building environment')
@@ -183,7 +182,6 @@ export async function readNatives(nativeFolder: string): Promise<Natives> {
       const fullPath = path.resolve(nativeFolder, filePath)
       const importedModule = await import(fullPath)
       const segments = filePath.replace(/\.(ts|js)$/, '').split('/')
-      console.log({segments})
       return segments.reduceRight((acc, segment) => { return { [segment]: acc } }, importedModule.default || importedModule)
     })
   )
