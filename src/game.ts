@@ -6,7 +6,7 @@ import logger from 'loglevel'
 import { join } from 'path'
 import { Server } from 'socket.io'
 import { GAME_MODULE, Interpreter, RuntimeObject, WollokException } from 'wollok-ts'
-import { Asset, boardState, buildKeyPressEvent, buildKeyReleaseEvent, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools/dist/game/utils.js'
+import { Asset, boardState, buildKeyPressEvent, /*buildKeyReleaseEvent,*/ queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools/dist/game/utils.js'
 import { DummyProfiler, EventProfiler, TimeMeasurer } from './time-measurer.js'
 import { imageIcon, DynamicDiagramClient, ENTER, failureDescription, folderIcon, gameIcon, getSoundsFolder, isValidImage, isValidSound, publicPath, successDescription, valueDescription, boardIcon, soundIcon, keyboardIcon } from './utils.js'
 
@@ -47,10 +47,10 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
       queueEvent(interpreter as any, ...events.map(code => buildKeyPressEvent(interpreter as any, code)))
     })
 
-    socket.on('keyReleased', (events: string[]) => {
-      logger.debug(`${keyboardIcon} Key realeased: ${JSON.stringify(events, null, 2)}`)
-      queueEvent(interpreter as any, ...events.map(code => buildKeyReleaseEvent(interpreter as any, code)))
-    })
+    // socket.on('keyReleased', (events: string[]) => {
+    //   logger.debug(`${keyboardIcon} Key realeased: ${JSON.stringify(events, null, 2)}`)
+    //   queueEvent(interpreter as any, ...events.map(code => buildKeyReleaseEvent(interpreter as any, code)))
+    // })
 
     const gameSingleton = interpreter.object(GAME_MODULE)
     // wait for client to be ready
