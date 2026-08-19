@@ -8,7 +8,15 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+
+    runs-on: ${{matrix.os}}
+    
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js
@@ -20,6 +28,7 @@ jobs:
         run: |
           npm ls wollok-web-tools
           ls -R node_modules/wollok-web-tools/dist || true
+        shell: bash
       - name: Unit Tests
         run: npm run test-with-coverage
       - name: Build

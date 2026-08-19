@@ -25,9 +25,9 @@ const buildOptionsFor = (path: string, skipValidations = false) => ({
 })
 
 const startReplCommand = (autoImportPath: string, options: Options) =>
-  replFn(join(options.project, autoImportPath), options)
+  replFn(`${options.project}/${autoImportPath}`, options)
 
-const projectPath = join('examples', 'repl-examples')
+const projectPath = 'examples/repl-examples'
 
 const options = {
   project: projectPath,
