@@ -41,6 +41,8 @@ export const soundIcon = '🔉'
 export const boardIcon = '📏'
 export const projectIcon = '📁'
 export const keyboardIcon = '🎹'
+export const mouseIcon = '🖱️'
+export const loopIcon = '🔁'
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // FILE / PATH HANDLING

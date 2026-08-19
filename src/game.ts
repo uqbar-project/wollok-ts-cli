@@ -6,9 +6,9 @@ import logger from 'loglevel'
 import { join } from 'path'
 import { Server } from 'socket.io'
 import { GAME_MODULE, Interpreter, RuntimeObject, WollokException } from 'wollok-ts'
-import { Asset, boardState, buildKeyPressEvent, buildKeyReleaseEvent, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools/dist/game/utils.js'
+import { Asset, boardState, buildDoubleClickedEvent, buildKeyPressEvent, buildKeyReleaseEvent, buildMouseClickedEvent, Position, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools/dist/game/utils.js'
 import { DummyProfiler, EventProfiler, TimeMeasurer } from './time-measurer.js'
-import { imageIcon, DynamicDiagramClient, ENTER, failureDescription, folderIcon, gameIcon, getSoundsFolder, isValidImage, isValidSound, publicPath, successDescription, valueDescription, boardIcon, soundIcon, keyboardIcon } from './utils.js'
+import { boardIcon, DynamicDiagramClient, ENTER, failureDescription, folderIcon, gameIcon, getSoundsFolder, imageIcon, isValidImage, isValidSound, keyboardIcon, loopIcon, mouseIcon, publicPath, soundIcon, successDescription, valueDescription } from './utils.js'
 
 const { bold } = chalk
 
@@ -52,6 +52,16 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
       queueEvent(interpreter as any, ...events.map(code => buildKeyReleaseEvent(interpreter as any, code)))
     })
 
+    socket.on('mouseClicked', (position: Position) => {
+      logger.debug(`${mouseIcon} Click: ${JSON.stringify(position, null, 2)}`)
+      queueEvent(interpreter as any, buildMouseClickedEvent(interpreter as any, position))
+    })
+
+    socket.on('doubleClicked', (position: Position) => {
+      logger.debug(`${mouseIcon} Double click: ${JSON.stringify(position, null, 2)}`)
+      queueEvent(interpreter as any, buildDoubleClickedEvent(interpreter as any, position))
+    })
+
     const gameSingleton = interpreter.object(GAME_MODULE)
     // wait for client to be ready
     socket.on('ready', () => {
@@ -76,7 +86,7 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
 
     const flushInterval = 17
     const profiler = logger.getLevel() >= logger.levels.DEBUG
-      ? new EventProfiler(logger, 'GAME-LOOP')
+      ? new EventProfiler(logger, `${loopIcon} GAME-LOOP`)
       : new DummyProfiler()
 
     const start = new TimeMeasurer()
