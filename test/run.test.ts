@@ -93,22 +93,22 @@ describe('testing run', () => {
     const imageProject = join('examples', 'run-examples', 'asset-example')
 
     it('should return all images for a single assets folder', () => {
-      expect(getAllAssets(project, 'assets')).toEqual([{ name: join('pepita.png'), url: join('pepita.png') }])
+      expect(getAllAssets(project, 'assets')).toEqual([{ name: 'pepita.png', url: join('pepita.png') }])
     })
 
     it('should return all images relative to assets folder (recursively)', () => {
       expect(getAllAssets(imageProject, 'assets')).toEqual([
-        { name: join('medium', '3.png'), url: join('medium', '3.png') },
-        { name: join('smalls', '1.png'), url: join('smalls', '1.png') },
-        { name: join('smalls', '2.png'), url: join('smalls', '2.png') },
+        { name: 'medium/3.png', url: join('medium', '3.png') },
+        { name: 'smalls/1.png', url: join('smalls', '1.png') },
+        { name: 'smalls/2.png', url: join('smalls', '2.png') },
       ])
     })
 
     it('should return all images relative to project if assets folder is not present', () => {
       expect(getAllAssets(imageProject, '')).toEqual([
-        { name: join('assets', 'medium', '3.png'), url: join('assets', 'medium', '3.png') },
-        { name: join('assets', 'smalls', '1.png'), url: join('assets', 'smalls', '1.png') },
-        { name: join('assets', 'smalls', '2.png'), url: join('assets', 'smalls', '2.png') },
+        { name: 'assets/medium/3.png', url: join('assets', 'medium', '3.png') },
+        { name: 'assets/smalls/1.png', url: join('assets', 'smalls', '1.png') },
+        { name: 'assets/smalls/2.png', url: join('assets', 'smalls', '2.png') },
       ])
     })
 

@@ -119,8 +119,8 @@ export async function buildEnvironmentForProject(project: string, files: string[
   const environmentFiles = await Promise.all(paths.map(async name =>
     ({ name, content: await readFile(join(project, name), 'utf8') })
   ))
-  if (debug) timeEnd('Reading project files')
 
+  if (debug) timeEnd('Reading project files')
   if (debug) time('Building environment')
   try { return buildEnvironment(environmentFiles) }
   finally { if (debug) timeEnd('Building environment') }
@@ -183,8 +183,7 @@ export async function readNatives(nativeFolder: string): Promise<Natives> {
     paths.map(async (filePath) => {
       const fullPath = path.resolve(nativeFolder, filePath)
       const importedModule = await import(fullPath)
-      const segments = filePath.replace(/\.(ts|js)$/, '').split(path.sep)
-
+      const segments = filePath.replace(/\.(ts|js)$/, '').split('/')
       return segments.reduceRight((acc, segment) => { return { [segment]: acc } }, importedModule.default || importedModule)
     })
   )
@@ -374,7 +373,7 @@ export const getAllAssets = (projectPath: string, assetsFolder: string): Asset[]
   if (!existsSync(baseFolder))
     throw new Error(`Folder image ${baseFolder} does not exist`)
 
-  const fileRelativeFor = (path: string) => ({ name: path, url: path })
+  const fileRelativeFor = (path: string) => ({ name: path.replace(/\\/g, '/'), url: path })
 
   const loadAssetsIn = (basePath: string): Asset[] =>
     fs.readdirSync(basePath, { withFileTypes: true })
