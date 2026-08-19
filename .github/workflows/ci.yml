@@ -22,6 +22,8 @@ jobs:
           ls -R node_modules/wollok-web-tools/dist || true
       - name: Unit Tests
         run: npm run test-with-coverage
+      - name: Build
+        run: npm run build
       - name: Update coverage badge
         uses: codecov/codecov-action@v4
         with:
