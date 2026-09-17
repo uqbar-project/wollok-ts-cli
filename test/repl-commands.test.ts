@@ -146,7 +146,7 @@ describe('REPL command', () => {
 
     it('on start up', () => {
       expectCalledWithSubstrings(loggerLogSpy,
-        'Initializing Wollok REPL on examples/repl-examples',
+        `Initializing Wollok REPL on ${join('examples', 'repl-examples')}`,
         'No problems found building the environment',
         'No errors or warnings found')
     })
@@ -155,7 +155,7 @@ describe('REPL command', () => {
       loggerLogSpy.mockReset()
       const repl = await startReplCommand('aves.wlk', options)
       expectCalledWithSubstrings(loggerLogSpy,
-        'Initializing Wollok REPL for file examples/repl-examples/aves.wlk on examples/repl-examples',
+        `Initializing Wollok REPL for file ${join('examples', 'repl-examples', 'aves.wlk')} on ${join('examples', 'repl-examples')}`,
         'No problems found building the environment',
         'No errors or warnings found')
       repl.close()
@@ -165,7 +165,7 @@ describe('REPL command', () => {
       loggerLogSpy.mockReset()
       const repl = await replFn(undefined, { ...options, skipDiagram: false })
       expectCalledWithSubstrings(loggerLogSpy,
-        'Initializing Wollok REPL on examples/repl-examples',
+        `Initializing Wollok REPL on ${join('examples', 'repl-examples')}`,
         'No problems found building the environment',
         'No errors or warnings found',
         'Dynamic diagram available at: http://localhost:8080')
