@@ -47,10 +47,19 @@ export default function (folder: string | undefined, { project: _project, name, 
     }
 
     // Creating files
-    logger.info(`Creating definition file ${exampleName}.${WOLLOK_FILE_EXTENSION}`)
-    writeFileSync(join(project, `${exampleName}.${WOLLOK_FILE_EXTENSION}`), wlkDefinition)
+    if(game){
+      logger.info(`Creating definition file ${exampleName}.${WOLLOK_FILE_EXTENSION}`)
+      writeFileSync(join(project, `${exampleName}.${WOLLOK_FILE_EXTENSION}`), wlkDefinitionGame)
+    }else{
+      logger.info(`Creating definition file ${exampleName}.${WOLLOK_FILE_EXTENSION}`)
+      writeFileSync(join(project, `${exampleName}.${WOLLOK_FILE_EXTENSION}`), wlkDefinition)
+    }
 
-    if (!noTest) {
+    if(game){
+      const testFile = `test${capitalizeFirstLetter(exampleName)}.${TEST_FILE_EXTENSION}`
+      logger.info(`Creating test file ${testFile}`)
+      writeFileSync(join(project, testFile), testDefinitionGame(exampleName))
+    }else if (!noTest) {
       const testFile = `test${capitalizeFirstLetter(exampleName)}.${TEST_FILE_EXTENSION}`
       logger.info(`Creating test file ${testFile}`)
       writeFileSync(join(project, testFile), testDefinition(exampleName))
@@ -106,6 +115,9 @@ const capitalizeFirstLetter = (value: string) =>
 // COMMANDS
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
+
+// files made by the init command: wollok init --project name_project
+
 const wlkDefinition = `object pepita {
   var energy = 100
 
@@ -126,6 +138,41 @@ describe "group of tests for pepita" {
 
 }`
 
+
+// files made by the init command: wollok init --project name_project --game
+
+const wlkDefinitionGame = `object pepita {
+  var energy = 100
+  var property position = game.origin()
+
+  method energy() = energy
+
+  method image() = "pepita.png"
+
+  method fly(minutes) {
+    energy = energy - minutes * 3
+  }
+}`
+
+const testDefinitionGame = (exampleName: string) => `import wollok.game.*
+
+import ${exampleName}.pepita
+
+import example.pepita
+import wollok.game.*
+
+describe "group of tests for pepita" {
+  test "pepita has initial energy" {
+    assert.equals(100, pepita.energy())
+  }
+
+  test "add pepita in game" {
+    assert.equals("pepita.png", pepita.image())
+  }
+
+}`
+
+
 const gameDefinition = (exampleName: string) => `import wollok.game.*
 
 import ${exampleName}.pepita
@@ -135,16 +182,12 @@ program PepitaGame {
 	game.height(10)
 	game.width(10)
 
-	// add assets in asset folder, for example, for the background
-  // game.boardGround("fondo2.jpg")
-
-	//
-
-	game.showAttributes(pepita) //Debug
+	game.addVisual(pepita)
 
 	game.start()
 }
 `
+
 
 const packageJsonDefinition = (projectName: string, game: boolean, natives?: string) => {
   const wollokVersion = '4.2.3' // TODO: obtain it from package.json dependency
