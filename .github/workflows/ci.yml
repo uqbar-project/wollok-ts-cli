@@ -16,7 +16,7 @@ jobs:
           - macos-latest
 
     runs-on: ${{matrix.os}}
-    
+
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js
@@ -34,6 +34,7 @@ jobs:
       - name: Build
         run: npm run build
       - name: Update coverage badge
+        if: matrix.os == 'macos-latest'
         uses: codecov/codecov-action@v4
         with:
           files: ./coverage/coverage-final.json
