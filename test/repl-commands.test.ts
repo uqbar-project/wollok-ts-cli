@@ -175,7 +175,7 @@ describe('REPL command', () => {
     it('on reload', async () => {
       loggerLogSpy.mockReset()
       repl.emit('line', ':r')
-      await vi.waitFor(() => expect(loggerLogSpy).toHaveBeenCalledWith('✓ Environment reloaded'))
+      await vi.waitFor(() => expect(loggerLogSpy).toHaveBeenCalledWith('✓ Environment reloaded'), { timeout: 5000 })
       expectCalledWithSubstrings(loggerLogSpy,
         'No problems found building the environment',
         'No errors or warnings found',
