@@ -47,22 +47,15 @@ export default function (folder: string | undefined, { project: _project, name, 
     }
 
     // Creating files
-    if(game){
-      logger.info(`Creating definition file ${exampleName}.${WOLLOK_FILE_EXTENSION}`)
-      writeFileSync(join(project, `${exampleName}.${WOLLOK_FILE_EXTENSION}`), wlkDefinitionGame)
-    }else{
-      logger.info(`Creating definition file ${exampleName}.${WOLLOK_FILE_EXTENSION}`)
-      writeFileSync(join(project, `${exampleName}.${WOLLOK_FILE_EXTENSION}`), wlkDefinition)
-    }
+    const definition = game ? wlkDefinitionGame : wlkDefinition
+    logger.info(`Creating definition file ${exampleName}.${WOLLOK_FILE_EXTENSION}`)
+    writeFileSync(join(project, `${exampleName}.${WOLLOK_FILE_EXTENSION}`), definition)
 
-    if(game){
+    if (!noTest) {
+      const definition = game ? testDefinitionGame(exampleName) : testDefinition(exampleName)
       const testFile = `test${capitalizeFirstLetter(exampleName)}.${TEST_FILE_EXTENSION}`
       logger.info(`Creating test file ${testFile}`)
-      writeFileSync(join(project, testFile), testDefinitionGame(exampleName))
-    }else if (!noTest) {
-      const testFile = `test${capitalizeFirstLetter(exampleName)}.${TEST_FILE_EXTENSION}`
-      logger.info(`Creating test file ${testFile}`)
-      writeFileSync(join(project, testFile), testDefinition(exampleName))
+      writeFileSync(join(project, testFile), definition)
     }
 
     if (game) {
@@ -155,18 +148,14 @@ const wlkDefinitionGame = `object pepita {
 }`
 
 const testDefinitionGame = (exampleName: string) => `import wollok.game.*
-
 import ${exampleName}.pepita
-
-import example.pepita
-import wollok.game.*
 
 describe "group of tests for pepita" {
   test "pepita has initial energy" {
     assert.equals(100, pepita.energy())
   }
 
-  test "add pepita in game" {
+  test "pepita has an image" {
     assert.equals("pepita.png", pepita.image())
   }
 
@@ -174,7 +163,6 @@ describe "group of tests for pepita" {
 
 
 const gameDefinition = (exampleName: string) => `import wollok.game.*
-
 import ${exampleName}.pepita
 
 program PepitaGame {
@@ -182,7 +170,7 @@ program PepitaGame {
 	game.height(10)
 	game.width(10)
 
-	game.addVisual(pepita)
+	game.addVisualCharacter(pepita)
 
 	game.start()
 }
