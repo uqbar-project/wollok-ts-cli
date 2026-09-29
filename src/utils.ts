@@ -173,7 +173,7 @@ export const handleError = (error: any): void => {
 }
 
 export async function readNatives(nativeFolder: string): Promise<Natives> {
-  const paths = await globby(['**/*.js', '**/*.cjs', '**/*.js'], { cwd: nativeFolder })
+  const paths = await globby(['**/*.js', '**/*.cjs', '**/*.ts'], { cwd: nativeFolder })
 
   const debug = logger.getLevel() <= logger.levels.DEBUG
 
