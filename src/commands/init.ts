@@ -43,6 +43,7 @@ export default function (folder: string | undefined, { project: _project, name, 
     createFolderIfNotExists(join(project, '.github'))
     createFolderIfNotExists(join(project, '.github', 'workflows'))
     if (game) {
+      logger.info(`Creating assets folder with pepita.png`)
       const assetsFolder = join(project, 'assets')
       createFolderIfNotExists(assetsFolder)
       const image = join('public', 'game', 'pepita.png')
