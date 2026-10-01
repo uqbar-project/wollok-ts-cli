@@ -1,6 +1,6 @@
 import chalk from 'chalk'
 import logger from 'loglevel'
-import { existsSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, writeFileSync } from 'node:fs'
 import { basename, isAbsolute, join } from 'node:path'
 import kebabCase from 'kebab-case'
 import  { userInfo } from 'os'
@@ -43,17 +43,23 @@ export default function (folder: string | undefined, { project: _project, name, 
     createFolderIfNotExists(join(project, '.github'))
     createFolderIfNotExists(join(project, '.github', 'workflows'))
     if (game) {
-      createFolderIfNotExists(join(project, 'assets'))
+      logger.info('Creating assets folder with pepita.png')
+      const assetsFolder = join(project, 'assets')
+      createFolderIfNotExists(assetsFolder)
+      const image = join('public', 'game', 'pepita.png')
+      copyFileSync(image, join(assetsFolder, 'pepita.png'))
     }
 
     // Creating files
+    const definition = game ? wlkDefinitionGame : wlkDefinition
     logger.info(`Creating definition file ${exampleName}.${WOLLOK_FILE_EXTENSION}`)
-    writeFileSync(join(project, `${exampleName}.${WOLLOK_FILE_EXTENSION}`), wlkDefinition)
+    writeFileSync(join(project, `${exampleName}.${WOLLOK_FILE_EXTENSION}`), definition)
 
     if (!noTest) {
+      const definition = game ? testDefinitionGame(exampleName) : testDefinition(exampleName)
       const testFile = `test${capitalizeFirstLetter(exampleName)}.${TEST_FILE_EXTENSION}`
       logger.info(`Creating test file ${testFile}`)
-      writeFileSync(join(project, testFile), testDefinition(exampleName))
+      writeFileSync(join(project, testFile), definition)
     }
 
     if (game) {
@@ -106,6 +112,9 @@ const capitalizeFirstLetter = (value: string) =>
 // COMMANDS
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
+
+// files made by default
+
 const wlkDefinition = `object pepita {
   var energy = 100
 
@@ -126,8 +135,38 @@ describe "group of tests for pepita" {
 
 }`
 
-const gameDefinition = (exampleName: string) => `import wollok.game.*
 
+// files made for games
+
+const wlkDefinitionGame = `object pepita {
+  var energy = 100
+  var property position = game.origin()
+
+  method energy() = energy
+
+  method image() = "pepita.png"
+
+  method fly(minutes) {
+    energy = energy - minutes * 3
+  }
+}`
+
+const testDefinitionGame = (exampleName: string) => `import wollok.game.*
+import ${exampleName}.pepita
+
+describe "group of tests for pepita" {
+  test "pepita has initial energy" {
+    assert.equals(100, pepita.energy())
+  }
+
+  test "pepita has an image" {
+    assert.equals("pepita.png", pepita.image())
+  }
+
+}`
+
+
+const gameDefinition = (exampleName: string) => `import wollok.game.*
 import ${exampleName}.pepita
 
 program PepitaGame {
@@ -135,16 +174,12 @@ program PepitaGame {
 	game.height(10)
 	game.width(10)
 
-	// add assets in asset folder, for example, for the background
-  // game.boardGround("fondo2.jpg")
-
-	//
-
-	game.showAttributes(pepita) //Debug
+	game.addVisualCharacter(pepita)
 
 	game.start()
 }
 `
+
 
 const packageJsonDefinition = (projectName: string, game: boolean, natives?: string) => {
   const wollokVersion = '4.2.3' // TODO: obtain it from package.json dependency
