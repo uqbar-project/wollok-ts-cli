@@ -1,6 +1,6 @@
 import chalk from 'chalk'
 import logger from 'loglevel'
-import { existsSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, writeFileSync } from 'node:fs'
 import { basename, isAbsolute, join } from 'node:path'
 import kebabCase from 'kebab-case'
 import  { userInfo } from 'os'
@@ -43,7 +43,10 @@ export default function (folder: string | undefined, { project: _project, name, 
     createFolderIfNotExists(join(project, '.github'))
     createFolderIfNotExists(join(project, '.github', 'workflows'))
     if (game) {
-      createFolderIfNotExists(join(project, 'assets'))
+      const assetsFolder = join(project, 'assets')
+      createFolderIfNotExists(assetsFolder)
+      const image = join('public', 'game', 'pepita.png')
+      copyFileSync(image, join(assetsFolder, 'pepita.png'))
     }
 
     // Creating files

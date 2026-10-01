@@ -11,6 +11,7 @@ const customFolderName = 'custom-folder'
 const customFolderProject = join(project, customFolderName)
 const absoluteFolder = join(homedir(), '_____folder_for_wollok_unit_test_please_remove_it______')
 const GITHUB_FOLDER = join('.github', 'workflows')
+const image = join('public', 'game', 'pepita.png')
 
 const baseOptions: Options = {
   project,
@@ -73,6 +74,7 @@ describe('testing init', () => {
     expect(join(project, GITHUB_FOLDER, 'ci.yml')).pathExists()
     expect(join(project, 'README.md')).pathExists()
     expect(join(project, '.gitignore')).pathExists()
+    expect(readFileSync(join(project, 'assets', 'pepita.png'))).toEqual(readFileSync(image))
     expect(getResourceFolder()).toBe('assets')
     expect(processExitSpy).toHaveBeenCalledWith(0)
   })
