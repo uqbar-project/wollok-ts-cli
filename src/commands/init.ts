@@ -113,7 +113,7 @@ const capitalizeFirstLetter = (value: string) =>
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
 
-// files made by the init command: wollok init --project name_project
+// files made by default
 
 const wlkDefinition = `object pepita {
   var energy = 100
@@ -136,7 +136,7 @@ describe "group of tests for pepita" {
 }`
 
 
-// files made by the init command: wollok init --project name_project --game
+// files made for games
 
 const wlkDefinitionGame = `object pepita {
   var energy = 100
