@@ -9,7 +9,7 @@ import http from 'http'
 import logger from 'loglevel'
 import path, { join, relative } from 'path'
 import { Server, Socket } from 'socket.io'
-import { fileURLToPath } from 'url'
+import { fileURLToPath, pathToFileURL } from 'url'
 import { buildEnvironment, Environment, get, getDynamicDiagramData, getMessage, Interpreter, isEmpty, List, NativeFunction, Natives, natives, Node, Package, Problem, validate, WOLLOK_EXTRA_STACK_TRACE_HEADER, WollokException } from 'wollok-ts'
 import { Asset, VALID_IMAGE_EXTENSIONS, VALID_SOUND_EXTENSIONS } from 'wollok-web-tools/dist/game/utils.js'
 import { getDataDiagram } from 'wollok-web-tools/dist/dynamicDiagram/diagram-generator.js'
@@ -182,7 +182,7 @@ export async function readNatives(nativeFolder: string): Promise<Natives> {
   const nativesObjects: List<Natives> = await Promise.all(
     paths.map(async (filePath) => {
       const fullPath = path.resolve(nativeFolder, filePath)
-      const importedModule = await import(fullPath)
+      const importedModule = await import(pathToFileURL(fullPath).href)
       const segments = filePath.replace(/\.(ts|js)$/, '').split('/')
       return segments.reduceRight((acc, segment) => { return { [segment]: acc } }, importedModule.default || importedModule)
     })
