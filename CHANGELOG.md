@@ -6,6 +6,14 @@ The goal of this file is to document the changes to the Wollok language definiti
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Since 0.4.0 version, the Wollok language adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.1.1
+- 🎮 Improve game support
+  - Fix boardground updates
+  - Better `init` command for games
+- 🤓 Better user natives
+  - Support `.ts` files
+  - Fix loading dynamic code for Windows
+
 ## v1.1.0
 
 - ⬆️ Wollok-TS version 4.3.0
