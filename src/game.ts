@@ -8,7 +8,7 @@ import { Server } from 'socket.io'
 import { GAME_MODULE, Interpreter, RuntimeObject, WollokException } from 'wollok-ts'
 import { Asset, boardState, buildDoubleClickedEvent, buildKeyPressEvent, buildKeyReleaseEvent, buildMouseClickedEvent, Position, queueEvent, SoundState, soundState, VisualState, visualState } from 'wollok-web-tools/dist/game/utils.js'
 import { DummyProfiler, EventProfiler, TimeMeasurer } from './time-measurer.js'
-import { DynamicDiagramClient, ENTER, failureDescription, folderIcon, gameIcon, getSoundsFolder, imageIcon, isValidImage, isValidSound, keyboardIcon, loopIcon, mouseIcon, publicPath, soundIcon, successDescription, valueDescription } from './utils.js'
+import { boardIcon, DynamicDiagramClient, ENTER, failureDescription, folderIcon, gameIcon, getSoundsFolder, imageIcon, isValidImage, isValidSound, keyboardIcon, loopIcon, mouseIcon, publicPath, soundIcon, successDescription, valueDescription } from './utils.js'
 
 const { bold } = chalk
 
@@ -68,6 +68,10 @@ export const eventsFor = (io: Server, interpreter: Interpreter, dynamicDiagramCl
       logger.debug(successDescription('Client ready!'))
 
       // send static data
+      const board = boardState(gameSingleton as any)
+      logger.debug(`${boardIcon} Sending board: ${JSON.stringify(board, null, 2)}`)
+      socket.emit('board', board)
+
       const images = assetFiles.filter(isValidImage)
       socket.emit('images', images)
       logger.debug(`${imageIcon} Sending images: ${JSON.stringify(images, null, 2)}`)
