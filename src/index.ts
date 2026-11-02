@@ -114,14 +114,9 @@ const execute = async () => {
   program.addCommand(dependencyCommand)
   program.exitOverride()
 
+  // First execute the command, then check for updates
   try {
     await program.parseAsync()
-  } catch (error) {
-    if (error instanceof CommanderError) {
-      process.exitCode = error.exitCode
-    } else {
-      throw error
-    }
   } finally {
     await updateNotifier()
   }
