@@ -11,7 +11,7 @@ import test from './commands/test.js'
 import updateNotifier from './update-notifier.js'
 import { versionInfo } from './utils.js'
 
-updateNotifier().finally(() => {
+const execute = async () => {
   const program = new Command()
     .name('wollok')
     .description('Wollok Language command line interpreter tool')
@@ -112,5 +112,14 @@ updateNotifier().finally(() => {
     .action(synchronizeDependencies)
 
   program.addCommand(dependencyCommand)
-  program.parseAsync()
-})
+  program.exitOverride()
+
+  // First execute the command, then check for updates
+  try {
+    await program.parseAsync()
+  } finally {
+    await updateNotifier()
+  }
+}
+
+void execute()
