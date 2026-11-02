@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { Command, CommanderError } from 'commander'
+import { Command } from 'commander'
 import logger from 'loglevel'
 import ast from './commands/ast.js'
 import { addDependency, removeDependency, synchronizeDependencies } from './commands/dependencies.js'
