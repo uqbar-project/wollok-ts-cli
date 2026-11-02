@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { Command } from 'commander'
+import { Command, CommanderError } from 'commander'
 import logger from 'loglevel'
 import ast from './commands/ast.js'
 import { addDependency, removeDependency, synchronizeDependencies } from './commands/dependencies.js'
@@ -11,7 +11,7 @@ import test from './commands/test.js'
 import updateNotifier from './update-notifier.js'
 import { versionInfo } from './utils.js'
 
-updateNotifier().finally(() => {
+const execute = async () => {
   const program = new Command()
     .name('wollok')
     .description('Wollok Language command line interpreter tool')
@@ -112,5 +112,19 @@ updateNotifier().finally(() => {
     .action(synchronizeDependencies)
 
   program.addCommand(dependencyCommand)
-  program.parseAsync()
-})
+  program.exitOverride()
+
+  try {
+    await program.parseAsync()
+  } catch (error) {
+    if (error instanceof CommanderError) {
+      process.exitCode = error.exitCode
+    } else {
+      throw error
+    }
+  } finally {
+    await updateNotifier()
+  }
+}
+
+void execute()
